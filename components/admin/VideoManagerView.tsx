@@ -38,53 +38,7 @@ export interface VideoReelItem {
   };
 }
 
-export const DEFAULT_INITIAL_REELS: VideoReelItem[] = [
-  {
-    id: "reel-1",
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-woman-posing-with-jewelry-41584-large.mp4",
-    posterUrl: "https://images.unsplash.com/photo-1599643477877-530eb83abc8e?q=80&w=800&auto=format&fit=crop",
-    product: {
-      name: "Lucy Williams Square Malachite Necklace | 18ct Gold Vermeil",
-      price: 135.0,
-      thumbnail: "/necklace.jpeg",
-      href: "/collections/necklaces",
-    },
-  },
-  {
-    id: "reel-2",
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-model-wearing-a-gold-necklace-41585-large.mp4",
-    posterUrl: "https://images.unsplash.com/photo-1598560917505-59a3ad559071?q=80&w=800&auto=format&fit=crop",
-    product: {
-      name: "Lucy Williams Engravable Roman Arc Coin Necklace | 18ct Gold",
-      price: 149.0,
-      thumbnail: "/necklace.jpeg",
-      href: "/collections/necklaces",
-    },
-  },
-  {
-    id: "reel-3",
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-fashion-model-showing-earrings-and-a-necklace-41586-large.mp4",
-    posterUrl: "https://images.unsplash.com/photo-1630019852942-f89202989a59?q=80&w=800&auto=format&fit=crop",
-    product: {
-      name: "Claw Pavé Huggies | 18ct Gold Plated/Cubic Zirconia",
-      price: 85.0,
-      thumbnail: "/ring2.jpeg",
-      href: "/collections/earrings",
-    },
-  },
-  {
-    id: "reel-4",
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-woman-wearing-a-gold-chain-41587-large.mp4",
-    posterUrl: "https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?q=80&w=800&auto=format&fit=crop",
-    product: {
-      name: "The Everyday Layering Necklace Set | 18ct Gold Vermeil",
-      price: 289.0,
-      originalPrice: 345.0,
-      thumbnail: "/necklace.jpeg",
-      href: "/collections/necklaces",
-    },
-  },
-];
+export const DEFAULT_INITIAL_REELS: VideoReelItem[] = [];
 
 interface VideoManagerViewProps {
   products: Product[];
@@ -95,12 +49,12 @@ export default function VideoManagerView({
   products,
   onNavigateToAddProduct 
 }: VideoManagerViewProps) {
-  const [reels, setReels] = useState<VideoReelItem[]>(DEFAULT_INITIAL_REELS);
+  const [reels, setReels] = useState<VideoReelItem[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [successToast, setSuccessToast] = useState(false);
 
   // Form state for creating a new shoppable video reel
-  const [videoUrl, setVideoUrl] = useState("https://assets.mixkit.co/videos/preview/mixkit-woman-posing-with-jewelry-41584-large.mp4");
+  const [videoUrl, setVideoUrl] = useState("");
   const [posterUrl, setPosterUrl] = useState("/ear.jpeg");
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(
     products.length > 0 ? products[0] : null
@@ -118,7 +72,7 @@ export default function VideoManagerView({
   useEffect(() => {
     try {
       const stored = localStorage.getItem("bhai_shoppable_reels_v1");
-      if (stored) {
+      if (stored !== null) {
         setReels(JSON.parse(stored));
       }
     } catch (e) {
@@ -127,21 +81,15 @@ export default function VideoManagerView({
 
     async function loadFromSupabase() {
       try {
-        const { data, error } = await supabase.from("shoppable_videos").select("*").order("display_order", { ascending: true });
-        if (!error && data && data.length > 0) {
-          const mapped: VideoReelItem[] = data.map((row) => ({
-            id: row.id,
-            videoUrl: row.video_url,
-            posterUrl: row.poster_url || "",
-            product: {
-              name: row.product_name,
-              price: Number(row.product_price),
-              originalPrice: row.original_price ? Number(row.original_price) : undefined,
-              thumbnail: row.product_thumbnail,
-              href: row.product_href,
-            },
-          }));
-          setReels(mapped);
+        const { data, error } = await supabase
+          .from("site_settings")
+          .select("value")
+          .eq("key", "shoppable_reels")
+          .maybeSingle();
+
+        if (!error && data && Array.isArray(data.value)) {
+          setReels(data.value);
+          localStorage.setItem("bhai_shoppable_reels_v1", JSON.stringify(data.value));
         }
       } catch (err) {
         console.warn("Supabase video load:", err);

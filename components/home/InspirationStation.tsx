@@ -4,8 +4,9 @@ import React, { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Volume2, VolumeX, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient";
 
-interface InspirationItem {
+export interface InspirationItem {
   id: string;
   videoUrl: string;
   posterUrl: string;
@@ -18,139 +19,78 @@ interface InspirationItem {
   };
 }
 
-const INSPIRATION_ITEMS: InspirationItem[] = [
-  {
-    id: "insp-1",
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-woman-posing-with-jewelry-41584-large.mp4",
-    posterUrl: "https://images.unsplash.com/photo-1599643477877-530eb83abc8e?q=80&w=800&auto=format&fit=crop",
-    product: {
-      name: "Lucy Williams Square Malachite Necklace | 18ct Gold Vermeil",
-      price: 135.0,
-      thumbnail: "/necklace.jpeg",
-      href: "/products/chunky-knot-t-bar-chain-necklace",
-    },
-  },
-  {
-    id: "insp-2",
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-model-wearing-a-gold-necklace-41585-large.mp4",
-    posterUrl: "https://images.unsplash.com/photo-1598560917505-59a3ad559071?q=80&w=800&auto=format&fit=crop",
-    product: {
-      name: "Lucy Williams Engravable Roman Arc Coin Necklace | 18ct Gold",
-      price: 149.0,
-      thumbnail: "/necklace.jpeg",
-      href: "/products/roman-arc-coin-pendant-necklace",
-    },
-  },
-  {
-    id: "insp-3",
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-fashion-model-showing-earrings-and-a-necklace-41586-large.mp4",
-    posterUrl: "https://images.unsplash.com/photo-1630019852942-f89202989a59?q=80&w=800&auto=format&fit=crop",
-    product: {
-      name: "Claw Pavé Huggies | 18ct Gold Plated/Cubic Zirconia",
-      price: 85.0,
-      thumbnail: "/ring2.jpeg",
-      href: "/products/classic-pave-huggie-hoop-earrings",
-    },
-  },
-  {
-    id: "insp-4",
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-woman-wearing-a-gold-chain-41587-large.mp4",
-    posterUrl: "https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?q=80&w=800&auto=format&fit=crop",
-    product: {
-      name: "The Everyday Layering Necklace Set | 18ct Gold Vermeil",
-      price: 289.0,
-      originalPrice: 345.0,
-      thumbnail: "/necklace.jpeg",
-      href: "/products/the-pearl-t-bar-layered-necklace-set",
-    },
-  },
-  {
-    id: "insp-5",
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-young-woman-with-golden-earrings-drinking-coffee-41588-large.mp4",
-    posterUrl: "https://images.unsplash.com/photo-1611591477292-624021798361?q=80&w=800&auto=format&fit=crop",
-    product: {
-      name: "Ripple Oversized Stud Earrings",
-      price: 135.0,
-      thumbnail: "/ear.jpeg",
-      href: "/products/knot-t-bar-charm-hoop-earrings",
-    },
-  },
-  {
-    id: "insp-6",
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-woman-showing-silver-and-gold-rings-41589-large.mp4",
-    posterUrl: "https://images.unsplash.com/photo-1605100804763-247f67b3557e?q=80&w=800&auto=format&fit=crop",
-    product: {
-      name: "Lucy Williams Gold Chunky Bangle / Silver Cable",
-      price: 165.0,
-      thumbnail: "/braclet2.jpeg",
-      href: "/products/solitaire-claw-stacking-ring",
-    },
-  },
-  {
-    id: "insp-7",
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-girl-in-bikini-near-the-pool-41590-large.mp4",
-    posterUrl: "https://images.unsplash.com/photo-1576022160538-23214b7e997f?q=80&w=800&auto=format&fit=crop",
-    product: {
-      name: "Square Malachite Square Hoop Earrings",
-      price: 115.0,
-      thumbnail: "/ear.jpeg",
-      href: "/products/knot-t-bar-charm-hoop-earrings",
-    },
-  },
-  {
-    id: "insp-8",
-    videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-model-wearing-a-gold-necklace-41585-large.mp4",
-    posterUrl: "https://images.unsplash.com/photo-1598560917505-59a3ad559071?q=80&w=800&auto=format&fit=crop",
-    product: {
-      name: "Lucy Williams Engravable Roman Arc Coin Necklace",
-      price: 149.0,
-      thumbnail: "/necklace.jpeg",
-      href: "/products/roman-arc-coin-pendant-necklace",
-    },
-  },
-];
-
 export default function InspirationStation() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const [items, setItems] = useState<InspirationItem[]>(INSPIRATION_ITEMS);
-  const [activeVideoId, setActiveVideoId] = useState<string>("insp-4");
+  const [items, setItems] = useState<InspirationItem[]>([]);
+  const [activeVideoId, setActiveVideoId] = useState<string>("");
   const [mutedStates, setMutedStates] = useState<Record<string, boolean>>({});
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Real-time synchronization for shoppable video reels
+  // Real-time synchronization for shoppable video reels from Supabase & localStorage
   useEffect(() => {
-    // 1. Load local cache
+    // 1. Initial local load
     try {
       const stored = localStorage.getItem("bhai_shoppable_reels_v1");
-      if (stored) {
+      if (stored !== null) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           setItems(parsed);
-          setActiveVideoId(parsed[0].id);
+          if (parsed.length > 0) {
+            setActiveVideoId(parsed[0].id);
+          }
         }
       }
     } catch (e) {
       console.error(e);
     }
 
-    // 2. BroadcastChannel for instant zero-latency cross-tab sync
+    // 2. Load from Supabase Database
+    async function loadFromDb() {
+      try {
+        const { data, error } = await supabase
+          .from("site_settings")
+          .select("value")
+          .eq("key", "shoppable_reels")
+          .maybeSingle();
+
+        if (!error && data && Array.isArray(data.value)) {
+          setItems(data.value);
+          if (data.value.length > 0) {
+            setActiveVideoId(data.value[0].id);
+          }
+          localStorage.setItem("bhai_shoppable_reels_v1", JSON.stringify(data.value));
+        }
+      } catch (err) {
+        console.warn("Supabase reels fetch notice:", err);
+      } finally {
+        setIsLoaded(true);
+      }
+    }
+
+    loadFromDb();
+
+    // 3. BroadcastChannel for instant zero-latency cross-tab sync
     let channel: BroadcastChannel | null = null;
     if (typeof window !== "undefined" && "BroadcastChannel" in window) {
       channel = new BroadcastChannel("bhai_realtime_videos");
       channel.onmessage = (event) => {
         if (event.data?.type === "REELS_UPDATED" && Array.isArray(event.data.payload)) {
           setItems(event.data.payload);
+          if (event.data.payload.length > 0) {
+            setActiveVideoId(event.data.payload[0].id);
+          }
         }
       };
     }
 
-    // 3. Storage event listener
+    // 4. Storage event listener
     const handleStorage = () => {
       try {
         const stored = localStorage.getItem("bhai_shoppable_reels_v1");
-        if (stored) {
+        if (stored !== null) {
           const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) {
+          if (Array.isArray(parsed)) {
             setItems(parsed);
           }
         }
@@ -166,7 +106,7 @@ export default function InspirationStation() {
     };
   }, []);
 
-  // Function to smoothly scroll clicked video to the exact center
+  // Smoothly scroll clicked video to center
   const selectAndCenterVideo = (id: string) => {
     setActiveVideoId(id);
     const targetElem = itemRefs.current[id];
@@ -179,79 +119,81 @@ export default function InspirationStation() {
       const scrollPosition = targetLeft - (containerWidth / 2) + (targetWidth / 2);
       
       container.scrollTo({
-        left: Math.max(0, scrollPosition),
+        left: scrollPosition,
         behavior: "smooth",
       });
     }
   };
 
-  // Center initial active video on load
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      selectAndCenterVideo("insp-4");
-    }, 400);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const toggleMute = (id: string, e: React.MouseEvent) => {
-    e.preventDefault();
+  const toggleMute = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    setMutedStates((prev) => ({ ...prev, [id]: !prev[id] }));
+    setMutedStates((prev) => ({
+      ...prev,
+      [id]: prev[id] === undefined ? false : !prev[id],
+    }));
   };
 
-  const handleArrowNavigation = (direction: "left" | "right") => {
-    const currentIndex = INSPIRATION_ITEMS.findIndex((item) => item.id === activeVideoId);
-    let nextIndex = direction === "left" ? currentIndex - 1 : currentIndex + 1;
-    
-    if (nextIndex < 0) nextIndex = 0;
-    if (nextIndex >= INSPIRATION_ITEMS.length) nextIndex = INSPIRATION_ITEMS.length - 1;
-
-    const nextId = INSPIRATION_ITEMS[nextIndex].id;
-    selectAndCenterVideo(nextId);
+  const scrollHorizontally = (direction: "left" | "right") => {
+    if (!scrollRef.current) return;
+    const scrollAmount = 340;
+    scrollRef.current.scrollBy({
+      left: direction === "left" ? -scrollAmount : scrollAmount,
+      behavior: "smooth",
+    });
   };
+
+  // If no videos exist in database/admin panel, cleanly hide the section (no fake/broken demo videos)
+  if (items.length === 0) {
+    return null;
+  }
 
   return (
-    <section className="w-full bg-white pt-16 pb-20 border-b border-neutral-200/70 overflow-hidden">
-      <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-14">
-        
-        {/* CENTER TITLE & ARROWS */}
-        <div className="flex items-center justify-between mb-12 sm:mb-16">
-          <div className="w-8 hidden sm:block" />
-          
-          <h2
-            style={{ fontFamily: "var(--font-cormorant), var(--font-playfair), serif" }}
-            className="text-2xl sm:text-3xl md:text-4xl font-normal text-neutral-900 tracking-[0.015em] text-center"
-          >
-            Inspiration Station
-          </h2>
-
-          {/* Navigation Controls */}
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => handleArrowNavigation("left")}
-              aria-label="Previous inspiration"
-              className="w-8 h-8 rounded-full border border-neutral-300 bg-white hover:border-neutral-900 flex items-center justify-center text-neutral-700 hover:text-black transition-all cursor-pointer shadow-2xs"
+    <section className="w-full bg-[#FAF7F2] py-16 sm:py-20 border-b border-[#ece7de] overflow-hidden">
+      
+      {/* 1. TOP HEADER & ARROW CONTROLS */}
+      <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-14 mb-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <span className="text-[10px] sm:text-[11px] font-bold tracking-[0.2em] uppercase text-neutral-500 mb-1.5 block">
+              AS SEEN ON YOU
+            </span>
+            <h2
+              style={{ fontFamily: "var(--font-cormorant), var(--font-playfair), serif" }}
+              className="text-2xl sm:text-3xl lg:text-[38px] font-normal tracking-[0.02em] text-neutral-950 capitalize"
             >
-              <ChevronLeft className="w-4 h-4 stroke-[1.75]" />
+              Inspiration Station
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => scrollHorizontally("left")}
+              aria-label="Scroll left"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-neutral-300 bg-white hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all duration-200 flex items-center justify-center text-neutral-800 shadow-2xs active:scale-95 cursor-pointer"
+            >
+              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.75]" />
             </button>
             <button
-              onClick={() => handleArrowNavigation("right")}
-              aria-label="Next inspiration"
-              className="w-8 h-8 rounded-full border border-neutral-300 bg-white hover:border-neutral-900 flex items-center justify-center text-neutral-700 hover:text-black transition-all cursor-pointer shadow-2xs"
+              onClick={() => scrollHorizontally("right")}
+              aria-label="Scroll right"
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-neutral-300 bg-white hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all duration-200 flex items-center justify-center text-neutral-800 shadow-2xs active:scale-95 cursor-pointer"
             >
-              <ChevronRight className="w-4 h-4 stroke-[1.75]" />
+              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.75]" />
             </button>
           </div>
         </div>
+      </div>
 
-        {/* HORIZONTAL CAROUSEL WITH AUTO-CENTERING & ELEVATED CENTER REEL */}
+      {/* 2. SMOOTH HORIZONTAL VIDEO REEL CAROUSEL */}
+      <div className="w-full relative">
         <div
           ref={scrollRef}
-          className="flex items-end gap-3 sm:gap-4 overflow-x-auto scrollbar-none pt-14 pb-6 px-4 sm:px-10 scroll-smooth"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+          className="flex items-start gap-4 sm:gap-6 overflow-x-auto no-scrollbar scroll-smooth px-4 sm:px-8 lg:px-12 xl:px-14 py-4"
+          style={{ scrollSnapType: "x mandatory" }}
         >
           {items.map((item) => {
             const isFeatured = activeVideoId === item.id;
+            const isMuted = mutedStates[item.id] !== false;
 
             return (
               <div
@@ -260,18 +202,19 @@ export default function InspirationStation() {
                   itemRefs.current[item.id] = el;
                 }}
                 onClick={() => selectAndCenterVideo(item.id)}
-                className={`flex flex-col flex-shrink-0 transition-all duration-500 cursor-pointer select-none ${
+                className={`flex-shrink-0 transition-all duration-500 cursor-pointer ${
                   isFeatured
-                    ? "w-[240px] sm:w-[265px] md:w-[285px] -translate-y-8 z-20"
-                    : "w-[185px] sm:w-[205px] md:w-[220px] opacity-95 hover:opacity-100 z-10"
+                    ? "w-[240px] sm:w-[280px] md:w-[310px] scale-100 z-10"
+                    : "w-[170px] sm:w-[210px] md:w-[230px] opacity-85 hover:opacity-100"
                 }`}
+                style={{ scrollSnapAlign: "center" }}
               >
-                {/* 1. VERTICAL VIDEO REEL (Taller when active/featured) */}
+                {/* 1. VIDEO CONTAINER */}
                 <div
-                  className={`relative w-full rounded-2xl overflow-hidden bg-neutral-900 transition-all duration-500 ${
+                  className={`relative aspect-[9/16] w-full rounded-2xl overflow-hidden bg-neutral-950 transition-all duration-500 shadow-md ${
                     isFeatured
-                      ? "h-[390px] sm:h-[430px] md:h-[460px] shadow-2xl ring-1 ring-neutral-900/15"
-                      : "h-[310px] sm:h-[340px] md:h-[365px] shadow-sm border border-neutral-200/90 hover:shadow-md"
+                      ? "ring-2 ring-neutral-950 shadow-2xl"
+                      : "border border-neutral-300/80"
                   }`}
                 >
                   <video
@@ -279,73 +222,72 @@ export default function InspirationStation() {
                     poster={item.posterUrl}
                     autoPlay
                     loop
-                    muted={mutedStates[item.id]}
+                    muted={isMuted}
                     playsInline
-                    className="w-full h-full object-cover object-center"
+                    className="w-full h-full object-cover object-center pointer-events-none select-none"
                   />
 
-                  {/* Subtle vignette */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/15 pointer-events-none" />
-
-                  {/* Volume Toggle Button at Bottom-Right */}
+                  {/* Top Sound Toggle Pill */}
                   <button
-                    onClick={(e) => toggleMute(item.id, e)}
-                    aria-label={mutedStates[item.id] ? "Unmute video" : "Mute video"}
-                    className="absolute bottom-2.5 right-2.5 z-10 w-7 h-7 rounded-full bg-black/45 backdrop-blur-xs border border-white/20 text-white flex items-center justify-center hover:bg-black/70 transition-all cursor-pointer shadow-sm"
+                    onClick={(e) => toggleMute(e, item.id)}
+                    aria-label={isMuted ? "Unmute video" : "Mute video"}
+                    className="absolute top-3 right-3 p-2 rounded-full bg-black/50 hover:bg-black/80 text-white backdrop-blur-md transition-all duration-200 z-20"
                   >
-                    {mutedStates[item.id] ? (
-                      <VolumeX className="w-3.5 h-3.5" />
+                    {isMuted ? (
+                      <VolumeX className="w-3.5 h-3.5 stroke-[2]" />
                     ) : (
-                      <Volume2 className="w-3.5 h-3.5" />
+                      <Volume2 className="w-3.5 h-3.5 stroke-[2]" />
                     )}
                   </button>
                 </div>
 
                 {/* 2. ATTACHED PRODUCT CARD DIRECTLY BELOW VIDEO */}
-                <Link
-                  href={item.product.href}
-                  className={`mt-2 p-2 bg-white rounded-lg transition-all duration-300 flex items-center gap-2 group/prod ${
-                    isFeatured
-                      ? "border border-neutral-300 shadow-md"
-                      : "border border-neutral-200/80 hover:border-neutral-900 hover:shadow-sm"
-                  }`}
-                >
-                  {/* Product Thumbnail */}
-                  <div className="w-9 h-9 relative rounded-md overflow-hidden bg-[#FAF7F2] border border-neutral-200/50 flex-shrink-0 p-0.5">
-                    <Image
-                      src={item.product.thumbnail}
-                      alt={item.product.name}
-                      fill
-                      className="object-cover object-center"
-                    />
-                  </div>
-
-                  {/* Name & Price */}
-                  <div className="flex-1 min-w-0 text-left">
-                    <p className="text-[10px] sm:text-[10.5px] font-medium text-neutral-900 line-clamp-1 group-hover/prod:text-[#b8860b] transition-colors leading-tight">
-                      {item.product.name}
-                    </p>
-                    <div className="flex items-center gap-1 text-[11px] font-semibold text-neutral-900 mt-0.5">
-                      {item.product.originalPrice ? (
-                        <>
-                          <span className="line-through text-neutral-400 font-light text-[10px]">
-                            £{item.product.originalPrice.toFixed(0)}
-                          </span>
-                          <span className="text-rose-700">
-                            £{item.product.price.toFixed(0)}
-                          </span>
-                        </>
-                      ) : (
-                        <span>£{item.product.price.toFixed(0)}</span>
-                      )}
+                {item.product && (
+                  <Link
+                    href={item.product.href || `/collections/earrings`}
+                    className={`mt-2 p-2 bg-white rounded-lg transition-all duration-300 flex items-center gap-2 group/prod ${
+                      isFeatured
+                        ? "border border-neutral-300 shadow-md"
+                        : "border border-neutral-200/80 hover:border-neutral-900 hover:shadow-sm"
+                    }`}
+                  >
+                    {/* Product Thumbnail */}
+                    <div className="w-9 h-9 relative rounded-md overflow-hidden bg-[#FAF7F2] border border-neutral-200/50 flex-shrink-0 p-0.5">
+                      <Image
+                        src={item.product.thumbnail || "/ear.jpeg"}
+                        alt={item.product.name || "Jewellery"}
+                        fill
+                        className="object-cover object-center"
+                      />
                     </div>
-                  </div>
 
-                  {/* Expand Chevron */}
-                  <div className="text-neutral-400 group-hover/prod:text-neutral-900 transition-colors flex-shrink-0">
-                    <ChevronUp className="w-4 h-4 stroke-[1.75]" />
-                  </div>
-                </Link>
+                    {/* Name & Price */}
+                    <div className="flex-1 min-w-0 text-left">
+                      <p className="text-[10px] sm:text-[10.5px] font-medium text-neutral-900 line-clamp-1 group-hover/prod:text-[#b8860b] transition-colors leading-tight">
+                        {item.product.name}
+                      </p>
+                      <div className="flex items-center gap-1 text-[11px] font-semibold text-neutral-900 mt-0.5">
+                        {item.product.originalPrice ? (
+                          <>
+                            <span className="line-through text-neutral-400 font-light text-[10px]">
+                              £{item.product.originalPrice.toFixed(0)}
+                            </span>
+                            <span className="text-rose-700">
+                              £{item.product.price.toFixed(0)}
+                            </span>
+                          </>
+                        ) : (
+                          <span>£{item.product.price ? item.product.price.toFixed(0) : "0"}</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Expand Chevron */}
+                    <div className="text-neutral-400 group-hover/prod:text-neutral-900 transition-colors flex-shrink-0">
+                      <ChevronUp className="w-4 h-4 stroke-[1.75]" />
+                    </div>
+                  </Link>
+                )}
 
               </div>
             );
