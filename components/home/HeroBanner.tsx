@@ -21,8 +21,8 @@ export default function HeroBanner({
   imageSrc = "/hero_section.jpg",
 }: HeroBannerProps) {
   return (
-    <section className="relative w-full h-[88vh] sm:h-[92vh] min-h-[560px] max-h-[1080px] overflow-hidden bg-[#0a0a0a] flex items-end">
-      {/* 1. BACKGROUND IMAGE (Full Clarity & Visibility) */}
+    <section className="relative w-full h-[84vh] sm:h-[92vh] min-h-[520px] sm:min-h-[560px] max-h-[1080px] overflow-hidden bg-[#0a0a0a] flex items-end">
+      {/* 1. BACKGROUND IMAGE (Optimized Focal Point for Mobile & Desktop) */}
       <div className="absolute inset-0 z-0">
         <Image
           src={imageSrc}
@@ -30,19 +30,19 @@ export default function HeroBanner({
           fill
           priority
           sizes="100vw"
-          className="object-cover object-center scale-[1.01]"
+          className="object-cover object-[center_25%] sm:object-center scale-[1.01]"
         />
-        {/* Very Light Subtle Overlay to keep image 100% bright & visible while keeping navbar readable */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/35 pointer-events-none" />
+        {/* Subtle Gradient Overlay for Clean Legibility */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-black/40 sm:from-black/60 sm:via-transparent sm:to-black/35 pointer-events-none" />
       </div>
 
       {/* 2. BOTTOM-LEFT EDITORIAL CONTENT (Compact, Clean & Elegant) */}
-      <div className="relative z-10 w-full px-4 sm:px-8 lg:px-12 xl:px-14 pb-8 sm:pb-10 lg:pb-12 max-w-2xl text-left">
+      <div className="relative z-10 w-full px-5 sm:px-8 lg:px-12 xl:px-14 pb-7 sm:pb-10 lg:pb-12 max-w-2xl text-left">
         
         {/* Refined Title (Cormorant Garamond, delicate size) */}
         <h1
           style={{ fontFamily: "var(--font-cormorant), var(--font-playfair), serif" }}
-          className="text-2xl sm:text-3xl md:text-4xl lg:text-[42px] font-medium text-white tracking-[0.02em] leading-[1.18] drop-shadow-md"
+          className="text-[26px] sm:text-3xl md:text-4xl lg:text-[42px] font-medium text-white tracking-[0.02em] leading-[1.18] drop-shadow-md"
         >
           {title}
         </h1>

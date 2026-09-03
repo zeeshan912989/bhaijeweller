@@ -2,17 +2,23 @@ import React from "react";
 
 export default function ProductSkeleton() {
   return (
-    <div className="flex flex-col flex-shrink-0 w-[240px] sm:w-[260px] md:w-[280px] select-none">
-      {/* 1. SKELETON IMAGE BOX (Matching Reference Image) */}
-      <div className="aspect-[4/5] w-full rounded-lg bg-[#DFE3E8] relative overflow-hidden">
-        {/* Smooth Shimmer Light Sweep */}
-        <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+    <div className="flex flex-col flex-shrink-0 w-[240px] sm:w-[260px] md:w-[280px] select-none group">
+      {/* 1. SKELETON IMAGE BOX (Luxury Shimmer Animation) */}
+      <div className="aspect-[4/5] w-full rounded-2xl bg-[#F5F2EC] relative overflow-hidden border border-neutral-200/70">
+        {/* Shimmer Light Sweep */}
+        <div className="skeleton-shimmer absolute inset-0 bg-gradient-to-r from-transparent via-white/70 to-transparent pointer-events-none" />
       </div>
 
       {/* 2. SKELETON PLACEHOLDER BARS BELOW IMAGE */}
-      <div className="pt-3.5 space-y-2">
-        <div className="h-3 bg-[#CFD5DC] rounded-full w-4/5" />
-        <div className="h-3 bg-[#CFD5DC] rounded-full w-2/5" />
+      <div className="pt-3.5 space-y-2.5">
+        {/* Title skeleton */}
+        <div className="h-3.5 bg-[#EAE5DB] rounded-full w-4/5 relative overflow-hidden">
+          <div className="skeleton-shimmer absolute inset-0 bg-gradient-to-r from-transparent via-white/80 to-transparent pointer-events-none" />
+        </div>
+        {/* Price skeleton */}
+        <div className="h-3 bg-[#EFEAE0] rounded-full w-2/5 relative overflow-hidden">
+          <div className="skeleton-shimmer absolute inset-0 bg-gradient-to-r from-transparent via-white/80 to-transparent pointer-events-none" />
+        </div>
       </div>
     </div>
   );

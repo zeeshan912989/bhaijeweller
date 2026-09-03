@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Cinzel, Playfair_Display, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
+import CookieConsentModal from "@/components/ui/CookieConsentModal";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -40,6 +41,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans bg-white text-neutral-900 selection:bg-[#d4af37] selection:text-white">
         {children}
+        <CookieConsentModal />
       </body>
     </html>
   );

@@ -113,17 +113,58 @@ const INSPIRATION_ITEMS: InspirationItem[] = [
 export default function InspirationStation() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [items, setItems] = useState<InspirationItem[]>(INSPIRATION_ITEMS);
   const [activeVideoId, setActiveVideoId] = useState<string>("insp-4");
-  const [mutedStates, setMutedStates] = useState<Record<string, boolean>>({
-    "insp-1": true,
-    "insp-2": true,
-    "insp-3": true,
-    "insp-4": true,
-    "insp-5": true,
-    "insp-6": true,
-    "insp-7": true,
-    "insp-8": true,
-  });
+  const [mutedStates, setMutedStates] = useState<Record<string, boolean>>({});
+
+  // Real-time synchronization for shoppable video reels
+  useEffect(() => {
+    // 1. Load local cache
+    try {
+      const stored = localStorage.getItem("bhai_shoppable_reels_v1");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setItems(parsed);
+          setActiveVideoId(parsed[0].id);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    // 2. BroadcastChannel for instant zero-latency cross-tab sync
+    let channel: BroadcastChannel | null = null;
+    if (typeof window !== "undefined" && "BroadcastChannel" in window) {
+      channel = new BroadcastChannel("bhai_realtime_videos");
+      channel.onmessage = (event) => {
+        if (event.data?.type === "REELS_UPDATED" && Array.isArray(event.data.payload)) {
+          setItems(event.data.payload);
+        }
+      };
+    }
+
+    // 3. Storage event listener
+    const handleStorage = () => {
+      try {
+        const stored = localStorage.getItem("bhai_shoppable_reels_v1");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setItems(parsed);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    window.addEventListener("storage", handleStorage);
+
+    return () => {
+      if (channel) channel.close();
+      window.removeEventListener("storage", handleStorage);
+    };
+  }, []);
 
   // Function to smoothly scroll clicked video to the exact center
   const selectAndCenterVideo = (id: string) => {
@@ -209,7 +250,7 @@ export default function InspirationStation() {
           className="flex items-end gap-3 sm:gap-4 overflow-x-auto scrollbar-none pt-14 pb-6 px-4 sm:px-10 scroll-smooth"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {INSPIRATION_ITEMS.map((item) => {
+          {items.map((item) => {
             const isFeatured = activeVideoId === item.id;
 
             return (

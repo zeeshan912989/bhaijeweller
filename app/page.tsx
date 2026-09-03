@@ -8,6 +8,7 @@ import EditorialFeatureBanners from "@/components/home/EditorialFeatureBanners";
 import TrustBadges from "@/components/home/TrustBadges";
 import InspirationStation from "@/components/home/InspirationStation";
 import CuratedEdits from "@/components/home/CuratedEdits";
+import StoreLocatorBanner from "@/components/home/StoreLocatorBanner";
 import Footer from "@/components/layout/Footer";
 
 export default function Home() {
@@ -59,7 +60,10 @@ export default function Home() {
       {/* 10. CURATED STYLING EDITS & SERVICES (SQUARE 1:1 GRID: Stores, Permanent Bracelets, Piercing Studio, Materials & Care) */}
       <CuratedEdits />
 
-      {/* 11. LUXURY FOOTER */}
+      {/* 11. IN-STORE SHOPPING & APPOINTMENT BANNER */}
+      <StoreLocatorBanner />
+
+      {/* 12. LUXURY FOOTER */}
       <Footer />
     </main>
   );

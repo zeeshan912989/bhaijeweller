@@ -45,11 +45,11 @@ const SERVICES_TILES: ServiceTile[] = [
 
 export default function CuratedEdits() {
   return (
-    <section className="w-full bg-white py-14 sm:py-18 border-b border-neutral-200/70">
-      <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-14">
+    <section className="w-full bg-white py-10 sm:py-18 border-b border-neutral-200/70">
+      <div className="w-full px-3.5 sm:px-8 lg:px-12 xl:px-14">
         
-        {/* 4-COLUMN SQUARE GRID */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-7">
+        {/* 4-COLUMN SQUARE GRID (2 cols on mobile, 4 cols on desktop) */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-7">
           {SERVICES_TILES.map((tile) => (
             <Link
               key={tile.title}
@@ -62,24 +62,24 @@ export default function CuratedEdits() {
                   src={tile.imageSrc}
                   alt={tile.alt}
                   fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
                   className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
                 />
               </div>
 
               {/* 2. TEXT BELOW IMAGE */}
-              <div className="pt-4 text-left">
+              <div className="pt-3 sm:pt-4 text-left">
                 {/* Title */}
                 <h3
                   style={{ fontFamily: "var(--font-cormorant), var(--font-playfair), serif" }}
-                  className="text-2xl sm:text-[26px] font-normal text-neutral-900 tracking-[0.01em] leading-tight group-hover:text-[#b8860b] transition-colors"
+                  className="text-lg sm:text-2xl lg:text-[26px] font-normal text-neutral-900 tracking-[0.01em] leading-tight group-hover:text-[#b8860b] transition-colors"
                 >
                   {tile.title}
                 </h3>
 
                 {/* Underlined Link */}
-                <div className="mt-2">
-                  <span className="inline-block text-xs sm:text-[13px] font-semibold tracking-wider text-neutral-900 border-b border-neutral-900 group-hover:border-[#b8860b] group-hover:text-[#b8860b] transition-all duration-300 pb-0.5">
+                <div className="mt-1 sm:mt-2">
+                  <span className="inline-block text-[11px] sm:text-[13px] font-semibold tracking-wider text-neutral-900 border-b border-neutral-900 group-hover:border-[#b8860b] group-hover:text-[#b8860b] transition-all duration-300 pb-0.5">
                     {tile.linkText}
                   </span>
                 </div>
