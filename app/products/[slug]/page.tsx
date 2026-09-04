@@ -13,6 +13,7 @@ import {
   DEFAULT_PRODUCT_SETS, 
   DEFAULT_SEE_IT_IRL_ITEMS 
 } from "@/data/productSets";
+import ProductReviewsSection from "@/components/products/ProductReviewsSection";
 import { supabase } from "@/lib/supabaseClient";
 import { useCart } from "@/context/CartContext";
 import { 
@@ -1910,6 +1911,13 @@ export default function ProductDetailPage() {
           </div>
         </div>
       )}
+
+      {/* 6.5 CUSTOMER REVIEWS & RATINGS (Responsive Mobile & Desktop Breakdown) */}
+      <ProductReviewsSection
+        productName={product.name}
+        productSlug={slug}
+        currentMetalName={currentMetal?.name}
+      />
 
       {/* 7. FOOTER */}
       <Footer />
