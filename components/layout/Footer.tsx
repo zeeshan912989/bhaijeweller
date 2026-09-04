@@ -190,8 +190,7 @@ export default function Footer() {
                   <li><Link href="/help/withdrawal" className="hover:text-black hover:underline transition-all">EU Right of Withdrawal</Link></li>
                   <li><Link href="/help/ring-size-guide" className="hover:text-black hover:underline transition-all">Ring Size Guide</Link></li>
                   <li><Link href="/help/size-guides" className="hover:text-black hover:underline transition-all">Size Guides</Link></li>
-                  <li><Link href="/help/materials-care" className="hover:text-black hover:underline transition-all">Materials & Care</Link></li>
-                  <li><Link href="/help/klarna" className="hover:text-black hover:underline transition-all">How to Pay with Klarna</Link></li>
+                  <li><Link href="/help/materials-care" className="hover:text-black hover:underline transition-all">Materials &amp; Care</Link></li>
                   <li><Link href="/contact" className="hover:text-black hover:underline transition-all">Contact Us</Link></li>
                   <li><Link href="/accessibility" className="hover:text-black hover:underline transition-all">Accessibility</Link></li>
                 </ul>
