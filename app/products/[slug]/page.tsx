@@ -682,8 +682,8 @@ export default function ProductDetailPage() {
         <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-4 sm:py-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
             
-            {/* LEFT COLUMN: Missoma-Inspired Editorial Multi-Image Gallery (7 Columns) */}
-            <div className="lg:col-span-7 space-y-6">
+            {/* LEFT COLUMN: Sticky Luxury Image Gallery (7 Columns - Stays fixed while right side scrolls) */}
+            <div className="lg:col-span-7 lg:sticky lg:top-28 lg:self-start space-y-6">
               
               {/* EDITORIAL GRID (Left Hero with Review Quote Overlay + Right 2 Stacked Cards) */}
               <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 sm:gap-4 items-stretch">
@@ -864,8 +864,8 @@ export default function ProductDetailPage() {
 
             </div>
 
-            {/* RIGHT COLUMN: Sticky Buy Box Panel (5 Columns) */}
-            <div className="lg:col-span-5 lg:sticky lg:top-32 space-y-6">
+            {/* RIGHT COLUMN: Buy Box & Product Details Panel (5 Columns) */}
+            <div className="lg:col-span-5 space-y-6">
               
               {/* Product Title & Subtitle */}
               <div>
