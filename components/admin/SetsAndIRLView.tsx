@@ -50,11 +50,15 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
   // IRL Modal State
   const [isIrlModalOpen, setIsIrlModalOpen] = useState(false);
   const [editingIrlId, setEditingIrlId] = useState<string | null>(null);
+  const [irlType, setIrlType] = useState<"photo" | "video">("photo");
   const [irlImage, setIrlImage] = useState("");
+  const [irlVideoUrl, setIrlVideoUrl] = useState("");
+  const [irlPosterUrl, setIrlPosterUrl] = useState("");
   const [irlHandle, setIrlHandle] = useState("@");
   const [irlCaption, setIrlCaption] = useState("");
   const [irlProductSlug, setIrlProductSlug] = useState("all");
   const [isUploading, setIsUploading] = useState(false);
+  const [selectedProductFilter, setSelectedProductFilter] = useState("all");
 
   // 1. Initial Load from Supabase + Local Storage Backup
   useEffect(() => {
@@ -62,9 +66,10 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
       setLoading(true);
       try {
         // Load Sets
+        let loadedSets: ProductSetItem[] = [];
         const { data: sData } = await supabase.from("product_sets").select("*").order("created_at", { ascending: false });
         if (sData && sData.length > 0) {
-          setProductSets(sData.map((row) => ({
+          loadedSets = sData.map((row) => ({
             id: row.id,
             targetProductSlug: row.target_product_slug || "all",
             setTitle: row.set_title,
@@ -76,31 +81,63 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
             originalTotalPrice: row.original_total_price ? Number(row.original_total_price) : undefined,
             includedItems: Array.isArray(row.included_items) ? row.included_items : [],
             moreStyles: Array.isArray(row.more_styles) ? row.more_styles : [],
-          })));
+          }));
         } else {
           const localSets = localStorage.getItem("bhai_product_sets_v1");
-          if (localSets) setProductSets(JSON.parse(localSets));
+          if (localSets) {
+            try {
+              const parsed = JSON.parse(localSets);
+              if (Array.isArray(parsed) && parsed.length > 0) loadedSets = parsed;
+            } catch (e) {}
+          }
         }
 
+        if (loadedSets.length === 0) {
+          loadedSets = DEFAULT_PRODUCT_SETS;
+          try {
+            localStorage.setItem("bhai_product_sets_v1", JSON.stringify(DEFAULT_PRODUCT_SETS));
+          } catch (e) {}
+        }
+        setProductSets(loadedSets);
+
         // Load IRL
+        let loadedIRL: SeeItIRLItem[] = [];
         const { data: irlData } = await supabase.from("see_it_irl").select("*").order("display_order", { ascending: true });
         if (irlData && irlData.length > 0) {
-          setIrlItems(irlData.map((row) => ({
+          loadedIRL = irlData.map((row) => ({
             id: row.id,
-            imageUrl: row.image_url,
+            type: row.video_url ? "video" : "photo",
+            imageUrl: row.image_url || row.poster_url || "/ear.jpeg",
+            videoUrl: row.video_url || undefined,
+            posterUrl: row.poster_url || undefined,
             customerHandle: row.customer_handle,
             caption: row.caption || "",
             productSlug: row.product_slug || "all",
             productName: row.product_name || "",
             productPrice: row.product_price ? Number(row.product_price) : undefined,
             displayOrder: row.display_order || 0,
-          })));
+          }));
         } else {
           const localIRL = localStorage.getItem("bhai_see_it_irl_v1");
-          if (localIRL) setIrlItems(JSON.parse(localIRL));
+          if (localIRL) {
+            try {
+              const parsed = JSON.parse(localIRL);
+              if (Array.isArray(parsed) && parsed.length > 0) loadedIRL = parsed;
+            } catch (e) {}
+          }
         }
+
+        if (loadedIRL.length === 0) {
+          loadedIRL = DEFAULT_SEE_IT_IRL_ITEMS;
+          try {
+            localStorage.setItem("bhai_see_it_irl_v1", JSON.stringify(DEFAULT_SEE_IT_IRL_ITEMS));
+          } catch (e) {}
+        }
+        setIrlItems(loadedIRL);
       } catch (err) {
         console.warn("Notice: Loaded offline defaults for Sets & IRL:", err);
+        setProductSets(DEFAULT_PRODUCT_SETS);
+        setIrlItems(DEFAULT_SEE_IT_IRL_ITEMS);
       } finally {
         setLoading(false);
       }
@@ -113,6 +150,43 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
     if (typeof window !== "undefined" && "BroadcastChannel" in window) {
       const channel = new BroadcastChannel("bhai_store_updates");
       channel.postMessage({ type: "SYNC_SETS_AND_IRL", timestamp: Date.now() });
+    }
+  };
+
+  // Import existing Video Reels into IRL with 1 click
+  const handleImportReels = () => {
+    try {
+      const storedReels = localStorage.getItem("bhai_shoppable_reels_v1");
+      if (storedReels) {
+        const parsed = JSON.parse(storedReels);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const imported: SeeItIRLItem[] = parsed.map((reel: any, idx: number) => {
+            const prodSlug = reel.product?.href ? reel.product.href.replace("/products/", "") : "all";
+            return {
+              id: `imported-reel-${reel.id || idx}`,
+              type: "video",
+              imageUrl: reel.posterUrl || reel.product?.thumbnail || "/ear.jpeg",
+              videoUrl: reel.videoUrl,
+              posterUrl: reel.posterUrl,
+              customerHandle: `@${reel.product?.name ? reel.product.name.toLowerCase().replace(/[^a-z0-9]/g, "_") : "bhai_reels"}`,
+              caption: `Shoppable Video Reel for ${reel.product?.name || "Bhai Fine Jewellery"}`,
+              productSlug: prodSlug,
+              productName: reel.product?.name || "Fine Jewellery Piece",
+              productPrice: reel.product?.price,
+              displayOrder: idx + 1,
+            };
+          });
+
+          // Merge without duplicates
+          const merged = [...imported, ...irlItems.filter((it) => !it.id.startsWith("imported-reel-"))];
+          persistIRL(merged);
+          alert(`Successfully imported ${imported.length} shoppable video reel(s) into See It IRL!`);
+          return;
+        }
+      }
+      alert("No stored video reels found in Video Manager. You can upload a new Reel or Photo right here!");
+    } catch (e) {
+      console.error("Import error:", e);
     }
   };
 
@@ -234,16 +308,20 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
     await persistSets(filtered);
   };
 
-  // Handle IRL Photo Save
+  // Handle IRL Save (Photo or Video Reel)
   const handleSaveIRL = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!irlImage.trim()) return;
+    if (irlType === "photo" && !irlImage.trim()) return;
+    if (irlType === "video" && !irlVideoUrl.trim() && !irlImage.trim()) return;
 
     const selectedProd = products.find((p) => p.slug === irlProductSlug);
 
     const newIrl: SeeItIRLItem = {
       id: editingIrlId || `irl-${Date.now()}`,
-      imageUrl: irlImage.trim(),
+      type: irlType,
+      imageUrl: irlImage.trim() || irlPosterUrl.trim() || "/ear.jpeg",
+      videoUrl: irlType === "video" ? irlVideoUrl.trim() : undefined,
+      posterUrl: irlType === "video" ? (irlPosterUrl.trim() || irlImage.trim()) : undefined,
       customerHandle: irlHandle.trim().startsWith("@") ? irlHandle.trim() : `@${irlHandle.trim()}`,
       caption: irlCaption.trim(),
       productSlug: irlProductSlug,
@@ -263,6 +341,8 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
       await supabase.from("see_it_irl").upsert({
         id: newIrl.id,
         image_url: newIrl.imageUrl,
+        video_url: newIrl.videoUrl,
+        poster_url: newIrl.posterUrl,
         customer_handle: newIrl.customerHandle,
         caption: newIrl.caption,
         product_slug: newIrl.productSlug,
@@ -281,7 +361,10 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
 
   const resetIrlForm = () => {
     setEditingIrlId(null);
+    setIrlType("photo");
     setIrlImage("");
+    setIrlVideoUrl("");
+    setIrlPosterUrl("");
     setIrlHandle("@");
     setIrlCaption("");
     setIrlProductSlug("all");
@@ -289,7 +372,10 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
 
   const openEditIRL = (item: SeeItIRLItem) => {
     setEditingIrlId(item.id);
+    setIrlType(item.type || (item.videoUrl ? "video" : "photo"));
     setIrlImage(item.imageUrl);
+    setIrlVideoUrl(item.videoUrl || "");
+    setIrlPosterUrl(item.posterUrl || "");
     setIrlHandle(item.customerHandle);
     setIrlCaption(item.caption || "");
     setIrlProductSlug(item.productSlug || "all");
@@ -297,7 +383,7 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
   };
 
   const handleDeleteIRL = async (id: string) => {
-    if (!confirm("Are you sure you want to remove this IRL community photo?")) return;
+    if (!confirm("Are you sure you want to remove this IRL community item?")) return;
     const filtered = irlItems.filter((i) => i.id !== id);
     try {
       await supabase.from("see_it_irl").delete().eq("id", id);
@@ -307,8 +393,8 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
     await persistIRL(filtered);
   };
 
-  // Image File Upload Helper
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, target: "set" | "irl") => {
+  // Image / Video File Upload Helper
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, target: "set" | "irl" | "irl-video" | "irl-poster") => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -318,10 +404,17 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
       const dataUrl = event.target?.result as string;
       if (target === "set") setSetImage(dataUrl);
       if (target === "irl") setIrlImage(dataUrl);
+      if (target === "irl-video") setIrlVideoUrl(dataUrl);
+      if (target === "irl-poster") setIrlPosterUrl(dataUrl);
       setIsUploading(false);
     };
     reader.readAsDataURL(file);
   };
+
+  const filteredIRLItems = irlItems.filter((item) => {
+    if (selectedProductFilter === "all") return true;
+    return item.productSlug === selectedProductFilter || item.productSlug === "all";
+  });
 
   return (
     <div className="space-y-8 pb-20">
@@ -330,7 +423,7 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
       {saveToast && (
         <div className="fixed top-20 right-8 z-50 bg-neutral-950 text-white px-5 py-3.5 border border-[#d4af37]/40 shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
           <Check className="w-4 h-4 text-[#d4af37]" />
-          <p className="text-xs font-bold uppercase tracking-wider">Changes Saved & Live on Website</p>
+          <p className="text-xs font-bold uppercase tracking-wider">Changes Saved &amp; Live on Website</p>
         </div>
       )}
 
@@ -346,14 +439,14 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
             style={{ fontFamily: "var(--font-cinzel), serif" }}
             className="text-2xl sm:text-3xl font-bold tracking-wider"
           >
-            Sets & See It IRL Studio
+            Sets &amp; See It IRL Studio
           </h1>
           <p className="text-xs text-neutral-400 max-w-xl mt-1 leading-relaxed">
-            Manage product bundle pairs (&quot;Save As A Set&quot; &amp; &quot;More Styles&quot;) and the real-life &quot;See It IRL&quot; customer photo gallery for your product pages.
+            Manage product bundle pairs (&quot;Save As A Set&quot; &amp; &quot;More Styles&quot;) and the real-life &quot;See It IRL&quot; customer photos &amp; shoppable video reels for your product pages.
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {activeSubTab === "sets" ? (
             <button
               onClick={() => {
@@ -366,16 +459,26 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
               <span>Create New Set</span>
             </button>
           ) : (
-            <button
-              onClick={() => {
-                resetIrlForm();
-                setIsIrlModalOpen(true);
-              }}
-              className="px-5 py-2.5 bg-[#d4af37] hover:bg-[#b5952f] text-black text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-colors cursor-pointer"
-            >
-              <Camera className="w-4 h-4" />
-              <span>Upload IRL Photo</span>
-            </button>
+            <>
+              <button
+                onClick={handleImportReels}
+                className="px-4 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors cursor-pointer border border-neutral-700"
+                title="Automatically import existing shoppable video reels into See It IRL"
+              >
+                <RefreshCw className="w-3.5 h-3.5 text-[#d4af37]" />
+                <span>Import Video Reels</span>
+              </button>
+              <button
+                onClick={() => {
+                  resetIrlForm();
+                  setIsIrlModalOpen(true);
+                }}
+                className="px-5 py-2.5 bg-[#d4af37] hover:bg-[#b5952f] text-black text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-colors cursor-pointer"
+              >
+                <Camera className="w-4 h-4" />
+                <span>Add Look / Reel</span>
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -403,7 +506,7 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
           }`}
         >
           <Camera className="w-4 h-4" />
-          <span>&quot;See It IRL&quot; Community Photos ({irlItems.length})</span>
+          <span>&quot;See It IRL&quot; Community Photos &amp; Reels ({irlItems.length})</span>
         </button>
       </div>
 
@@ -474,41 +577,92 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
         </div>
       )}
 
-      {/* SUB-PANEL 2: SEE IT IRL COMMUNITY PHOTOS */}
+      {/* SUB-PANEL 2: SEE IT IRL COMMUNITY PHOTOS & REELS */}
       {activeSubTab === "irl" && (
         <div className="space-y-6">
+          
+          {/* Product Filter Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-neutral-50 p-4 border border-neutral-200">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold uppercase tracking-wider text-neutral-700">
+                Filter By Product:
+              </span>
+              <select
+                value={selectedProductFilter}
+                onChange={(e) => setSelectedProductFilter(e.target.value)}
+                className="bg-white border border-neutral-300 px-3 py-1.5 text-xs font-medium outline-none focus:border-black"
+              >
+                <option value="all">🌟 All Pieces ({irlItems.length} total looks &amp; reels)</option>
+                {products.map((p) => (
+                  <option key={p.id} value={p.slug}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <span className="text-xs text-neutral-500 font-mono">
+              Showing {filteredIRLItems.length} item(s)
+            </span>
+          </div>
+
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {irlItems.map((item) => (
+            {filteredIRLItems.map((item) => (
               <div 
                 key={item.id}
                 className="group relative aspect-[3/4] bg-neutral-100 rounded-2xl overflow-hidden border border-neutral-200 shadow-xs"
               >
-                <Image src={item.imageUrl} alt={item.customerHandle} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                {item.type === "video" && item.videoUrl ? (
+                  <video
+                    src={item.videoUrl}
+                    poster={item.posterUrl || item.imageUrl}
+                    muted
+                    loop
+                    playsInline
+                    onMouseEnter={(e) => e.currentTarget.play().catch(() => {})}
+                    onMouseLeave={(e) => e.currentTarget.pause()}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                ) : (
+                  <Image src={item.imageUrl} alt={item.customerHandle} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                )}
                 
+                {/* Media Type Badge */}
+                <div className="absolute top-2 left-2 z-10 bg-black/75 backdrop-blur-xs text-white text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full flex items-center gap-1">
+                  {item.type === "video" || item.videoUrl ? (
+                    <>
+                      <Sparkles className="w-2.5 h-2.5 text-[#d4af37]" />
+                      <span>Video Reel</span>
+                    </>
+                  ) : (
+                    <span>Photo</span>
+                  )}
+                </div>
+
                 {/* Overlay Badge */}
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent p-3.5 text-white">
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-3.5 text-white">
                   <p className="text-xs font-bold font-mono text-[#d4af37]">{item.customerHandle}</p>
                   {item.caption && (
                     <p className="text-[10.5px] text-white/90 line-clamp-1 mt-0.5">{item.caption}</p>
                   )}
-                  <span className="text-[9px] uppercase tracking-widest text-neutral-300 font-mono mt-1 block">
+                  <span className="text-[9px] uppercase tracking-widest text-neutral-300 font-mono mt-1 block truncate">
                     Product: {item.productSlug}
                   </span>
                 </div>
 
                 {/* Hover Quick Actions */}
-                <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity z-10">
                   <button
                     onClick={() => openEditIRL(item)}
                     className="w-7 h-7 bg-white/90 hover:bg-white text-black rounded-full flex items-center justify-center shadow-md cursor-pointer"
-                    title="Edit Photo"
+                    title="Edit Item"
                   >
                     <Edit3 className="w-3.5 h-3.5" />
                   </button>
                   <button
                     onClick={() => handleDeleteIRL(item.id)}
                     className="w-7 h-7 bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center justify-center shadow-md cursor-pointer"
-                    title="Delete Photo"
+                    title="Delete Item"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -525,7 +679,7 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
           <div className="bg-white w-full max-w-xl border border-neutral-300 shadow-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-neutral-200">
               <h2 className="text-base font-bold uppercase tracking-wider text-neutral-950">
-                {editingSetId ? "Edit Jewellery Set" : "Create Jewellery Set & Bundle"}
+                {editingSetId ? "Edit Jewellery Set" : "Create Jewellery Set &amp; Bundle"}
               </h2>
               <button onClick={() => setIsSetModalOpen(false)} className="text-neutral-400 hover:text-black">
                 <X className="w-5 h-5" />
@@ -678,13 +832,13 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
         </div>
       )}
 
-      {/* MODAL 2: ADD/EDIT IRL COMMUNITY PHOTO */}
+      {/* MODAL 2: ADD/EDIT IRL COMMUNITY PHOTO & REEL */}
       {isIrlModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-lg border border-neutral-300 shadow-2xl p-6 sm:p-8">
+          <div className="bg-white w-full max-w-lg border border-neutral-300 shadow-2xl p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between pb-4 border-b border-neutral-200">
               <h2 className="text-base font-bold uppercase tracking-wider text-neutral-950">
-                {editingIrlId ? "Edit IRL Photo" : "Upload & Tag 'See It IRL' Photo"}
+                {editingIrlId ? "Edit IRL Item" : "Upload &amp; Tag 'See It IRL' Look / Reel"}
               </h2>
               <button onClick={() => setIsIrlModalOpen(false)} className="text-neutral-400 hover:text-black">
                 <X className="w-5 h-5" />
@@ -693,32 +847,119 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
 
             <form onSubmit={handleSaveIRL} className="space-y-4 pt-4">
               
-              {/* Photo Upload / URL */}
+              {/* Media Type Toggle */}
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700 mb-1">
-                  Customer / On-Model Photo *
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700 mb-1.5">
+                  Media Type
                 </label>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="text"
-                    required
-                    placeholder="https://images.unsplash.com/... or data:image"
-                    value={irlImage}
-                    onChange={(e) => setIrlImage(e.target.value)}
-                    className="flex-1 bg-white border border-neutral-300 p-2.5 text-xs focus:border-black outline-none"
-                  />
-                  <label className="px-4 py-2.5 bg-neutral-900 text-white text-xs font-bold uppercase tracking-wider cursor-pointer hover:bg-black flex items-center gap-1.5">
-                    <Upload className="w-3.5 h-3.5" />
-                    <span>Upload</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={(e) => handleFileUpload(e, "irl")}
-                    />
-                  </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIrlType("photo")}
+                    className={`py-2 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
+                      irlType === "photo" ? "bg-black text-white border-black" : "bg-white text-neutral-700 border-neutral-300 hover:border-black"
+                    }`}
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>📸 Photo</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIrlType("video")}
+                    className={`py-2 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 border transition-all cursor-pointer ${
+                      irlType === "video" ? "bg-black text-white border-black" : "bg-white text-neutral-700 border-neutral-300 hover:border-black"
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-[#d4af37]" />
+                    <span>🎬 Video Reel</span>
+                  </button>
                 </div>
               </div>
+
+              {/* Photo Input (If Photo) */}
+              {irlType === "photo" && (
+                <div>
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700 mb-1">
+                    Customer / On-Model Photo *
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="text"
+                      required
+                      placeholder="https://images.unsplash.com/... or data:image"
+                      value={irlImage}
+                      onChange={(e) => setIrlImage(e.target.value)}
+                      className="flex-1 bg-white border border-neutral-300 p-2.5 text-xs focus:border-black outline-none"
+                    />
+                    <label className="px-4 py-2.5 bg-neutral-900 text-white text-xs font-bold uppercase tracking-wider cursor-pointer hover:bg-black flex items-center gap-1.5">
+                      <Upload className="w-3.5 h-3.5" />
+                      <span>Upload</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => handleFileUpload(e, "irl")}
+                      />
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* Video Reel Input (If Video) */}
+              {irlType === "video" && (
+                <>
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700 mb-1">
+                      Video File / URL (MP4, WebM) *
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="text"
+                        required
+                        placeholder="https://...video.mp4 or upload"
+                        value={irlVideoUrl}
+                        onChange={(e) => setIrlVideoUrl(e.target.value)}
+                        className="flex-1 bg-white border border-neutral-300 p-2.5 text-xs focus:border-black outline-none"
+                      />
+                      <label className="px-4 py-2.5 bg-neutral-900 text-white text-xs font-bold uppercase tracking-wider cursor-pointer hover:bg-black flex items-center gap-1.5">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Upload Video</span>
+                        <input
+                          type="file"
+                          accept="video/*"
+                          className="hidden"
+                          onChange={(e) => handleFileUpload(e, "irl-video")}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700 mb-1">
+                      Poster Image Thumbnail (Optional)
+                    </label>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="text"
+                        placeholder="https://...poster.jpg or upload"
+                        value={irlPosterUrl}
+                        onChange={(e) => setIrlPosterUrl(e.target.value)}
+                        className="flex-1 bg-white border border-neutral-300 p-2.5 text-xs focus:border-black outline-none"
+                      />
+                      <label className="px-4 py-2.5 bg-neutral-900 text-white text-xs font-bold uppercase tracking-wider cursor-pointer hover:bg-black flex items-center gap-1.5">
+                        <Upload className="w-3.5 h-3.5" />
+                        <span>Upload Poster</span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleFileUpload(e, "irl-poster")}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* Customer Handle */}
               <div>
@@ -752,7 +993,7 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
               {/* Tagged Product */}
               <div>
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-700 mb-1">
-                  Tagged Product
+                  Tagged Product (Link to PDP)
                 </label>
                 <select
                   value={irlProductSlug}
@@ -781,7 +1022,7 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
                   type="submit"
                   className="px-6 py-2 bg-neutral-950 hover:bg-[#d4af37] text-white hover:text-black text-xs font-bold uppercase tracking-widest transition-colors cursor-pointer"
                 >
-                  {editingIrlId ? "Update Photo" : "Add Photo"}
+                  {editingIrlId ? "Update Item" : "Add Look / Reel"}
                 </button>
               </div>
 

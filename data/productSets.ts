@@ -19,7 +19,10 @@ export interface ProductSetItem {
 
 export interface SeeItIRLItem {
   id: string;
+  type?: "photo" | "video";
   imageUrl: string;
+  videoUrl?: string;
+  posterUrl?: string;
   customerHandle: string; // e.g. "@rebecca_london"
   caption?: string; // e.g. "Layering the T-Bar with classic hoops"
   productSlug?: string; // tagged product or "all"

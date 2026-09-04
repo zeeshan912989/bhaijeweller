@@ -240,62 +240,109 @@ export default function ProductDetailPage() {
     loadReviews();
   }, [slug]);
 
-  // 3. Fetch Product Sets & "See It IRL" Community Photos
+  // 3. Fetch Product Sets & "See It IRL" Community Photos & Video Reels
   useEffect(() => {
     async function loadSetsAndIRL() {
       try {
         // Load Sets from Supabase
+        let loadedSets: ProductSetItem[] = [];
         const { data: sData } = await supabase
           .from("product_sets")
           .select("*")
           .order("created_at", { ascending: false });
 
         if (sData && sData.length > 0) {
-          setProductSets(
-            sData.map((row) => ({
-              id: row.id,
-              targetProductSlug: row.target_product_slug || "all",
-              setTitle: row.set_title,
-              setSlug: row.set_slug,
-              badgeText: row.badge_text,
-              discountDescription: row.discount_description,
-              bundleImage: row.bundle_image,
-              bundlePrice: Number(row.bundle_price),
-              originalTotalPrice: row.original_total_price ? Number(row.original_total_price) : undefined,
-              includedItems: Array.isArray(row.included_items) ? row.included_items : [],
-              moreStyles: Array.isArray(row.more_styles) ? row.more_styles : [],
-            }))
-          );
+          loadedSets = sData.map((row) => ({
+            id: row.id,
+            targetProductSlug: row.target_product_slug || "all",
+            setTitle: row.set_title,
+            setSlug: row.set_slug,
+            badgeText: row.badge_text,
+            discountDescription: row.discount_description,
+            bundleImage: row.bundle_image,
+            bundlePrice: Number(row.bundle_price),
+            originalTotalPrice: row.original_total_price ? Number(row.original_total_price) : undefined,
+            includedItems: Array.isArray(row.included_items) ? row.included_items : [],
+            moreStyles: Array.isArray(row.more_styles) ? row.more_styles : [],
+          }));
         } else {
           const localSets = localStorage.getItem("bhai_product_sets_v1");
-          if (localSets) setProductSets(JSON.parse(localSets));
+          if (localSets) {
+            try {
+              const parsed = JSON.parse(localSets);
+              if (Array.isArray(parsed) && parsed.length > 0) loadedSets = parsed;
+            } catch (e) {}
+          }
         }
 
-        // Load See It IRL from Supabase
+        if (loadedSets.length === 0) {
+          loadedSets = DEFAULT_PRODUCT_SETS;
+        }
+        setProductSets(loadedSets);
+
+        // Load See It IRL & Product Reels
+        let loadedIRL: SeeItIRLItem[] = [];
         const { data: irlData } = await supabase
           .from("see_it_irl")
           .select("*")
           .order("display_order", { ascending: true });
 
         if (irlData && irlData.length > 0) {
-          setSeeItIRLList(
-            irlData.map((row) => ({
-              id: row.id,
-              imageUrl: row.image_url,
-              customerHandle: row.customer_handle,
-              caption: row.caption || "",
-              productSlug: row.product_slug || "all",
-              productName: row.product_name || "",
-              productPrice: row.product_price ? Number(row.product_price) : undefined,
-              displayOrder: row.display_order || 0,
-            }))
-          );
+          loadedIRL = irlData.map((row) => ({
+            id: row.id,
+            type: row.video_url ? "video" : "photo",
+            imageUrl: row.image_url || row.poster_url || "/ear.jpeg",
+            videoUrl: row.video_url || undefined,
+            posterUrl: row.poster_url || undefined,
+            customerHandle: row.customer_handle,
+            caption: row.caption || "",
+            productSlug: row.product_slug || "all",
+            productName: row.product_name || "",
+            productPrice: row.product_price ? Number(row.product_price) : undefined,
+            displayOrder: row.display_order || 0,
+          }));
         } else {
           const localIRL = localStorage.getItem("bhai_see_it_irl_v1");
-          if (localIRL) setSeeItIRLList(JSON.parse(localIRL));
+          if (localIRL) {
+            try {
+              const parsed = JSON.parse(localIRL);
+              if (Array.isArray(parsed) && parsed.length > 0) loadedIRL = parsed;
+            } catch (e) {}
+          }
         }
+
+        // Also check if any stored shoppable reels exist for this product
+        try {
+          const storedReels = localStorage.getItem("bhai_shoppable_reels_v1");
+          if (storedReels) {
+            const parsedReels = JSON.parse(storedReels);
+            if (Array.isArray(parsedReels) && parsedReels.length > 0) {
+              const reelItems: SeeItIRLItem[] = parsedReels.map((r: any, i: number) => ({
+                id: `reel-${r.id || i}`,
+                type: "video",
+                imageUrl: r.posterUrl || r.product?.thumbnail || "/ear.jpeg",
+                videoUrl: r.videoUrl,
+                posterUrl: r.posterUrl,
+                customerHandle: `@${r.product?.name ? r.product.name.toLowerCase().replace(/[^a-z0-9]/g, "_") : "bhai_reels"}`,
+                caption: `Shoppable Video Reel • ${r.product?.name || "Bhai Fine Jewellery"}`,
+                productSlug: r.product?.href ? r.product.href.replace("/products/", "") : "all",
+                productName: r.product?.name,
+                productPrice: r.product?.price,
+                displayOrder: 99 + i,
+              }));
+              loadedIRL = [...loadedIRL, ...reelItems.filter((ri) => !loadedIRL.some((li) => li.videoUrl && li.videoUrl === ri.videoUrl))];
+            }
+          }
+        } catch (e) {}
+
+        if (loadedIRL.length === 0) {
+          loadedIRL = DEFAULT_SEE_IT_IRL_ITEMS;
+        }
+        setSeeItIRLList(loadedIRL);
       } catch (err) {
         console.warn("Notice: Loaded offline defaults for Sets & IRL:", err);
+        setProductSets(DEFAULT_PRODUCT_SETS);
+        setSeeItIRLList(DEFAULT_SEE_IT_IRL_ITEMS);
       }
     }
 
@@ -1243,12 +1290,37 @@ export default function ProductDetailPage() {
                   onClick={() => setActiveIrlModalItem(item)}
                   className="relative flex-shrink-0 w-52 sm:w-64 aspect-[3/4] bg-[#FAF8F5] rounded-2xl sm:rounded-3xl overflow-hidden border border-neutral-200 shadow-xs group cursor-pointer"
                 >
-                  <Image
-                    src={item.imageUrl}
-                    alt={item.customerHandle}
-                    fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
+                  {item.type === "video" && item.videoUrl ? (
+                    <video
+                      src={item.videoUrl}
+                      poster={item.posterUrl || item.imageUrl}
+                      muted
+                      loop
+                      playsInline
+                      onMouseEnter={(e) => e.currentTarget.play().catch(() => {})}
+                      onMouseLeave={(e) => e.currentTarget.pause()}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  ) : (
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.customerHandle}
+                      fill
+                      className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  )}
+
+                  {/* Media Type Badge */}
+                  <div className="absolute top-3 left-3 z-10 bg-black/75 backdrop-blur-xs text-white text-[9.5px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
+                    {item.type === "video" || item.videoUrl ? (
+                      <>
+                        <Sparkles className="w-2.5 h-2.5 text-[#d4af37]" />
+                        <span>Reel</span>
+                      </>
+                    ) : (
+                      <span>Look</span>
+                    )}
+                  </div>
 
                   {/* Gradient Tag Overlay */}
                   <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-4 text-white">
@@ -1743,22 +1815,35 @@ export default function ProductDetailPage() {
       {activeIrlModalItem && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-200">
           <div className="bg-white max-w-3xl w-full rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row border border-neutral-200">
-            {/* Left Photo */}
-            <div className="relative w-full md:w-1/2 aspect-[3/4] bg-neutral-100">
-              <Image
-                src={activeIrlModalItem.imageUrl}
-                alt={activeIrlModalItem.customerHandle}
-                fill
-                className="object-cover"
-              />
+            {/* Left Media (Photo or Video Player) */}
+            <div className="relative w-full md:w-1/2 aspect-[3/4] bg-neutral-950 flex items-center justify-center overflow-hidden">
+              {activeIrlModalItem.type === "video" && activeIrlModalItem.videoUrl ? (
+                <video
+                  src={activeIrlModalItem.videoUrl}
+                  poster={activeIrlModalItem.posterUrl || activeIrlModalItem.imageUrl}
+                  controls
+                  autoPlay
+                  loop
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <Image
+                  src={activeIrlModalItem.imageUrl}
+                  alt={activeIrlModalItem.customerHandle}
+                  fill
+                  className="object-cover"
+                />
+              )}
             </div>
 
             {/* Right Details */}
             <div className="w-full md:w-1/2 p-6 sm:p-8 flex flex-col justify-between space-y-6">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#997b24] bg-[#FAF8F5] border border-[#d4af37]/30 px-2.5 py-1 rounded-full">
-                    Community Style Look
+                  <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#997b24] bg-[#FAF8F5] border border-[#d4af37]/30 px-2.5 py-1 rounded-full flex items-center gap-1">
+                    <Sparkles className="w-2.5 h-2.5" />
+                    <span>{activeIrlModalItem.type === "video" ? "Shoppable Reel Look" : "Community Style Look"}</span>
                   </span>
                   <button
                     onClick={() => setActiveIrlModalItem(null)}
