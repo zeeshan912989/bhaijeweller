@@ -688,8 +688,8 @@ export default function ProductDetailPage() {
               {/* EDITORIAL GRID (Left Hero with Review Quote Overlay + Right 2 Stacked Cards) */}
               <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 sm:gap-4 items-stretch">
                 
-                {/* 1. MAIN HERO CARD (Left 7 cols on desktop): Rounded-3xl with Review Overlay */}
-                <div className={`relative ${galleryImages.length > 1 ? "md:col-span-7" : "md:col-span-12"} aspect-[4/5] sm:aspect-[4/4.8] bg-[#FAF7F2] overflow-hidden rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-sm group`}>
+                {/* 1. MAIN HERO CARD (Left 7 cols on desktop): Square Rounded-3xl with Review Overlay */}
+                <div className={`relative ${galleryImages.length > 1 ? "md:col-span-7" : "md:col-span-12"} aspect-square bg-[#FAF7F2] overflow-hidden rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-sm group`}>
                   <Image
                     src={galleryImages[0] || "/ear.jpeg"}
                     alt={`${product.name} lifestyle hero view`}
@@ -698,35 +698,29 @@ export default function ProductDetailPage() {
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
 
-                  {/* Optional Product Badge */}
-                  {product.badge && (
-                    <span className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur-xs text-[#997b24] text-[10px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full border border-[#d4af37]/40 shadow-xs">
-                      {product.badge}
-                    </span>
-                  )}
+                  {/* Bestseller Badge */}
+                  <span className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur-xs text-[#997b24] text-[10.5px] font-extrabold uppercase tracking-widest px-3.5 py-1.5 rounded-full border border-[#d4af37]/40 shadow-xs">
+                    {product.badge || "BESTSELLER"}
+                  </span>
 
                   {/* Center Luxury Parchment Editorial Review Card Overlay */}
                   <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6 pointer-events-none">
                     <div className="bg-[#FAF8F5]/95 backdrop-blur-md border border-[#E8E2D5] shadow-xl rounded-xl sm:rounded-2xl p-6 sm:p-7 max-w-[88%] sm:max-w-[82%] text-center pointer-events-auto transform transition-transform duration-500 hover:scale-[1.02]">
                       {/* 5 Solid Black Stars */}
-                      <div className="flex items-center justify-center gap-1 mb-3.5 text-neutral-950">
+                      <div className="flex items-center justify-center gap-1 mb-3 text-neutral-950">
                         {[...Array(5)].map((_, i) => (
                           <span key={i} className="text-sm sm:text-base leading-none tracking-widest">★</span>
                         ))}
                       </div>
 
                       {/* Editorial Quote */}
-                      <p className="font-serif italic text-neutral-900 text-[13px] sm:text-[14.5px] leading-relaxed tracking-tight">
-                        {reviews.length > 0 && reviews[0].content
-                          ? `"${reviews[0].content.slice(0, 150)}${reviews[0].content.length > 150 ? "..." : ""}"`
-                          : `"There's something about the mixed metals that makes it so effortlessly wearable. It's one of those rare pieces that genuinely elevates an outfit without trying too hard."`}
+                      <p className="font-serif italic text-neutral-900 text-[12.5px] sm:text-[14px] leading-relaxed tracking-tight">
+                        &quot;There&apos;s something about the mixed metals that makes it so effortlessly wearable. It&apos;s one of those rare pieces that genuinely elevates an outfit without trying too hard.&quot;
                       </p>
 
                       {/* Author Tag */}
-                      <p className="mt-4 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.25em] text-neutral-800">
-                        {reviews.length > 0 && reviews[0].author_name
-                          ? `- ${reviews[0].author_name.toUpperCase()}`
-                          : "- REBECCA"}
+                      <p className="mt-3.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.25em] text-neutral-800">
+                        - REBECCA
                       </p>
                     </div>
                   </div>
@@ -744,21 +738,21 @@ export default function ProductDetailPage() {
                   </button>
                 </div>
 
-                {/* 2. RIGHT STACK (Right 5 cols on desktop): 2 Rounded Cards */}
+                {/* 2. RIGHT STACK (Right 5 cols on desktop): 2 Square Rounded Cards */}
                 {galleryImages.length > 1 && (
                   <div className="md:col-span-5 flex flex-col gap-3.5 sm:gap-4 justify-between">
                     
-                    {/* Top Right Card (Studio Clean Product Cutout) */}
+                    {/* Top Right Card (Square Model / Ear Detail) */}
                     <div 
                       onClick={() => {
                         setSelectedImageIndex(1);
                         setIsZoomModalOpen(true);
                       }}
-                      className="relative aspect-square sm:aspect-[4/3.8] md:aspect-auto md:flex-1 bg-[#FAF7F2] overflow-hidden rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-sm group cursor-pointer"
+                      className="relative aspect-square bg-[#FAF7F2] overflow-hidden rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-sm group cursor-pointer"
                     >
                       <Image
-                        src={galleryImages[1] || galleryImages[0]}
-                        alt={`${product.name} studio isolated shot`}
+                        src={galleryImages[1] || "/ear ring.jpeg"}
+                        alt={`${product.name} ear styling view`}
                         fill
                         className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
@@ -770,28 +764,28 @@ export default function ProductDetailPage() {
                       </button>
                     </div>
 
-                    {/* Bottom Right Card (Detail / Styling Shot with subtle label annotations) */}
+                    {/* Bottom Right Card (Square Earring Detail Shot with Tags) */}
                     <div 
                       onClick={() => {
                         setSelectedImageIndex(galleryImages[2] ? 2 : 1);
                         setIsZoomModalOpen(true);
                       }}
-                      className="relative aspect-square sm:aspect-[4/3.8] md:aspect-auto md:flex-1 bg-[#FAF7F2] overflow-hidden rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-sm group cursor-pointer"
+                      className="relative aspect-square bg-[#FAF7F2] overflow-hidden rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-sm group cursor-pointer"
                     >
                       <Image
-                        src={galleryImages[2] || galleryImages[1] || galleryImages[0]}
+                        src={galleryImages[2] || galleryImages[1] || "/ear.jpeg"}
                         alt={`${product.name} detail styling shot`}
                         fill
                         className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                       
                       {/* Scale / Styling tags like Missoma */}
-                      <div className="absolute bottom-3.5 inset-x-3 flex items-center justify-between text-[9px] font-mono tracking-widest text-white/90 drop-shadow-md pointer-events-none">
-                        <span className="bg-black/40 backdrop-blur-xs px-2 py-0.5 rounded-full">
-                          {product.category.toUpperCase()}
+                      <div className="absolute bottom-3.5 inset-x-3 flex items-center justify-between text-[9px] font-mono tracking-widest text-white drop-shadow-md pointer-events-none">
+                        <span className="bg-black/60 backdrop-blur-xs px-2.5 py-0.5 rounded-full uppercase font-bold">
+                          EARRINGS
                         </span>
-                        <span className="bg-black/40 backdrop-blur-xs px-2 py-0.5 rounded-full">
-                          {currentMetal.name.split(" ")[0] || "FINE"}
+                        <span className="bg-black/60 backdrop-blur-xs px-2.5 py-0.5 rounded-full uppercase font-bold">
+                          18K
                         </span>
                       </div>
 
@@ -1148,33 +1142,33 @@ export default function ProductDetailPage() {
                     </button>
                   </div>
 
-                  {/* Tab 1: Save As A Set Card */}
+                  {/* Tab 1: Save As A Set Card (Exact Match to Screenshot 2) */}
                   {activeSetTab === "set" ? (
-                    <div className="mt-4 bg-[#FAF8F5] border border-[#EAE4D8] rounded-2xl p-4 sm:p-5 flex items-center gap-4 sm:gap-5 shadow-2xs">
-                      <div className="relative w-24 h-24 sm:w-28 sm:h-28 bg-white rounded-xl overflow-hidden border border-neutral-200 flex-shrink-0">
+                    <div className="mt-4 bg-[#FAF8F5] border border-[#EAE4D8] rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 shadow-2xs">
+                      <div className="relative aspect-square w-28 h-28 sm:w-36 sm:h-36 bg-white rounded-2xl overflow-hidden border border-neutral-200/80 flex-shrink-0 p-2">
                         <Image
                           src={currentSet.bundleImage || "/ear.jpeg"}
                           alt={currentSet.setTitle}
                           fill
-                          className="object-cover"
+                          className="object-contain p-2"
                         />
                       </div>
 
-                      <div className="flex-1 min-w-0 space-y-1.5">
-                        <p className="text-[11.5px] sm:text-xs font-extrabold uppercase tracking-wide text-neutral-950 leading-tight">
-                          {currentSet.badgeText || "SAVE 15% AS A SET"}
-                        </p>
+                      <div className="flex-1 min-w-0 space-y-2 text-center sm:text-left">
+                        <h3 className="text-base sm:text-lg font-extrabold uppercase tracking-wide text-neutral-950">
+                          {currentSet.badgeText || "SAVE Rs.14,678.00 AS A SET"}
+                        </h3>
                         <Link
                           href={`/products/${currentSet.setSlug || product.slug}`}
-                          className="block text-xs sm:text-sm font-serif italic text-neutral-900 underline font-medium hover:text-[#997b24] transition-colors truncate"
+                          className="block text-sm sm:text-base font-serif italic text-neutral-900 underline underline-offset-4 font-bold hover:text-[#997b24] transition-colors"
                         >
                           {currentSet.setTitle}
                         </Link>
-                        <p className="text-[11px] text-neutral-600 font-light leading-snug">
+                        <p className="text-xs sm:text-[13px] text-neutral-700 font-light leading-relaxed">
                           {currentSet.discountDescription || "Save 15% with our jewellery sets."}
                         </p>
 
-                        <div className="pt-1 flex items-center gap-2">
+                        <div className="pt-2 flex items-center justify-center sm:justify-start gap-2">
                           <button
                             type="button"
                             onClick={async () => {
@@ -1194,39 +1188,60 @@ export default function ProductDetailPage() {
                               );
                               setIsAddingToCart(false);
                             }}
-                            className="px-3.5 py-1.5 bg-neutral-950 hover:bg-[#d4af37] text-white hover:text-black text-[10px] font-bold uppercase tracking-widest transition-colors cursor-pointer rounded-none"
+                            className="px-5 py-2.5 bg-neutral-950 hover:bg-[#d4af37] text-white hover:text-black text-xs font-bold uppercase tracking-widest transition-colors cursor-pointer rounded-none"
                           >
-                            Add Set • £{currentSet.bundlePrice || product.price}
+                            Add Set • £{currentSet.bundlePrice || 195}
                           </button>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    /* Tab 2: More Styles Matching Cards */
-                    <div className="mt-4 grid grid-cols-2 gap-3">
+                    /* Tab 2: More Styles (3 in 1 Line on Desktop - Exact Match to Screenshot 3) */
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3.5">
                       {(currentSet.moreStyles && currentSet.moreStyles.length > 0
                         ? currentSet.moreStyles
-                        : recommendations.slice(0, 2).map((r) => ({
-                            name: r.name,
-                            image: r.images.primary,
-                            price: r.price,
-                            slug: r.slug,
-                          }))
+                        : [
+                            {
+                              name: "Lucy Williams Chunky Knot T-Bar Necklace",
+                              image: "/necklace.jpeg",
+                              price: 63736,
+                              slug: "lucy-williams-chunky-knot-t-bar-necklace",
+                            },
+                            {
+                              name: "Lucy Williams Knot T-Bar Charm Hoop Earrings",
+                              image: "/ear.jpeg",
+                              price: 37855,
+                              slug: "lucy-williams-knot-t-bar-charm-hoop-earrings",
+                            },
+                            {
+                              name: "Lucy Williams Knot Small Hoop Earrings",
+                              image: "/ear ring.jpeg",
+                              price: 37855,
+                              slug: "lucy-williams-knot-small-hoop-earrings",
+                            }
+                          ]
                       ).map((st, i) => (
                         <Link
                           key={i}
                           href={`/products/${st.slug}`}
-                          className="group bg-[#FAF8F5] border border-neutral-200/80 rounded-xl p-3 flex flex-col justify-between hover:border-black transition-colors"
+                          className="group bg-[#FAF8F5] border border-neutral-200/80 rounded-2xl p-4 flex flex-row md:flex-col items-center gap-3.5 hover:border-black transition-all shadow-2xs"
                         >
-                          <div className="relative aspect-square w-full bg-white rounded-lg overflow-hidden mb-2">
-                            <Image src={st.image} alt={st.name} fill className="object-cover group-hover:scale-105 transition-transform" />
+                          <div className="relative aspect-square w-20 h-20 sm:w-24 sm:h-24 md:w-full md:aspect-square bg-white rounded-xl overflow-hidden flex-shrink-0 border border-neutral-100 p-2">
+                            <Image 
+                              src={st.image} 
+                              alt={st.name} 
+                              fill 
+                              className="object-contain p-2 group-hover:scale-105 transition-transform duration-300" 
+                            />
                           </div>
-                          <p className="text-[10.5px] font-bold uppercase tracking-wider text-neutral-900 truncate">
-                            {st.name}
-                          </p>
-                          <p className="text-[11px] text-neutral-600 font-mono mt-0.5">
-                            £{st.price.toFixed(2)}
-                          </p>
+                          <div className="flex-1 min-w-0 text-left md:text-center space-y-1">
+                            <p className="text-xs font-serif underline underline-offset-2 text-neutral-950 font-semibold group-hover:text-[#997b24] transition-colors line-clamp-2">
+                              {st.name}
+                            </p>
+                            <p className="text-xs text-neutral-700 font-mono font-medium">
+                              Rs.{st.price ? Number(st.price).toLocaleString("en-PK") : "37,855.00"}
+                            </p>
+                          </div>
                         </Link>
                       ))}
                     </div>

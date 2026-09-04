@@ -45,22 +45,22 @@ export const DEFAULT_PRODUCT_SETS: ProductSetItem[] = [
     includedItems: ["Mixed Metal T-Bar Necklace", "Mixed Metal Hoop Earrings"],
     moreStyles: [
       {
-        name: "Classic Chunky Hoop Earrings",
+        name: "Lucy Williams Knot T-Bar Charm Hoop Earrings",
         image: "/ear.jpeg",
-        price: 98,
-        slug: "classic-chunky-hoop-earrings",
+        price: 37855,
+        slug: "lucy-williams-knot-t-bar-charm-hoop-earrings",
       },
       {
-        name: "Deconstructed Bangle",
-        image: "/ear.jpeg",
-        price: 135,
-        slug: "deconstructed-bangle",
+        name: "Lucy Williams Knot Small Hoop Earrings",
+        image: "/ear ring.jpeg",
+        price: 37855,
+        slug: "lucy-williams-knot-small-hoop-earrings",
       },
       {
-        name: "Dome Ridge Ring",
+        name: "Chubby Medium Dome Huggie Earrings",
         image: "/ear.jpeg",
-        price: 89,
-        slug: "dome-ridge-ring",
+        price: 32500,
+        slug: "chubby-medium-dome-huggie-hoops",
       }
     ]
   }
