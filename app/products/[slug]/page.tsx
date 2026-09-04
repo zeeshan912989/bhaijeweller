@@ -688,8 +688,8 @@ export default function ProductDetailPage() {
               {/* EDITORIAL GRID (Left Hero with Review Quote Overlay + Right 2 Stacked Cards) */}
               <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 sm:gap-4 items-stretch">
                 
-                {/* 1. MAIN HERO CARD (Left 7 cols on desktop): Square Rounded-3xl with Review Overlay */}
-                <div className={`relative ${galleryImages.length > 1 ? "md:col-span-7" : "md:col-span-12"} aspect-square bg-[#FAF7F2] overflow-hidden rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-sm group`}>
+                {/* 1. MAIN HERO CARD (Left 7 cols on desktop): Square with Square Sharp Corners */}
+                <div className={`relative ${galleryImages.length > 1 ? "md:col-span-7" : "md:col-span-12"} aspect-square bg-[#FAF7F2] overflow-hidden rounded-none border border-neutral-200/90 shadow-sm group`}>
                   <Image
                     src={galleryImages[0] || "/ear.jpeg"}
                     alt={`${product.name} lifestyle hero view`}
@@ -699,13 +699,13 @@ export default function ProductDetailPage() {
                   />
 
                   {/* Bestseller Badge */}
-                  <span className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur-xs text-[#997b24] text-[10.5px] font-extrabold uppercase tracking-widest px-3.5 py-1.5 rounded-full border border-[#d4af37]/40 shadow-xs">
+                  <span className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur-xs text-[#997b24] text-[10.5px] font-extrabold uppercase tracking-widest px-3.5 py-1.5 rounded-none border border-[#d4af37]/40 shadow-xs">
                     {product.badge || "BESTSELLER"}
                   </span>
 
-                  {/* Center Luxury Parchment Editorial Review Card Overlay */}
+                  {/* Center Luxury Parchment Editorial Review Card Overlay (Square Corners) */}
                   <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6 pointer-events-none">
-                    <div className="bg-[#FAF8F5]/95 backdrop-blur-md border border-[#E8E2D5] shadow-xl rounded-xl sm:rounded-2xl p-6 sm:p-7 max-w-[88%] sm:max-w-[82%] text-center pointer-events-auto transform transition-transform duration-500 hover:scale-[1.02]">
+                    <div className="bg-[#FAF8F5]/95 backdrop-blur-md border border-[#E8E2D5] shadow-xl rounded-none p-6 sm:p-7 max-w-[88%] sm:max-w-[82%] text-center pointer-events-auto transform transition-transform duration-500 hover:scale-[1.02]">
                       {/* 5 Solid Black Stars */}
                       <div className="flex items-center justify-center gap-1 mb-3 text-neutral-950">
                         {[...Array(5)].map((_, i) => (
@@ -732,13 +732,13 @@ export default function ProductDetailPage() {
                       setSelectedImageIndex(0);
                       setIsZoomModalOpen(true);
                     }}
-                    className="absolute bottom-4 right-4 z-10 w-9 h-9 bg-white/90 hover:bg-white text-neutral-900 flex items-center justify-center rounded-full shadow-md transition-colors cursor-pointer"
+                    className="absolute bottom-4 right-4 z-10 w-9 h-9 bg-white/90 hover:bg-white text-neutral-900 flex items-center justify-center rounded-none shadow-md transition-colors cursor-pointer border border-neutral-200"
                   >
                     <Maximize2 className="w-4 h-4 stroke-[1.5]" />
                   </button>
                 </div>
 
-                {/* 2. RIGHT STACK (Right 5 cols on desktop): 2 Square Rounded Cards */}
+                {/* 2. RIGHT STACK (Right 5 cols on desktop): 2 Square Cards with Sharp Square Corners */}
                 {galleryImages.length > 1 && (
                   <div className="md:col-span-5 flex flex-col gap-3.5 sm:gap-4 justify-between">
                     
@@ -748,7 +748,7 @@ export default function ProductDetailPage() {
                         setSelectedImageIndex(1);
                         setIsZoomModalOpen(true);
                       }}
-                      className="relative aspect-square bg-[#FAF7F2] overflow-hidden rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-sm group cursor-pointer"
+                      className="relative aspect-square bg-[#FAF7F2] overflow-hidden rounded-none border border-neutral-200/90 shadow-sm group cursor-pointer"
                     >
                       <Image
                         src={galleryImages[1] || "/ear ring.jpeg"}
@@ -758,7 +758,7 @@ export default function ProductDetailPage() {
                       />
                       <button
                         aria-label="Enlarge image"
-                        className="absolute bottom-3 right-3 w-8 h-8 bg-white/90 hover:bg-white text-neutral-900 flex items-center justify-center rounded-full shadow-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute bottom-3 right-3 w-8 h-8 bg-white/90 hover:bg-white text-neutral-900 flex items-center justify-center rounded-none border border-neutral-200 shadow-xs opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <Maximize2 className="w-3.5 h-3.5" />
                       </button>
@@ -770,7 +770,7 @@ export default function ProductDetailPage() {
                         setSelectedImageIndex(galleryImages[2] ? 2 : 1);
                         setIsZoomModalOpen(true);
                       }}
-                      className="relative aspect-square bg-[#FAF7F2] overflow-hidden rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-sm group cursor-pointer"
+                      className="relative aspect-square bg-[#FAF7F2] overflow-hidden rounded-none border border-neutral-200/90 shadow-sm group cursor-pointer"
                     >
                       <Image
                         src={galleryImages[2] || galleryImages[1] || "/ear.jpeg"}
@@ -779,19 +779,19 @@ export default function ProductDetailPage() {
                         className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
                       
-                      {/* Scale / Styling tags like Missoma */}
+                      {/* Scale / Styling tags */}
                       <div className="absolute bottom-3.5 inset-x-3 flex items-center justify-between text-[9px] font-mono tracking-widest text-white drop-shadow-md pointer-events-none">
-                        <span className="bg-black/60 backdrop-blur-xs px-2.5 py-0.5 rounded-full uppercase font-bold">
+                        <span className="bg-black/70 px-2.5 py-0.5 rounded-none uppercase font-bold">
                           EARRINGS
                         </span>
-                        <span className="bg-black/60 backdrop-blur-xs px-2.5 py-0.5 rounded-full uppercase font-bold">
+                        <span className="bg-black/70 px-2.5 py-0.5 rounded-none uppercase font-bold">
                           18K
                         </span>
                       </div>
 
                       <button
                         aria-label="Enlarge image"
-                        className="absolute top-3 right-3 w-8 h-8 bg-white/90 hover:bg-white text-neutral-900 flex items-center justify-center rounded-full shadow-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="absolute top-3 right-3 w-8 h-8 bg-white/90 hover:bg-white text-neutral-900 flex items-center justify-center rounded-none border border-neutral-200 shadow-xs opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <Maximize2 className="w-3.5 h-3.5" />
                       </button>
@@ -1246,6 +1246,63 @@ export default function ProductDetailPage() {
                       ))}
                     </div>
                   )}
+
+                  {/* 6. "SEE IT IRL" (Directly Below Sets / More Styles - Exact Match to Screenshot 2) */}
+                  {activeIRLItems.length > 0 && (
+                    <div className="pt-8 mt-6 border-t border-neutral-200">
+                      <h2
+                        style={{ fontFamily: "var(--font-cinzel), Georgia, serif" }}
+                        className="text-xl sm:text-2xl font-bold tracking-wide text-neutral-950 mb-3.5"
+                      >
+                        See It IRL
+                      </h2>
+
+                      <div className="relative">
+                        <div
+                          ref={irlScrollRef}
+                          className="flex items-center gap-3 sm:gap-3.5 overflow-x-auto pb-2 scrollbar-none scroll-smooth"
+                        >
+                          {activeIRLItems.map((item) => (
+                            <div
+                              key={item.id}
+                              onClick={() => setActiveIrlModalItem(item)}
+                              className="relative flex-shrink-0 w-32 sm:w-40 md:w-44 aspect-[3/4] bg-[#FAF8F5] rounded-xl sm:rounded-2xl overflow-hidden border border-neutral-200/80 shadow-xs cursor-pointer group/card"
+                            >
+                              {item.type === "video" && item.videoUrl ? (
+                                <video
+                                  src={item.videoUrl}
+                                  poster={item.posterUrl || item.imageUrl}
+                                  muted
+                                  loop
+                                  playsInline
+                                  className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
+                                />
+                              ) : (
+                                <Image
+                                  src={item.imageUrl}
+                                  alt={item.customerHandle}
+                                  fill
+                                  className="object-cover group-hover/card:scale-105 transition-transform duration-500"
+                                />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Right Arrow Navigation Button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            irlScrollRef.current?.scrollBy({ left: 220, behavior: "smooth" });
+                          }}
+                          aria-label="Scroll IRL items"
+                          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-9 sm:h-9 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 shadow-md flex items-center justify-center rounded-full transition-all cursor-pointer translate-x-2.5"
+                        >
+                          <ChevronRight className="w-4 h-4 stroke-[2.5]" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1253,111 +1310,6 @@ export default function ProductDetailPage() {
 
           </div>
         </div>
-
-        {/* 6. "SEE IT IRL" (IN REAL LIFE) COMMUNITY PHOTO GALLERY (EXACT MISSOMA LAYOUT) */}
-        {activeIRLItems.length > 0 && (
-          <section className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-12 border-t border-neutral-200">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h2
-                  style={{ fontFamily: "var(--font-cinzel), Georgia, serif" }}
-                  className="text-2xl sm:text-3xl font-bold tracking-wide text-neutral-950"
-                >
-                  See It IRL
-                </h2>
-                <p className="text-xs text-neutral-500 font-light mt-1">
-                  Styled by our community, tastemakers &amp; collectors around the world.
-                </p>
-              </div>
-
-              {/* Scroll Arrow Controls */}
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    irlScrollRef.current?.scrollBy({ left: -320, behavior: "smooth" });
-                  }}
-                  aria-label="Previous IRL look"
-                  className="w-9 h-9 border border-neutral-300 hover:border-black hover:bg-neutral-100 flex items-center justify-center rounded-full transition-colors cursor-pointer"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    irlScrollRef.current?.scrollBy({ left: 320, behavior: "smooth" });
-                  }}
-                  aria-label="Next IRL look"
-                  className="w-9 h-9 border border-neutral-300 hover:border-black hover:bg-neutral-100 flex items-center justify-center rounded-full transition-colors cursor-pointer"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Horizontal Snap Scroll Carousel */}
-            <div
-              ref={irlScrollRef}
-              className="flex items-stretch gap-4 sm:gap-5 overflow-x-auto pb-4 scrollbar-thin scroll-smooth"
-            >
-              {activeIRLItems.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => setActiveIrlModalItem(item)}
-                  className="relative flex-shrink-0 w-52 sm:w-64 aspect-[3/4] bg-[#FAF8F5] rounded-2xl sm:rounded-3xl overflow-hidden border border-neutral-200 shadow-xs group cursor-pointer"
-                >
-                  {item.type === "video" && item.videoUrl ? (
-                    <video
-                      src={item.videoUrl}
-                      poster={item.posterUrl || item.imageUrl}
-                      muted
-                      loop
-                      playsInline
-                      onMouseEnter={(e) => e.currentTarget.play().catch(() => {})}
-                      onMouseLeave={(e) => e.currentTarget.pause()}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                  ) : (
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.customerHandle}
-                      fill
-                      className="object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                  )}
-
-                  {/* Media Type Badge */}
-                  <div className="absolute top-3 left-3 z-10 bg-black/75 backdrop-blur-xs text-white text-[9.5px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full flex items-center gap-1 shadow-sm">
-                    {item.type === "video" || item.videoUrl ? (
-                      <>
-                        <Sparkles className="w-2.5 h-2.5 text-[#d4af37]" />
-                        <span>Reel</span>
-                      </>
-                    ) : (
-                      <span>Look</span>
-                    )}
-                  </div>
-
-                  {/* Gradient Tag Overlay */}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-4 text-white">
-                    <p className="text-xs font-bold font-mono text-[#d4af37]">
-                      {item.customerHandle}
-                    </p>
-                    {item.caption && (
-                      <p className="text-[11px] text-neutral-200 line-clamp-2 mt-0.5 leading-snug">
-                        {item.caption}
-                      </p>
-                    )}
-                    <span className="inline-flex items-center gap-1 text-[9.5px] uppercase font-bold tracking-widest text-white/90 bg-white/20 backdrop-blur-xs px-2.5 py-0.5 rounded-full mt-2">
-                      <Sparkles className="w-2.5 h-2.5 text-[#d4af37]" />
-                      <span>Shop The Look</span>
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
 
         {/* 3. "DISCOVER MORE" CATEGORY CHIPS */}
         <section className="border-y border-neutral-200 py-6 bg-[#FAF7F2]/40 my-8">
