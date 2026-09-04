@@ -299,7 +299,7 @@ CREATE POLICY "Public Access product-images" ON storage.objects
 -- Allow authenticated and anon upload to product-images
 -- 14. PRODUCT SETS & BUNDLES TABLE (Save As A Set / More Styles)
 CREATE TABLE IF NOT EXISTS public.product_sets (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
     target_product_slug TEXT NOT NULL DEFAULT 'all',
     set_title TEXT NOT NULL,
     set_slug TEXT,
@@ -314,13 +314,17 @@ CREATE TABLE IF NOT EXISTS public.product_sets (
 );
 
 ALTER TABLE public.product_sets ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public product_sets are viewable by everyone" ON public.product_sets;
 CREATE POLICY "Public product_sets are viewable by everyone" ON public.product_sets FOR SELECT USING (true);
-CREATE POLICY "Service role full access on product_sets" ON public.product_sets FOR ALL USING (true);
+DROP POLICY IF EXISTS "Public product_sets insert update delete" ON public.product_sets;
+CREATE POLICY "Public product_sets insert update delete" ON public.product_sets FOR ALL USING (true);
 
 -- 15. SEE IT IRL TABLE (Community Real-Life Styled Gallery)
 CREATE TABLE IF NOT EXISTS public.see_it_irl (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
     image_url TEXT NOT NULL,
+    video_url TEXT,
+    poster_url TEXT,
     customer_handle TEXT NOT NULL,
     caption TEXT,
     product_slug TEXT DEFAULT 'all',
@@ -331,6 +335,9 @@ CREATE TABLE IF NOT EXISTS public.see_it_irl (
 );
 
 ALTER TABLE public.see_it_irl ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public see_it_irl are viewable by everyone" ON public.see_it_irl;
 CREATE POLICY "Public see_it_irl are viewable by everyone" ON public.see_it_irl FOR SELECT USING (true);
-CREATE POLICY "Service role full access on see_it_irl" ON public.see_it_irl FOR ALL USING (true);
+DROP POLICY IF EXISTS "Public see_it_irl insert update delete" ON public.see_it_irl;
+CREATE POLICY "Public see_it_irl insert update delete" ON public.see_it_irl FOR ALL USING (true);
+
 
