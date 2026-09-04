@@ -9,6 +9,7 @@ export interface Product {
   images: {
     primary: string;
     hover?: string;
+    gallery?: string[];
   };
   metals: Array<{
     name: string;

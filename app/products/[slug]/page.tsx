@@ -8,6 +8,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { Product } from "@/data/products";
 import { supabase } from "@/lib/supabaseClient";
+import { useCart } from "@/context/CartContext";
 import { 
   Star, 
   Heart, 
@@ -73,6 +74,7 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [addedToBagToast, setAddedToBagToast] = useState(false);
+  const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
 
   // Real Customer Reviews State (100% Real from Supabase)
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
@@ -133,6 +135,7 @@ export default function ProductDetailPage() {
             images: {
               primary: data.primary_image || "/ear.jpeg",
               hover: data.hover_image || undefined,
+              gallery: Array.isArray(data.gallery_images) ? data.gallery_images : [],
             },
             metals: data.metals || [
               { name: "18K Gold Vermeil", type: "gold", colorHex: "#E5C158" },
@@ -166,6 +169,7 @@ export default function ProductDetailPage() {
                 images: {
                   primary: row.primary_image,
                   hover: row.hover_image,
+                  gallery: Array.isArray(row.gallery_images) ? row.gallery_images : [],
                 },
                 metals: row.metals || [],
                 inStock: Boolean(row.in_stock),
@@ -359,9 +363,27 @@ export default function ProductDetailPage() {
     reviewsSectionRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleAddToBag = () => {
+  const { addToCart } = useCart();
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+
+  const handleAddToBag = async () => {
+    if (!product) return;
+    setIsAddingToCart(true);
     setAddedToBagToast(true);
     setTimeout(() => setAddedToBagToast(false), 3000);
+
+    await addToCart(
+      product.id || product.slug,
+      currentMetal?.name || "18K Gold Vermeil",
+      quantity,
+      {
+        name: product.name,
+        price: product.price,
+        image: galleryImages[0] || product.images.primary,
+        category: product.category,
+      }
+    );
+    setIsAddingToCart(false);
   };
 
   // Dynamic Rating Calculations from Real Data
@@ -383,15 +405,25 @@ export default function ProductDetailPage() {
       ? Math.round((positiveReviewsCount / totalReviewsCount) * 100)
       : 100;
 
-  // Image gallery items from real product
-  const galleryImages = product
-    ? [
-        product.images.primary,
-        product.images.hover || product.images.primary,
-        product.images.primary,
-        product.images.hover || product.images.primary,
-      ]
-    : [];
+  // Image gallery items from real product (strictly displays all unique added photos)
+  const galleryImages = React.useMemo(() => {
+    if (!product) return [];
+    const list: string[] = [];
+    if (product.images.primary?.trim()) {
+      list.push(product.images.primary.trim());
+    }
+    if (product.images.hover?.trim() && !list.includes(product.images.hover.trim())) {
+      list.push(product.images.hover.trim());
+    }
+    if (Array.isArray(product.images.gallery)) {
+      product.images.gallery.forEach((img) => {
+        if (img?.trim() && !list.includes(img.trim())) {
+          list.push(img.trim());
+        }
+      });
+    }
+    return list.length > 0 ? list : ["/ear.jpeg"];
+  }, [product]);
 
   const currentMetal = product?.metals[selectedMetalIndex] || {
     name: "18K Gold Vermeil",
@@ -501,8 +533,8 @@ export default function ProductDetailPage() {
               {/* Main Active Product Photo */}
               <div className="relative aspect-square w-full bg-[#FAF7F2] overflow-hidden border border-neutral-200 rounded-none group">
                 <Image
-                  src={galleryImages[selectedImageIndex] || "/ear.jpeg"}
-                  alt={product.name}
+                  src={galleryImages[selectedImageIndex] || galleryImages[0] || "/ear.jpeg"}
+                  alt={`${product.name} view ${selectedImageIndex + 1}`}
                   fill
                   priority
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
@@ -515,26 +547,64 @@ export default function ProductDetailPage() {
                   </span>
                 )}
 
+                {/* Photo Counter Badge (When multiple photos exist) */}
+                {galleryImages.length > 1 && (
+                  <span className="absolute top-4 right-4 bg-black/75 backdrop-blur-xs text-white text-[10px] font-mono px-2.5 py-1 tracking-widest shadow-xs">
+                    {selectedImageIndex + 1} / {galleryImages.length}
+                  </span>
+                )}
+
+                {/* Previous Image Arrow */}
+                {galleryImages.length > 1 && (
+                  <button
+                    type="button"
+                    aria-label="Previous image"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : galleryImages.length - 1));
+                    }}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 hover:bg-white text-black flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all cursor-pointer rounded-none"
+                  >
+                    <ChevronLeft className="w-5 h-5 stroke-[1.5]" />
+                  </button>
+                )}
+
+                {/* Next Image Arrow */}
+                {galleryImages.length > 1 && (
+                  <button
+                    type="button"
+                    aria-label="Next image"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedImageIndex((prev) => (prev < galleryImages.length - 1 ? prev + 1 : 0));
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 hover:bg-white text-black flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all cursor-pointer rounded-none"
+                  >
+                    <ChevronRight className="w-5 h-5 stroke-[1.5]" />
+                  </button>
+                )}
+
                 {/* Lightbox / Zoom Icon */}
                 <button
                   aria-label="Enlarge image"
+                  onClick={() => setIsZoomModalOpen(true)}
                   className="absolute bottom-4 right-4 w-9 h-9 bg-white/90 hover:bg-white text-neutral-900 flex items-center justify-center rounded-none shadow-md transition-colors cursor-pointer"
                 >
                   <Maximize2 className="w-4 h-4 stroke-[1.5]" />
                 </button>
               </div>
 
-              {/* 4-Thumbnail Selector Strip */}
+              {/* Dynamic Multiple Thumbnails Strip (Shows ALL added photos) */}
               {galleryImages.length > 1 && (
-                <div className="grid grid-cols-4 gap-3 sm:gap-4">
+                <div className="flex items-center gap-2.5 sm:gap-3 overflow-x-auto pb-2 scrollbar-thin">
                   {galleryImages.map((imgSrc, idx) => (
                     <button
                       key={idx}
                       onClick={() => setSelectedImageIndex(idx)}
-                      className={`relative aspect-square bg-[#FAF7F2] border transition-all cursor-pointer rounded-none overflow-hidden ${
+                      className={`relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-[#FAF7F2] border transition-all cursor-pointer rounded-none overflow-hidden ${
                         selectedImageIndex === idx
-                          ? "border-neutral-950 ring-1 ring-black"
-                          : "border-neutral-200 hover:border-neutral-400 opacity-80 hover:opacity-100"
+                          ? "border-neutral-950 ring-2 ring-black opacity-100"
+                          : "border-neutral-200 hover:border-neutral-400 opacity-70 hover:opacity-100"
                       }`}
                     >
                       <Image
@@ -543,6 +613,9 @@ export default function ProductDetailPage() {
                         fill
                         className="object-cover"
                       />
+                      <span className="absolute bottom-0.5 right-0.5 bg-black/60 text-white text-[8px] font-mono px-1">
+                        {idx + 1}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -1208,6 +1281,84 @@ export default function ProductDetailPage() {
             </form>
 
           </div>
+        </div>
+      )}
+
+      {/* FULLSCREEN LIGHTBOX ZOOM MODAL */}
+      {isZoomModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-between p-4 sm:p-8 animate-in fade-in duration-200">
+          
+          {/* Top Bar */}
+          <div className="w-full max-w-5xl flex items-center justify-between text-white pb-4 border-b border-white/20">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-[#d4af37]">
+                {product.name}
+              </p>
+              <p className="text-[11px] text-neutral-400 font-mono mt-0.5">
+                Photo {selectedImageIndex + 1} of {galleryImages.length}
+              </p>
+            </div>
+            <button
+              onClick={() => setIsZoomModalOpen(false)}
+              className="w-10 h-10 bg-white/10 hover:bg-white text-white hover:text-black flex items-center justify-center transition-colors rounded-none cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Main Large Image */}
+          <div className="relative w-full max-w-3xl h-[60vh] sm:h-[68vh] my-auto">
+            <Image
+              src={galleryImages[selectedImageIndex] || "/ear.jpeg"}
+              alt={`${product.name} large preview`}
+              fill
+              className="object-contain"
+            />
+
+            {/* Left & Right navigation in lightbox */}
+            {galleryImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : galleryImages.length - 1));
+                  }}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 hover:bg-white text-white hover:text-black flex items-center justify-center transition-colors cursor-pointer rounded-none"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedImageIndex((prev) => (prev < galleryImages.length - 1 ? prev + 1 : 0));
+                  }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 hover:bg-white text-white hover:text-black flex items-center justify-center transition-colors cursor-pointer rounded-none"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Bottom Thumbnails */}
+          {galleryImages.length > 1 && (
+            <div className="flex items-center gap-2 overflow-x-auto max-w-3xl pt-4">
+              {galleryImages.map((src, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSelectedImageIndex(idx)}
+                  className={`relative w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 bg-neutral-900 border transition-all cursor-pointer rounded-none overflow-hidden ${
+                    selectedImageIndex === idx ? "border-[#d4af37] ring-1 ring-[#d4af37]" : "border-neutral-700 opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  <Image src={src} alt={`Thumbnail ${idx + 1}`} fill className="object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+
         </div>
       )}
 

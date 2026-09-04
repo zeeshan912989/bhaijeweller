@@ -75,6 +75,7 @@ export default function AdminPage() {
           images: {
             primary: row.primary_image,
             hover: row.hover_image || undefined,
+            gallery: Array.isArray(row.gallery_images) ? row.gallery_images : [],
           },
           metals: row.metals || [
             { name: "18K Gold Vermeil", type: "gold", colorHex: "#E5C158" },
@@ -142,6 +143,7 @@ export default function AdminPage() {
           badge: newProduct.badge || null,
           primary_image: newProduct.images.primary,
           hover_image: newProduct.images.hover || null,
+          gallery_images: newProduct.images.gallery || [],
           metals: newProduct.metals,
           in_stock: newProduct.inStock,
         },
@@ -166,6 +168,7 @@ export default function AdminPage() {
           badge: updatedProduct.badge || null,
           primary_image: updatedProduct.images.primary,
           hover_image: updatedProduct.images.hover || null,
+          gallery_images: updatedProduct.images.gallery || [],
           in_stock: updatedProduct.inStock,
         })
         .eq("slug", updatedProduct.slug);

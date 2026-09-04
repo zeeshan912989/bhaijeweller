@@ -1,0 +1,83 @@
+"use client";
+
+import * as React from "react";
+import { motion, type Variants } from "motion/react";
+
+import {
+  getVariants,
+  useAnimateIconContext,
+  IconWrapper,
+  type IconProps,
+} from "./icon";
+
+export type UserRoundProps = IconProps<keyof typeof animations>;
+
+export const animations = {
+  default: {
+    path: {
+      initial: {
+        y: 0,
+      },
+      animate: {
+        y: [0, 3, -2, 0],
+        transition: {
+          duration: 0.5,
+          ease: "easeInOut",
+        },
+      },
+    },
+    circle: {
+      initial: {
+        y: 0,
+      },
+      animate: {
+        y: [0, 1, -2, 0],
+        transition: {
+          duration: 0.5,
+          ease: "easeInOut",
+        },
+      },
+    },
+  } satisfies Record<string, Variants>,
+} as const;
+
+function IconComponent({ size = 20, ...props }: UserRoundProps) {
+  const { controls } = useAnimateIconContext();
+  const variants = getVariants(animations);
+
+  return (
+    <motion.svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <motion.path
+        d="M20 21a8 8 0 0 0-16 0"
+        variants={variants.path}
+        initial="initial"
+        animate={controls}
+      />
+      <motion.circle
+        cx={12}
+        cy={8}
+        r={5}
+        variants={variants.circle}
+        initial="initial"
+        animate={controls}
+      />
+    </motion.svg>
+  );
+}
+
+export function UserRound(props: UserRoundProps) {
+  return <IconWrapper icon={IconComponent} {...props} />;
+}
+
+export default UserRound;

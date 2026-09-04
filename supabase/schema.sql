@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS public.products (
     badge TEXT, -- 'Bestseller', 'Statement', 'New In', 'Everyday Staple'
     primary_image TEXT NOT NULL,
     hover_image TEXT,
+    gallery_images JSONB DEFAULT '[]'::jsonb,
     metals JSONB DEFAULT '[]'::jsonb,
     in_stock BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -125,6 +126,183 @@ CREATE POLICY "Public can insert product_reviews" ON public.product_reviews FOR 
 CREATE POLICY "Public can update product_reviews helpful count" ON public.product_reviews FOR UPDATE USING (true);
 CREATE POLICY "Service role full access on product_reviews" ON public.product_reviews FOR ALL USING (true);
 
+-- 9. SHOPPING CARTS TABLE
+CREATE TABLE IF NOT EXISTS public.carts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID,
+    session_id TEXT,
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'merged', 'abandoned', 'converted')),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE DEFAULT (now() + INTERVAL '30 days') NOT NULL
+);
 
+-- 10. CART ITEMS TABLE
+CREATE TABLE IF NOT EXISTS public.cart_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cart_id UUID NOT NULL REFERENCES public.carts(id) ON DELETE CASCADE,
+    product_id TEXT NOT NULL,
+    variant_id TEXT DEFAULT 'Default',
+    quantity INT NOT NULL CHECK (quantity > 0 AND quantity <= 20),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    UNIQUE(cart_id, product_id, variant_id)
+);
 
+-- INDEXES FOR CART PERFORMANCE
+CREATE INDEX IF NOT EXISTS idx_carts_user_id ON public.carts(user_id);
+CREATE INDEX IF NOT EXISTS idx_carts_session_id ON public.carts(session_id);
+CREATE INDEX IF NOT EXISTS idx_cart_items_cart_id ON public.cart_items(cart_id);
+CREATE INDEX IF NOT EXISTS idx_cart_items_product ON public.cart_items(product_id);
+
+-- CART ROW LEVEL SECURITY (RLS)
+ALTER TABLE public.carts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.cart_items ENABLE ROW LEVEL SECURITY;
+
+-- Allow authenticated users to view & update only their own carts
+CREATE POLICY "Users can view own cart" ON public.carts 
+    FOR SELECT USING (auth.uid() IS NOT NULL AND user_id = auth.uid());
+
+CREATE POLICY "Users can update own cart" ON public.carts 
+    FOR UPDATE USING (auth.uid() IS NOT NULL AND user_id = auth.uid());
+
+-- Allow users to manage their cart items
+CREATE POLICY "Users can view own cart items" ON public.cart_items 
+    FOR SELECT USING (
+        EXISTS (
+            SELECT 1 FROM public.carts 
+            WHERE carts.id = cart_items.cart_id 
+            AND carts.user_id = auth.uid()
+        )
+    );
+
+CREATE POLICY "Users can manage own cart items" ON public.cart_items 
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM public.carts 
+            WHERE carts.id = cart_items.cart_id 
+            AND carts.user_id = auth.uid()
+        )
+    );
+
+-- Elevated Service Role Full Access (Used by Server Endpoints for Guest Token and Authoritative Mutations)
+CREATE POLICY "Service role full access on carts" ON public.carts FOR ALL USING (true);
+CREATE POLICY "Service role full access on cart_items" ON public.cart_items FOR ALL USING (true);
+
+-- 11. PROFILES TABLE (User Profile Metadata Linked to auth.users)
+CREATE TABLE IF NOT EXISTS public.profiles (
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    full_name TEXT,
+    phone TEXT,
+    avatar_url TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own profile" ON public.profiles
+    FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert own profile" ON public.profiles
+    FOR INSERT WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile" ON public.profiles
+    FOR UPDATE USING (auth.uid() = id);
+
+CREATE POLICY "Service role full access on profiles" ON public.profiles FOR ALL USING (true);
+
+-- Auto-create profile trigger on signup
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO public.profiles (id, full_name, phone)
+    VALUES (
+        new.id,
+        COALESCE(new.raw_user_meta_data->>'full_name', ''),
+        COALESCE(new.raw_user_meta_data->>'phone', '')
+    )
+    ON CONFLICT (id) DO NOTHING;
+    RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+    AFTER INSERT ON auth.users
+    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- 12. ADDRESSES TABLE (User Address Book with Default Address Protection)
+CREATE TABLE IF NOT EXISTS public.addresses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    full_name TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    address_line1 TEXT NOT NULL,
+    address_line2 TEXT,
+    city TEXT NOT NULL,
+    state TEXT NOT NULL,
+    postal_code TEXT NOT NULL,
+    country TEXT NOT NULL DEFAULT 'United Kingdom',
+    is_default BOOLEAN NOT NULL DEFAULT false,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_addresses_user_id ON public.addresses(user_id);
+
+ALTER TABLE public.addresses ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own addresses" ON public.addresses
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own addresses" ON public.addresses
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own addresses" ON public.addresses
+    FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own addresses" ON public.addresses
+    FOR DELETE USING (auth.uid() = user_id);
+
+CREATE POLICY "Service role full access on addresses" ON public.addresses FOR ALL USING (true);
+
+-- Add user_id column to orders if not present
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' AND table_name = 'orders' AND column_name = 'user_id'
+    ) THEN
+        ALTER TABLE public.orders ADD COLUMN user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
+        CREATE INDEX IF NOT EXISTS idx_orders_user_id ON public.orders(user_id);
+    END IF;
+
+    -- Add gallery_images to products if not present
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns 
+        WHERE table_schema = 'public' AND table_name = 'products' AND column_name = 'gallery_images'
+    ) THEN
+        ALTER TABLE public.products ADD COLUMN gallery_images JSONB DEFAULT '[]'::jsonb;
+    END IF;
+END $$;
+
+-- 13. SUPABASE STORAGE BUCKET: 'product-images' (Photos, Videos, Reels)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('product-images', 'product-images', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- Allow public read access to uploaded images & videos
+CREATE POLICY "Public Access product-images" ON storage.objects
+    FOR SELECT USING (bucket_id = 'product-images');
+
+-- Allow authenticated and anon upload to product-images
+CREATE POLICY "Allow Upload to product-images" ON storage.objects
+    FOR INSERT WITH CHECK (bucket_id = 'product-images');
+
+CREATE POLICY "Allow Update to product-images" ON storage.objects
+    FOR UPDATE USING (bucket_id = 'product-images');
+
+CREATE POLICY "Allow Delete to product-images" ON storage.objects
+    FOR DELETE USING (bucket_id = 'product-images');
 

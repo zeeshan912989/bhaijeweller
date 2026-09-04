@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Volume2, VolumeX, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
+import { getPersistentItem, setPersistentItem } from "@/lib/clientStorage";
 
 export interface InspirationItem {
   id: string;
@@ -27,23 +28,23 @@ export default function InspirationStation() {
   const [mutedStates, setMutedStates] = useState<Record<string, boolean>>({});
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Real-time synchronization for shoppable video reels from Supabase & localStorage
+  // Real-time synchronization for shoppable video reels from Supabase & client storage
   useEffect(() => {
     // 1. Initial local load
-    try {
-      const stored = localStorage.getItem("bhai_shoppable_reels_v1");
-      if (stored !== null) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          setItems(parsed);
-          if (parsed.length > 0) {
-            setActiveVideoId(parsed[0].id);
+    async function loadLocal() {
+      try {
+        const stored = await getPersistentItem<InspirationItem[]>("bhai_shoppable_reels_v1");
+        if (stored && Array.isArray(stored)) {
+          setItems(stored);
+          if (stored.length > 0) {
+            setActiveVideoId(stored[0].id);
           }
         }
+      } catch (e) {
+        console.warn("Local storage reel load notice:", e);
       }
-    } catch (e) {
-      console.error(e);
     }
+    loadLocal();
 
     // 2. Load from Supabase Database
     async function loadFromDb() {
@@ -59,7 +60,7 @@ export default function InspirationStation() {
           if (data.value.length > 0) {
             setActiveVideoId(data.value[0].id);
           }
-          localStorage.setItem("bhai_shoppable_reels_v1", JSON.stringify(data.value));
+          await setPersistentItem("bhai_shoppable_reels_v1", data.value);
         }
       } catch (err) {
         console.warn("Supabase reels fetch notice:", err);
@@ -85,17 +86,14 @@ export default function InspirationStation() {
     }
 
     // 4. Storage event listener
-    const handleStorage = () => {
+    const handleStorage = async () => {
       try {
-        const stored = localStorage.getItem("bhai_shoppable_reels_v1");
-        if (stored !== null) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed)) {
-            setItems(parsed);
-          }
+        const stored = await getPersistentItem<InspirationItem[]>("bhai_shoppable_reels_v1");
+        if (stored && Array.isArray(stored)) {
+          setItems(stored);
         }
       } catch (err) {
-        console.error(err);
+        console.warn("Storage sync notice:", err);
       }
     };
     window.addEventListener("storage", handleStorage);
@@ -217,15 +215,17 @@ export default function InspirationStation() {
                       : "border border-neutral-300/80"
                   }`}
                 >
-                  <video
-                    src={item.videoUrl}
-                    poster={item.posterUrl}
-                    autoPlay
-                    loop
-                    muted={isMuted}
-                    playsInline
-                    className="w-full h-full object-cover object-center pointer-events-none select-none"
-                  />
+                  {item.videoUrl && (
+                    <video
+                      src={item.videoUrl}
+                      poster={item.posterUrl || undefined}
+                      autoPlay
+                      loop
+                      muted={isMuted}
+                      playsInline
+                      className="w-full h-full object-cover object-center pointer-events-none select-none"
+                    />
+                  )}
 
                   {/* Top Sound Toggle Pill */}
                   <button

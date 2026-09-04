@@ -4,10 +4,13 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, User, Heart, ShoppingBag, X, Menu, ChevronDown, ArrowRight, Sparkles } from "lucide-react";
+import { Search, ShoppingBag, X, Menu, ChevronDown, ArrowRight, Sparkles } from "lucide-react";
+import { UserRound } from "@/components/animate-ui/icons/user-round";
+import { Heart } from "@/components/animate-ui/icons/heart";
 import { FEATURED_TBAR_PRODUCTS, BEST_SELLER_PRODUCTS, Product } from "@/data/products";
 import { supabase } from "@/lib/supabaseClient";
 import WishlistDrawer from "@/components/layout/WishlistDrawer";
+import { useCart } from "@/context/CartContext";
 
 interface NavItem {
   label: string;
@@ -273,7 +276,7 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [desktopSearchFocused, setDesktopSearchFocused] = useState(false);
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
-  const [cartCount, setCartCount] = useState(0);
+  const { itemCount: cartCount, openCart } = useCart();
   const [wishlistCount, setWishlistCount] = useState(0);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
 
@@ -395,6 +398,7 @@ export default function Navbar() {
             images: {
               primary: row.primary_image,
               hover: row.hover_image || undefined,
+              gallery: Array.isArray(row.gallery_images) ? row.gallery_images : [],
             },
             metals: row.metals || [
               { name: "18K Gold Vermeil", type: "gold", colorHex: "#E5C158" },
@@ -610,14 +614,14 @@ export default function Navbar() {
               </div>
 
               {/* SQUARE SEARCH DROPDOWN OVERLAY */}
-              {desktopSearchFocused && (
+              {desktopSearchFocused && searchQuery.trim() && (
                 <div className="absolute right-0 top-full mt-2 w-96 bg-white rounded-none shadow-2xl border border-neutral-300 overflow-hidden z-50 text-neutral-900 animate-in fade-in duration-200">
                   
                   {/* Dropdown Header */}
                   <div className="p-3.5 bg-neutral-900 text-white flex items-center justify-between text-xs border-b border-neutral-800">
                     <span className="font-bold tracking-widest uppercase text-[10.5px] text-[#d4af37] flex items-center gap-1.5">
                       <Sparkles className="w-3 h-3" />
-                      <span>{searchQuery.trim() ? `${searchResults.length} Pieces Found` : "Trending Searches"}</span>
+                      <span>{`${searchResults.length} Pieces Found`}</span>
                     </span>
                     <button
                       onClick={() => setDesktopSearchFocused(false)}
@@ -627,93 +631,73 @@ export default function Navbar() {
                     </button>
                   </div>
 
-                  {/* If Search Query is Empty -> Show Trending Suggestions */}
-                  {!searchQuery.trim() ? (
-                    <div className="p-4 space-y-3">
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">
-                        Popular Suggestions:
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {["Earrings", "Gold Huggies", "Necklaces", "T-Bar Chains", "Rings", "Bracelets"].map((tag) => (
-                          <button
-                            key={tag}
-                            onClick={() => setSearchQuery(tag)}
-                            className="px-3 py-1 bg-neutral-100 hover:bg-neutral-950 hover:text-white text-neutral-800 text-xs font-semibold rounded-none border border-neutral-200 transition-all cursor-pointer"
+                  {/* Search Results List */}
+                  <div className="max-h-80 overflow-y-auto divide-y divide-neutral-100">
+                    {searchResults.length > 0 ? (
+                      <>
+                        {searchResults.map((item) => (
+                          <Link
+                            key={item.id || item.slug}
+                            href={`/products/${item.slug}`}
+                            onClick={() => {
+                              setDesktopSearchFocused(false);
+                              setSearchQuery("");
+                            }}
+                            className="p-3 flex items-center gap-3 hover:bg-neutral-50 transition-colors group"
                           >
-                            {tag}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    /* Search Results List */
-                    <div className="max-h-80 overflow-y-auto divide-y divide-neutral-100">
-                      {searchResults.length > 0 ? (
-                        <>
-                          {searchResults.map((item) => (
-                            <Link
-                              key={item.id || item.slug}
-                              href={`/products/${item.slug}`}
-                              onClick={() => {
-                                setDesktopSearchFocused(false);
-                                setSearchQuery("");
-                              }}
-                              className="p-3 flex items-center gap-3 hover:bg-neutral-50 transition-colors group"
-                            >
-                              <div className="w-12 h-12 relative rounded-none overflow-hidden bg-neutral-100 flex-shrink-0 border border-neutral-200">
-                                <Image
-                                  src={item.images.primary}
-                                  alt={item.name}
-                                  fill
-                                  className="object-cover transition-transform duration-300 group-hover:scale-105"
-                                />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                {item.badge && (
-                                  <span className="text-[9px] font-extrabold text-[#997b24] uppercase tracking-wider block">
-                                    {item.badge}
+                            <div className="w-12 h-12 relative rounded-none overflow-hidden bg-neutral-100 flex-shrink-0 border border-neutral-200">
+                              <Image
+                                src={item.images.primary}
+                                alt={item.name}
+                                fill
+                                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              {item.badge && (
+                                <span className="text-[9px] font-extrabold text-[#997b24] uppercase tracking-wider block">
+                                  {item.badge}
+                                </span>
+                              )}
+                              <p className="text-xs font-bold text-neutral-950 group-hover:text-[#997b24] transition-colors truncate uppercase">
+                                {item.name}
+                              </p>
+                              <div className="flex items-baseline gap-2 mt-0.5">
+                                <span className="text-xs font-bold text-neutral-950 font-mono">
+                                  £{item.price.toFixed(2)}
+                                </span>
+                                {item.originalPrice && (
+                                  <span className="text-[10px] text-neutral-400 line-through font-mono">
+                                    £{item.originalPrice.toFixed(2)}
                                   </span>
                                 )}
-                                <p className="text-xs font-bold text-neutral-950 group-hover:text-[#997b24] transition-colors truncate uppercase">
-                                  {item.name}
-                                </p>
-                                <div className="flex items-baseline gap-2 mt-0.5">
-                                  <span className="text-xs font-bold text-neutral-950 font-mono">
-                                    £{item.price.toFixed(2)}
-                                  </span>
-                                  {item.originalPrice && (
-                                    <span className="text-[10px] text-neutral-400 line-through font-mono">
-                                      £{item.originalPrice.toFixed(2)}
-                                    </span>
-                                  )}
-                                </div>
                               </div>
-                              <ArrowRight className="w-3.5 h-3.5 text-neutral-400 group-hover:translate-x-1 group-hover:text-black transition-all flex-shrink-0" />
-                            </Link>
-                          ))}
+                            </div>
+                            <ArrowRight className="w-3.5 h-3.5 text-neutral-400 group-hover:translate-x-1 group-hover:text-black transition-all flex-shrink-0" />
+                          </Link>
+                        ))}
 
-                          <div className="p-2.5 bg-neutral-50 text-center border-t border-neutral-200">
-                            <Link
-                              href={`/collections/earrings`}
-                              onClick={() => setDesktopSearchFocused(false)}
-                              className="text-[10.5px] font-bold uppercase tracking-widest text-neutral-900 hover:text-[#997b24] transition-colors"
-                            >
-                              View All Matching Collections →
-                            </Link>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="p-8 text-center space-y-2">
-                          <p className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                            No Pieces Found for &ldquo;{searchQuery}&rdquo;
-                          </p>
-                          <p className="text-[11px] text-neutral-500">
-                            Try searching for &quot;Gold&quot;, &quot;Earrings&quot;, &quot;Necklace&quot; or &quot;Ring&quot;.
-                          </p>
+                        <div className="p-2.5 bg-neutral-50 text-center border-t border-neutral-200">
+                          <Link
+                            href={`/collections/earrings`}
+                            onClick={() => setDesktopSearchFocused(false)}
+                            className="text-[10.5px] font-bold uppercase tracking-widest text-neutral-900 hover:text-[#997b24] transition-colors"
+                          >
+                            View All Matching Collections →
+                          </Link>
                         </div>
-                      )}
-                    </div>
-                  )}
+                      </>
+                    ) : (
+                      <div className="p-8 text-center space-y-2">
+                        <p className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                          No Pieces Found for &ldquo;{searchQuery}&rdquo;
+                        </p>
+                        <p className="text-[11px] text-neutral-500">
+                          Try searching for &quot;Gold&quot;, &quot;Earrings&quot;, &quot;Necklace&quot; or &quot;Ring&quot;.
+                        </p>
+                      </div>
+                    )}
+                  </div>
 
                 </div>
               )}
@@ -740,25 +724,25 @@ export default function Navbar() {
             <Link
               href="/account"
               aria-label="My Account"
-              className={`p-1.5 rounded-full transition-all hover:scale-105 ${
+              className={`p-1.5 rounded-full transition-all hover:scale-105 inline-flex items-center justify-center ${
                 isHeaderWhite
                   ? "text-neutral-900 hover:text-black"
                   : "text-white hover:text-neutral-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
               }`}
             >
-              <User className="w-[19px] h-[19px] stroke-[1.6]" />
+              <UserRound size={19} animateOnHover />
             </Link>
 
             <button
               onClick={() => setIsWishlistOpen(true)}
               aria-label="Open Wishlist Drawer"
-              className={`p-1.5 rounded-full relative transition-all hover:scale-105 cursor-pointer ${
+              className={`p-1.5 rounded-full relative transition-all hover:scale-105 cursor-pointer inline-flex items-center justify-center ${
                 isHeaderWhite
                   ? "text-neutral-900 hover:text-black"
                   : "text-white hover:text-neutral-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
               }`}
             >
-              <Heart className="w-[19px] h-[19px] stroke-[1.6]" />
+              <Heart size={19} animateOnHover />
               {wishlistCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 bg-[#d4af37] text-black text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
                   {wishlistCount}
@@ -766,10 +750,11 @@ export default function Navbar() {
               )}
             </button>
 
-            <Link
-              href="/cart"
+            <button
+              type="button"
+              onClick={openCart}
               aria-label="Shopping Bag"
-              className={`p-1.5 rounded-full relative transition-all hover:scale-105 ${
+              className={`p-1.5 rounded-full relative transition-all hover:scale-105 cursor-pointer ${
                 isHeaderWhite
                   ? "text-neutral-900 hover:text-black"
                   : "text-white hover:text-neutral-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
@@ -777,11 +762,11 @@ export default function Navbar() {
             >
               <ShoppingBag className="w-[19px] h-[19px] stroke-[1.6]" />
               {cartCount > 0 ? (
-                <span className="absolute -top-0.5 -right-0.5 bg-[#d4af37] text-black text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm animate-pulse">
+                <span className="absolute -top-0.5 -right-0.5 bg-[#d4af37] text-black text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm animate-pulse font-mono">
                   {cartCount}
                 </span>
               ) : null}
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -1176,7 +1161,7 @@ export default function Navbar() {
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center gap-3 px-6 py-3 text-[13.5px] font-medium text-neutral-900 hover:bg-neutral-50"
                     >
-                      <User className="w-[18px] h-[18px] stroke-[1.6]" />
+                      <UserRound size={18} animateOnHover />
                       <span>Sign In | Register</span>
                     </Link>
                     <button
@@ -1186,7 +1171,7 @@ export default function Navbar() {
                       }}
                       className="w-full flex items-center gap-3 px-6 py-3 text-[13.5px] font-medium text-neutral-900 hover:bg-neutral-50 text-left cursor-pointer"
                     >
-                      <Heart className="w-[18px] h-[18px] stroke-[1.6]" />
+                      <Heart size={18} animateOnHover />
                       <span>My Wishlist</span>
                       {wishlistCount > 0 && (
                         <span className="ml-auto bg-[#d4af37] text-black text-[10px] font-bold px-1.5 py-0.5 rounded-full">

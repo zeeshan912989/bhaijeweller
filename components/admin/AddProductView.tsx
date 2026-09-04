@@ -46,6 +46,8 @@ export default function AddProductView({
   const [badge, setBadge] = useState("Bestseller");
   const [primaryImage, setPrimaryImage] = useState("/ear.jpeg");
   const [hoverImage, setHoverImage] = useState("/ear ring.jpeg");
+  const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [galleryUrlInput, setGalleryUrlInput] = useState("");
   const [description, setDescription] = useState(
     "Handcrafted from 100% certified recycled 18ct gold vermeil. Designed for effortless everyday styling and luxury ear stacks."
   );
@@ -65,11 +67,13 @@ export default function AddProductView({
   // Upload States
   const [isUploadingPrimary, setIsUploadingPrimary] = useState(false);
   const [isUploadingHover, setIsUploadingHover] = useState(false);
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   const primaryFileInputRef = useRef<HTMLInputElement>(null);
   const hoverFileInputRef = useRef<HTMLInputElement>(null);
+  const galleryFileInputRef = useRef<HTMLInputElement>(null);
 
   // Auto-generate slug from name
   const handleNameChange = (val: string) => {
@@ -138,6 +142,39 @@ export default function AddProductView({
     }
   };
 
+  // MULTIPLE GALLERY IMAGES UPLOAD (Handles multiple files at once)
+  const handleGalleryFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploadingGallery(true);
+    try {
+      const newUrls: string[] = [];
+      for (const file of Array.from(files)) {
+        const url = await uploadProductImage(file, "gallery");
+        if (url) newUrls.push(url);
+      }
+      setGalleryImages((prev) => [...prev, ...newUrls]);
+    } catch (err) {
+      console.error("Gallery batch upload failed:", err);
+    } finally {
+      setIsUploadingGallery(false);
+      if (galleryFileInputRef.current) {
+        galleryFileInputRef.current.value = "";
+      }
+    }
+  };
+
+  const handleAddGalleryUrl = () => {
+    if (!galleryUrlInput.trim()) return;
+    setGalleryImages((prev) => [...prev, galleryUrlInput.trim()]);
+    setGalleryUrlInput("");
+  };
+
+  const handleRemoveGalleryImage = (indexToRemove: number) => {
+    setGalleryImages((prev) => prev.filter((_, idx) => idx !== indexToRemove));
+  };
+
   const AVAILABLE_METALS = [
     { name: "18K Gold Vermeil", type: "gold" as const, colorHex: "#E5C158" },
     { name: "Recycled Sterling Silver", type: "silver" as const, colorHex: "#D1D5DB" },
@@ -188,6 +225,7 @@ export default function AddProductView({
       images: {
         primary: primaryImage || "/ear.jpeg",
         hover: hoverImage || undefined,
+        gallery: galleryImages,
       },
       metals: metalsData.length > 0 ? metalsData : [
         { name: "18K Gold Vermeil", type: "gold", colorHex: "#E5C158" },
@@ -470,6 +508,14 @@ export default function AddProductView({
               accept="image/*"
               className="hidden"
             />
+            <input
+              type="file"
+              ref={galleryFileInputRef}
+              onChange={handleGalleryFileUpload}
+              accept="image/*"
+              multiple
+              className="hidden"
+            />
 
             {/* 1. Primary Photo Upload Stage */}
             <div className="space-y-2">
@@ -583,6 +629,119 @@ export default function AddProductView({
                   />
                 </div>
               </div>
+            </div>
+
+            {/* 3. Multiple Gallery Photos Stage (Add as many images as you want!) */}
+            <div className="space-y-3 pt-4 border-t border-neutral-200">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <label className="block font-bold text-neutral-800 uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+                    <span>Additional Gallery Photos (Upload Multiple)</span>
+                    <span className="text-[10px] bg-neutral-100 text-neutral-700 px-2 py-0.5 font-mono">
+                      {galleryImages.length} {galleryImages.length === 1 ? "Photo" : "Photos"} Added
+                    </span>
+                  </label>
+                  <p className="text-[10.5px] text-neutral-500">
+                    Add unlimited angles, detail shots, lifestyle crops, and packaging photos. All added photos will appear in the product gallery.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  disabled={isUploadingGallery}
+                  onClick={() => galleryFileInputRef.current?.click()}
+                  className="px-4 py-2 bg-neutral-950 hover:bg-[#d4af37] text-white hover:text-black text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all cursor-pointer rounded-none disabled:opacity-50 whitespace-nowrap self-start sm:self-auto"
+                >
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{isUploadingGallery ? "Uploading Photos..." : "Upload Multiple Photos"}</span>
+                </button>
+              </div>
+
+              {/* Paste URL Input Option */}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Or paste an image URL to add to gallery (e.g. /brace.jpeg or https://...)"
+                  value={galleryUrlInput}
+                  onChange={(e) => setGalleryUrlInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAddGalleryUrl();
+                    }
+                  }}
+                  className="flex-1 bg-white border border-neutral-300 rounded-none px-3 py-1.5 text-xs text-neutral-800 font-mono outline-none focus:border-black"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddGalleryUrl}
+                  disabled={!galleryUrlInput.trim()}
+                  className="px-3 py-1.5 bg-neutral-200 hover:bg-neutral-300 text-neutral-800 text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-40"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              </div>
+
+              {/* Gallery Thumbnails Visual Grid */}
+              {galleryImages.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3 pt-2">
+                  {galleryImages.map((imgUrl, index) => (
+                    <div
+                      key={index}
+                      className="group relative aspect-square bg-[#FAF7F2] border border-neutral-300 overflow-hidden"
+                    >
+                      <Image
+                        src={imgUrl}
+                        alt={`Gallery photo ${index + 1}`}
+                        fill
+                        className="object-cover"
+                      />
+                      
+                      {/* Badge count */}
+                      <span className="absolute top-1 left-1 bg-black/75 text-white text-[9px] font-mono px-1.5 py-0.2">
+                        #{index + 1}
+                      </span>
+
+                      {/* Action overlay */}
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-1.5 text-white">
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveGalleryImage(index)}
+                            title="Remove photo"
+                            className="w-5 h-5 bg-red-600 hover:bg-red-700 text-white flex items-center justify-center rounded-none cursor-pointer"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+
+                        <div className="space-y-1">
+                          <button
+                            type="button"
+                            onClick={() => setPrimaryImage(imgUrl)}
+                            className="w-full bg-white/90 hover:bg-white text-black text-[9px] font-bold uppercase py-0.5 transition-colors"
+                          >
+                            Set Primary
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setHoverImage(imgUrl)}
+                            className="w-full bg-neutral-800/90 hover:bg-neutral-800 text-white text-[9px] font-bold uppercase py-0.5 transition-colors"
+                          >
+                            Set Hover
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="p-4 border border-dashed border-neutral-300 bg-[#FAF7F2]/40 text-center">
+                  <p className="text-[11px] text-neutral-500">
+                    No extra gallery photos added yet. Click <strong>&quot;Upload Multiple Photos&quot;</strong> above to select multiple photos at once.
+                  </p>
+                </div>
+              )}
             </div>
 
           </div>

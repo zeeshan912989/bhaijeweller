@@ -270,6 +270,7 @@ export default function CollectionPLP() {
             images: {
               primary: row.primary_image,
               hover: row.hover_image || undefined,
+              gallery: Array.isArray(row.gallery_images) ? row.gallery_images : [],
             },
             metals: row.metals || [
               { name: "18K Gold Vermeil", type: "gold", colorHex: "#E5C158" },

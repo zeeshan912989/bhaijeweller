@@ -29,6 +29,8 @@ export const metadata: Metadata = {
   description: "Explore handcrafted luxury necklaces, earrings, rings, and bracelets in 18K gold and certified diamonds.",
 };
 
+import ClientProviders from "@/components/providers/ClientProviders";
+
 export default function RootLayout({
   children,
 }: {
@@ -40,9 +42,12 @@ export default function RootLayout({
       className={`${inter.variable} ${cinzel.variable} ${playfair.variable} ${cormorant.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans bg-white text-neutral-900 selection:bg-[#d4af37] selection:text-white">
-        {children}
-        <CookieConsentModal />
+        <ClientProviders>
+          {children}
+          <CookieConsentModal />
+        </ClientProviders>
       </body>
     </html>
   );
 }
+

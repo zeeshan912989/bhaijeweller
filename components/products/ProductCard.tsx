@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Heart, ShoppingBag, Check } from "lucide-react";
 import { Product } from "@/data/products";
+import { useCart } from "@/context/CartContext";
 
 interface ProductCardProps {
   product: Product;
@@ -14,12 +15,30 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [selectedMetalIndex, setSelectedMetalIndex] = useState(0);
   const [addedToBag, setAddedToBag] = useState(false);
+  const { addToCart } = useCart();
 
-  const handleQuickAdd = (e: React.MouseEvent) => {
+  const handleQuickAdd = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setAddedToBag(true);
     setTimeout(() => setAddedToBag(false), 2000);
+
+    const metalName =
+      product.metals && product.metals[selectedMetalIndex]
+        ? product.metals[selectedMetalIndex].name
+        : "18K Gold Vermeil";
+
+    await addToCart(
+      product.id || product.slug,
+      metalName,
+      1,
+      {
+        name: product.name,
+        price: product.price,
+        image: product.images.primary,
+        category: product.category,
+      }
+    );
   };
 
   const discountPercent = product.originalPrice
@@ -45,17 +64,17 @@ export default function ProductCard({ product }: ProductCardProps) {
         <Link href={`/products/${product.slug}`} className="block w-full h-full relative">
           {/* Primary Image */}
           <Image
-            src={product.images.primary}
+            src={product.images.primary || "/ear.jpeg"}
             alt={product.name}
             fill
             sizes="(max-width: 768px) 240px, 280px"
             className="object-cover object-center transition-all duration-700 ease-out group-hover:scale-105 p-3"
           />
 
-          {/* Secondary Hover Image (Smooth Fade-in on Hover) */}
-          {product.images.hover && (
+          {/* Secondary Hover Image (Smooth Fade-in on Hover from hover or first gallery photo) */}
+          {(product.images.hover || (product.images.gallery && product.images.gallery.length > 0)) && (
             <Image
-              src={product.images.hover}
+              src={product.images.hover || product.images.gallery![0]}
               alt={`${product.name} alternate view`}
               fill
               sizes="(max-width: 768px) 240px, 280px"

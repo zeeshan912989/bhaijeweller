@@ -19,11 +19,14 @@ import {
   ArrowRight,
   Search,
   Check,
-  PackagePlus
+  PackagePlus,
+  Play
 } from "lucide-react";
 import { Product } from "@/data/products";
 import { uploadProductImage } from "@/lib/storageHelper";
 import { supabase } from "@/lib/supabaseClient";
+import { setPersistentItem, getPersistentItem } from "@/lib/clientStorage";
+import { compressVideo, CompressionProgress } from "@/lib/videoCompressor";
 
 export interface VideoReelItem {
   id: string;
@@ -38,48 +41,41 @@ export interface VideoReelItem {
   };
 }
 
-export const DEFAULT_INITIAL_REELS: VideoReelItem[] = [];
-
 interface VideoManagerViewProps {
   products: Product[];
   onNavigateToAddProduct?: () => void;
 }
 
 export default function VideoManagerView({ 
-  products,
+  products, 
   onNavigateToAddProduct 
 }: VideoManagerViewProps) {
   const [reels, setReels] = useState<VideoReelItem[]>([]);
-  const [isSaving, setIsSaving] = useState(false);
-  const [successToast, setSuccessToast] = useState(false);
-
-  // Form state for creating a new shoppable video reel
-  const [videoUrl, setVideoUrl] = useState("");
-  const [posterUrl, setPosterUrl] = useState("/ear.jpeg");
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(
-    products.length > 0 ? products[0] : null
-  );
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [productSearch, setProductSearch] = useState("");
-
+  const [videoUrl, setVideoUrl] = useState("");
+  const [posterUrl, setPosterUrl] = useState("");
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
   const [isUploadingPoster, setIsUploadingPoster] = useState(false);
   const [isPreviewMuted, setIsPreviewMuted] = useState(true);
+  const [successToast, setSuccessToast] = useState(false);
+  const [compressProgress, setCompressProgress] = useState<CompressionProgress | null>(null);
 
   const videoFileInputRef = useRef<HTMLInputElement>(null);
   const posterFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load existing reels from localStorage or Supabase on mount
+  // Load existing reels safely from persistent storage or Supabase on mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem("bhai_shoppable_reels_v1");
-      if (stored !== null) {
-        setReels(JSON.parse(stored));
+    async function initReels() {
+      try {
+        const stored = await getPersistentItem<VideoReelItem[]>("bhai_shoppable_reels_v1");
+        if (stored && Array.isArray(stored)) {
+          setReels(stored);
+        }
+      } catch (e) {
+        console.warn("Local reel load notice:", e);
       }
-    } catch (e) {
-      console.error(e);
-    }
 
-    async function loadFromSupabase() {
       try {
         const { data, error } = await supabase
           .from("site_settings")
@@ -89,13 +85,13 @@ export default function VideoManagerView({
 
         if (!error && data && Array.isArray(data.value)) {
           setReels(data.value);
-          localStorage.setItem("bhai_shoppable_reels_v1", JSON.stringify(data.value));
+          await setPersistentItem("bhai_shoppable_reels_v1", data.value);
         }
       } catch (err) {
-        console.warn("Supabase video load:", err);
+        console.warn("Supabase video load notice:", err);
       }
     }
-    loadFromSupabase();
+    initReels();
   }, []);
 
   // Update default selected product if products change
@@ -112,17 +108,26 @@ export default function VideoManagerView({
     return p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q);
   });
 
-  // Video file upload
+  // Video file upload with automatic in-browser compression
   const handleVideoFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploadingVideo(true);
     try {
-      const url = await uploadProductImage(file, "videos");
+      // 1. In-browser client-side compression (reduces 40-100MB to 2-3MB 720p HD)
+      const compressedFile = await compressVideo(file, {
+        maxWidth: 720,
+        maxHeight: 1280,
+        videoBitrate: 1_800_000,
+        onProgress: (p) => setCompressProgress(p),
+      });
+
+      // 2. Upload compressed file to Supabase / Persistent Media Storage
+      const url = await uploadProductImage(compressedFile, "videos");
       setVideoUrl(url);
     } catch (err) {
-      console.error("Video upload failed:", err);
+      console.error("Video upload/compression failed:", err);
     } finally {
       setIsUploadingVideo(false);
     }
@@ -177,10 +182,10 @@ export default function VideoManagerView({
     persistReels(updated);
   };
 
-  // Broadcast & Persist to Supabase / localStorage
+  // Broadcast & Persist to Supabase / IndexedDB / LocalStorage safely
   const persistReels = async (items: VideoReelItem[]) => {
     try {
-      localStorage.setItem("bhai_shoppable_reels_v1", JSON.stringify(items));
+      await setPersistentItem("bhai_shoppable_reels_v1", items);
 
       // Broadcast to live homepage without refresh
       if (typeof window !== "undefined" && "BroadcastChannel" in window) {
@@ -201,7 +206,7 @@ export default function VideoManagerView({
         console.warn("Supabase video sync:", dbErr);
       }
     } catch (err) {
-      console.error(err);
+      console.warn("Reel persistence notice:", err);
     }
   };
 
@@ -298,9 +303,52 @@ export default function VideoManagerView({
                   className="px-4 py-2.5 bg-neutral-950 hover:bg-[#d4af37] text-white hover:text-black text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer rounded-none disabled:opacity-50 whitespace-nowrap"
                 >
                   <Upload className="w-3.5 h-3.5" />
-                  <span>{isUploadingVideo ? "Uploading..." : "Upload MP4"}</span>
+                  <span>{isUploadingVideo ? "Processing..." : "Upload MP4"}</span>
                 </button>
               </div>
+
+              {/* In-Browser Video Compression Progress Indicator */}
+              {compressProgress && (
+                <div className="mt-2.5 p-3 bg-neutral-50 border border-neutral-200 text-xs">
+                  <div className="flex items-center justify-between gap-2 mb-1.5 font-mono">
+                    <span className="text-[11px] font-bold text-neutral-800 flex items-center gap-1.5">
+                      {compressProgress.status === "compressing" && (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin text-[#d4af37]" />
+                      )}
+                      {compressProgress.status === "done" && (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      )}
+                      <span>
+                        {compressProgress.status === "compressing"
+                          ? "In-Browser Video Compressor Active"
+                          : compressProgress.status === "done"
+                          ? "Video Compressed & Ready"
+                          : "Processing Video"}
+                      </span>
+                    </span>
+                    <span className="text-[11px] font-bold text-[#997b24]">
+                      {compressProgress.percent}%
+                    </span>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="w-full bg-neutral-200 h-1.5 rounded-none overflow-hidden">
+                    <div
+                      className="bg-[#d4af37] h-full transition-all duration-200"
+                      style={{ width: `${compressProgress.percent}%` }}
+                    />
+                  </div>
+
+                  <div className="mt-1.5 flex items-center justify-between text-[10.5px] text-neutral-500 font-mono">
+                    <span>{compressProgress.message}</span>
+                    {compressProgress.savedPercentage !== undefined && compressProgress.savedPercentage > 0 && (
+                      <span className="text-emerald-700 font-bold bg-emerald-50 px-1.5 py-0.2 border border-emerald-200">
+                        -{compressProgress.savedPercentage}% Size Saved
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>
@@ -496,15 +544,22 @@ export default function VideoManagerView({
             <div className="relative w-full max-w-[280px] mx-auto aspect-[9/16] bg-neutral-900 rounded-2xl overflow-hidden border border-neutral-300 shadow-xl group">
               
               {/* Video Element */}
-              <video
-                src={videoUrl}
-                poster={posterUrl || selectedProduct?.images.primary}
-                autoPlay
-                loop
-                muted={isPreviewMuted}
-                playsInline
-                className="w-full h-full object-cover"
-              />
+              {videoUrl ? (
+                <video
+                  src={videoUrl}
+                  poster={posterUrl || selectedProduct?.images.primary}
+                  autoPlay
+                  loop
+                  muted={isPreviewMuted}
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center bg-neutral-900 text-neutral-400 p-4 text-center">
+                  <Play className="w-8 h-8 mb-2 opacity-50" />
+                  <p className="text-xs">Upload or paste a video URL to preview</p>
+                </div>
+              )}
 
               {/* Sound Toggle */}
               <button
@@ -586,14 +641,20 @@ export default function VideoManagerView({
             >
               <div className="space-y-2">
                 <div className="relative aspect-[9/14] w-full bg-black overflow-hidden">
-                  <video
-                    src={item.videoUrl}
-                    poster={item.posterUrl}
-                    muted
-                    loop
-                    playsInline
-                    className="w-full h-full object-cover"
-                  />
+                  {item.videoUrl ? (
+                    <video
+                      src={item.videoUrl}
+                      poster={item.posterUrl || undefined}
+                      muted
+                      loop
+                      playsInline
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-neutral-500 text-xs">
+                      No Video
+                    </div>
+                  )}
                   <span className="absolute top-2 left-2 bg-black/70 text-white text-[9px] font-bold px-1.5 py-0.5">
                     Reel #{idx + 1}
                   </span>

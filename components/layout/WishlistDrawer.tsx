@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import { Product } from "@/data/products";
 
+import { useCart } from "@/context/CartContext";
+
 export interface WishlistItem {
   id: string;
   slug: string;
@@ -41,6 +43,7 @@ export default function WishlistDrawer({
 }: WishlistDrawerProps) {
   const [items, setItems] = useState<WishlistItem[]>([]);
   const [addedToastItem, setAddedToastItem] = useState<string | null>(null);
+  const { addToCart } = useCart();
 
   // Load wishlist items from localStorage & listen to cross-component updates
   const loadWishlist = () => {
@@ -94,9 +97,22 @@ export default function WishlistDrawer({
   };
 
   // Move Item to Shopping Bag
-  const handleMoveToBag = (item: WishlistItem) => {
+  const handleMoveToBag = async (item: WishlistItem) => {
     if (onAddToCart) {
       onAddToCart(item);
+    } else {
+      await addToCart(
+        item.id || item.slug,
+        item.metal || "18K Gold Vermeil",
+        1,
+        {
+          name: item.name,
+          price: item.price,
+          image: item.image,
+          category: item.category,
+        }
+      );
+      onClose();
     }
     setAddedToastItem(item.name);
     setTimeout(() => setAddedToastItem(null), 2500);
