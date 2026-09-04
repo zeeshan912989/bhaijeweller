@@ -527,113 +527,186 @@ export default function ProductDetailPage() {
         <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-4 sm:py-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
             
-            {/* LEFT COLUMN: Editorial Image Gallery (7 Columns) */}
-            <div className="lg:col-span-7 space-y-4">
+            {/* LEFT COLUMN: Missoma-Inspired Editorial Multi-Image Gallery (7 Columns) */}
+            <div className="lg:col-span-7 space-y-6">
               
-              {/* Main Active Product Photo */}
-              <div className="relative aspect-square w-full bg-[#FAF7F2] overflow-hidden border border-neutral-200 rounded-none group">
-                <Image
-                  src={galleryImages[selectedImageIndex] || galleryImages[0] || "/ear.jpeg"}
-                  alt={`${product.name} view ${selectedImageIndex + 1}`}
-                  fill
-                  priority
-                  className="object-cover transition-transform duration-700 group-hover:scale-105"
-                />
+              {/* EDITORIAL GRID (Left Hero with Review Quote Overlay + Right 2 Stacked Cards) */}
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 sm:gap-4 items-stretch">
+                
+                {/* 1. MAIN HERO CARD (Left 7 cols on desktop): Rounded-3xl with Review Overlay */}
+                <div className={`relative ${galleryImages.length > 1 ? "md:col-span-7" : "md:col-span-12"} aspect-[4/5] sm:aspect-[4/4.8] bg-[#FAF7F2] overflow-hidden rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-sm group`}>
+                  <Image
+                    src={galleryImages[0] || "/ear.jpeg"}
+                    alt={`${product.name} lifestyle hero view`}
+                    fill
+                    priority
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
 
-                {/* Badge Tag */}
-                {product.badge && (
-                  <span className="absolute top-4 left-4 bg-white/95 backdrop-blur-xs text-[#997b24] text-[10px] font-extrabold uppercase tracking-widest px-3 py-1.5 border border-[#d4af37]/40 shadow-xs">
-                    {product.badge}
-                  </span>
-                )}
+                  {/* Optional Product Badge */}
+                  {product.badge && (
+                    <span className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur-xs text-[#997b24] text-[10px] font-extrabold uppercase tracking-widest px-3 py-1.5 rounded-full border border-[#d4af37]/40 shadow-xs">
+                      {product.badge}
+                    </span>
+                  )}
 
-                {/* Photo Counter Badge (When multiple photos exist) */}
-                {galleryImages.length > 1 && (
-                  <span className="absolute top-4 right-4 bg-black/75 backdrop-blur-xs text-white text-[10px] font-mono px-2.5 py-1 tracking-widest shadow-xs">
-                    {selectedImageIndex + 1} / {galleryImages.length}
-                  </span>
-                )}
+                  {/* Center Luxury Parchment Editorial Review Card Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6 pointer-events-none">
+                    <div className="bg-[#FAF8F5]/95 backdrop-blur-md border border-[#E8E2D5] shadow-xl rounded-xl sm:rounded-2xl p-6 sm:p-7 max-w-[88%] sm:max-w-[82%] text-center pointer-events-auto transform transition-transform duration-500 hover:scale-[1.02]">
+                      {/* 5 Solid Black Stars */}
+                      <div className="flex items-center justify-center gap-1 mb-3.5 text-neutral-950">
+                        {[...Array(5)].map((_, i) => (
+                          <span key={i} className="text-sm sm:text-base leading-none tracking-widest">★</span>
+                        ))}
+                      </div>
 
-                {/* Previous Image Arrow */}
-                {galleryImages.length > 1 && (
+                      {/* Editorial Quote */}
+                      <p className="font-serif italic text-neutral-900 text-[13px] sm:text-[14.5px] leading-relaxed tracking-tight">
+                        {reviews.length > 0 && reviews[0].content
+                          ? `"${reviews[0].content.slice(0, 150)}${reviews[0].content.length > 150 ? "..." : ""}"`
+                          : `"There's something about the mixed metals that makes it so effortlessly wearable. It's one of those rare pieces that genuinely elevates an outfit without trying too hard."`}
+                      </p>
+
+                      {/* Author Tag */}
+                      <p className="mt-4 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.25em] text-neutral-800">
+                        {reviews.length > 0 && reviews[0].author_name
+                          ? `- ${reviews[0].author_name.toUpperCase()}`
+                          : "- REBECCA"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Lightbox / Zoom Icon */}
                   <button
-                    type="button"
-                    aria-label="Previous image"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : galleryImages.length - 1));
+                    aria-label="Enlarge hero image"
+                    onClick={() => {
+                      setSelectedImageIndex(0);
+                      setIsZoomModalOpen(true);
                     }}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 hover:bg-white text-black flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all cursor-pointer rounded-none"
+                    className="absolute bottom-4 right-4 z-10 w-9 h-9 bg-white/90 hover:bg-white text-neutral-900 flex items-center justify-center rounded-full shadow-md transition-colors cursor-pointer"
                   >
-                    <ChevronLeft className="w-5 h-5 stroke-[1.5]" />
+                    <Maximize2 className="w-4 h-4 stroke-[1.5]" />
                   </button>
-                )}
+                </div>
 
-                {/* Next Image Arrow */}
+                {/* 2. RIGHT STACK (Right 5 cols on desktop): 2 Rounded Cards */}
                 {galleryImages.length > 1 && (
-                  <button
-                    type="button"
-                    aria-label="Next image"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedImageIndex((prev) => (prev < galleryImages.length - 1 ? prev + 1 : 0));
-                    }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/90 hover:bg-white text-black flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all cursor-pointer rounded-none"
-                  >
-                    <ChevronRight className="w-5 h-5 stroke-[1.5]" />
-                  </button>
-                )}
-
-                {/* Lightbox / Zoom Icon */}
-                <button
-                  aria-label="Enlarge image"
-                  onClick={() => setIsZoomModalOpen(true)}
-                  className="absolute bottom-4 right-4 w-9 h-9 bg-white/90 hover:bg-white text-neutral-900 flex items-center justify-center rounded-none shadow-md transition-colors cursor-pointer"
-                >
-                  <Maximize2 className="w-4 h-4 stroke-[1.5]" />
-                </button>
-              </div>
-
-              {/* Dynamic Multiple Thumbnails Strip (Shows ALL added photos) */}
-              {galleryImages.length > 1 && (
-                <div className="flex items-center gap-2.5 sm:gap-3 overflow-x-auto pb-2 scrollbar-thin">
-                  {galleryImages.map((imgSrc, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setSelectedImageIndex(idx)}
-                      className={`relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 bg-[#FAF7F2] border transition-all cursor-pointer rounded-none overflow-hidden ${
-                        selectedImageIndex === idx
-                          ? "border-neutral-950 ring-2 ring-black opacity-100"
-                          : "border-neutral-200 hover:border-neutral-400 opacity-70 hover:opacity-100"
-                      }`}
+                  <div className="md:col-span-5 flex flex-col gap-3.5 sm:gap-4 justify-between">
+                    
+                    {/* Top Right Card (Studio Clean Product Cutout) */}
+                    <div 
+                      onClick={() => {
+                        setSelectedImageIndex(1);
+                        setIsZoomModalOpen(true);
+                      }}
+                      className="relative aspect-square sm:aspect-[4/3.8] md:aspect-auto md:flex-1 bg-[#FAF7F2] overflow-hidden rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-sm group cursor-pointer"
                     >
                       <Image
-                        src={imgSrc}
-                        alt={`Thumbnail ${idx + 1}`}
+                        src={galleryImages[1] || galleryImages[0]}
+                        alt={`${product.name} studio isolated shot`}
                         fill
-                        className="object-cover"
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
                       />
-                      <span className="absolute bottom-0.5 right-0.5 bg-black/60 text-white text-[8px] font-mono px-1">
-                        {idx + 1}
-                      </span>
-                    </button>
-                  ))}
+                      <button
+                        aria-label="Enlarge image"
+                        className="absolute bottom-3 right-3 w-8 h-8 bg-white/90 hover:bg-white text-neutral-900 flex items-center justify-center rounded-full shadow-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Maximize2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Bottom Right Card (Detail / Styling Shot with subtle label annotations) */}
+                    <div 
+                      onClick={() => {
+                        setSelectedImageIndex(galleryImages[2] ? 2 : 1);
+                        setIsZoomModalOpen(true);
+                      }}
+                      className="relative aspect-square sm:aspect-[4/3.8] md:aspect-auto md:flex-1 bg-[#FAF7F2] overflow-hidden rounded-2xl sm:rounded-3xl border border-neutral-200/90 shadow-sm group cursor-pointer"
+                    >
+                      <Image
+                        src={galleryImages[2] || galleryImages[1] || galleryImages[0]}
+                        alt={`${product.name} detail styling shot`}
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      
+                      {/* Scale / Styling tags like Missoma */}
+                      <div className="absolute bottom-3.5 inset-x-3 flex items-center justify-between text-[9px] font-mono tracking-widest text-white/90 drop-shadow-md pointer-events-none">
+                        <span className="bg-black/40 backdrop-blur-xs px-2 py-0.5 rounded-full">
+                          {product.category.toUpperCase()}
+                        </span>
+                        <span className="bg-black/40 backdrop-blur-xs px-2 py-0.5 rounded-full">
+                          {currentMetal.name.split(" ")[0] || "FINE"}
+                        </span>
+                      </div>
+
+                      <button
+                        aria-label="Enlarge image"
+                        className="absolute top-3 right-3 w-8 h-8 bg-white/90 hover:bg-white text-neutral-900 flex items-center justify-center rounded-full shadow-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <Maximize2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                  </div>
+                )}
+
+              </div>
+
+              {/* 3. DYNAMIC MULTI-IMAGE THUMBNAILS STRIP (When 3+ photos are added) */}
+              {galleryImages.length > 2 && (
+                <div className="pt-2">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">
+                      All Angles ({galleryImages.length} Images)
+                    </span>
+                    <span className="text-[10px] text-neutral-400 font-mono">
+                      Click to zoom & explore
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-thin">
+                    {galleryImages.map((imgSrc, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                          setSelectedImageIndex(idx);
+                          setIsZoomModalOpen(true);
+                        }}
+                        className={`relative w-18 h-18 sm:w-20 sm:h-20 flex-shrink-0 bg-[#FAF7F2] border transition-all cursor-pointer rounded-xl overflow-hidden group/thumb ${
+                          selectedImageIndex === idx
+                            ? "border-neutral-950 ring-2 ring-black opacity-100 scale-102"
+                            : "border-neutral-200 hover:border-neutral-400 opacity-80 hover:opacity-100"
+                        }`}
+                      >
+                        <Image
+                          src={imgSrc}
+                          alt={`Thumbnail angle ${idx + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                        <span className="absolute bottom-1 right-1 bg-black/70 text-white text-[8.5px] font-mono px-1.5 py-0.5 rounded-sm">
+                          {idx + 1}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
               {/* USP Trust Bar below photos */}
-              <div className="grid grid-cols-3 gap-2 pt-4 border-t border-neutral-200 text-center text-neutral-700">
-                <div className="p-3 bg-[#FAF7F2]/60 border border-neutral-200/80 space-y-1">
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-neutral-200 text-center text-neutral-700">
+                <div className="p-3 bg-[#FAF7F2]/60 border border-neutral-200/80 rounded-xl space-y-1">
                   <ShieldCheck className="w-4 h-4 text-[#997b24] mx-auto" />
                   <p className="text-[10px] font-bold uppercase tracking-wider">100% Recycled Gold</p>
                   <p className="text-[9.5px] text-neutral-500 font-light">Certified ethical precious metals</p>
                 </div>
-                <div className="p-3 bg-[#FAF7F2]/60 border border-neutral-200/80 space-y-1">
+                <div className="p-3 bg-[#FAF7F2]/60 border border-neutral-200/80 rounded-xl space-y-1">
                   <Truck className="w-4 h-4 text-[#997b24] mx-auto" />
                   <p className="text-[10px] font-bold uppercase tracking-wider">Free UK Delivery</p>
                   <p className="text-[9.5px] text-neutral-500 font-light">Tracked on orders over £100</p>
                 </div>
-                <div className="p-3 bg-[#FAF7F2]/60 border border-neutral-200/80 space-y-1">
+                <div className="p-3 bg-[#FAF7F2]/60 border border-neutral-200/80 rounded-xl space-y-1">
                   <RotateCcw className="w-4 h-4 text-[#997b24] mx-auto" />
                   <p className="text-[10px] font-bold uppercase tracking-wider">30-Day Returns</p>
                   <p className="text-[9.5px] text-neutral-500 font-light">Complimentary exchange</p>
