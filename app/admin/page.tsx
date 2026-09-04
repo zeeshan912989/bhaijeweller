@@ -13,6 +13,7 @@ import CustomersView from "@/components/admin/CustomersView";
 import CouponsView from "@/components/admin/CouponsView";
 import LayoutCustomizerView from "@/components/admin/LayoutCustomizerView";
 import SettingsView from "@/components/admin/SettingsView";
+import SetsAndIRLView from "@/components/admin/SetsAndIRLView";
 import { ALL_PRODUCTS, Product } from "@/data/products";
 import { supabase } from "@/lib/supabaseClient";
 
@@ -316,6 +317,8 @@ export default function AdminPage() {
               onNavigateToAddProduct={() => setActiveTab("add-product")}
             />
           )}
+
+          {activeTab === "sets-irl" && <SetsAndIRLView products={products} />}
 
           {activeTab === "orders" && (
             <OrdersView

@@ -297,12 +297,40 @@ CREATE POLICY "Public Access product-images" ON storage.objects
     FOR SELECT USING (bucket_id = 'product-images');
 
 -- Allow authenticated and anon upload to product-images
-CREATE POLICY "Allow Upload to product-images" ON storage.objects
-    FOR INSERT WITH CHECK (bucket_id = 'product-images');
+-- 14. PRODUCT SETS & BUNDLES TABLE (Save As A Set / More Styles)
+CREATE TABLE IF NOT EXISTS public.product_sets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    target_product_slug TEXT NOT NULL DEFAULT 'all',
+    set_title TEXT NOT NULL,
+    set_slug TEXT,
+    badge_text TEXT NOT NULL DEFAULT 'SAVE AS A SET',
+    discount_description TEXT NOT NULL DEFAULT 'Save 15% with our jewellery sets.',
+    bundle_image TEXT NOT NULL,
+    bundle_price NUMERIC(10, 2) NOT NULL,
+    original_total_price NUMERIC(10, 2),
+    included_items JSONB NOT NULL DEFAULT '[]'::jsonb,
+    more_styles JSONB NOT NULL DEFAULT '[]'::jsonb,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 
-CREATE POLICY "Allow Update to product-images" ON storage.objects
-    FOR UPDATE USING (bucket_id = 'product-images');
+ALTER TABLE public.product_sets ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public product_sets are viewable by everyone" ON public.product_sets FOR SELECT USING (true);
+CREATE POLICY "Service role full access on product_sets" ON public.product_sets FOR ALL USING (true);
 
-CREATE POLICY "Allow Delete to product-images" ON storage.objects
-    FOR DELETE USING (bucket_id = 'product-images');
+-- 15. SEE IT IRL TABLE (Community Real-Life Styled Gallery)
+CREATE TABLE IF NOT EXISTS public.see_it_irl (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    image_url TEXT NOT NULL,
+    customer_handle TEXT NOT NULL,
+    caption TEXT,
+    product_slug TEXT DEFAULT 'all',
+    product_name TEXT,
+    product_price NUMERIC(10, 2),
+    display_order INT DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+ALTER TABLE public.see_it_irl ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public see_it_irl are viewable by everyone" ON public.see_it_irl FOR SELECT USING (true);
+CREATE POLICY "Service role full access on see_it_irl" ON public.see_it_irl FOR ALL USING (true);
 
