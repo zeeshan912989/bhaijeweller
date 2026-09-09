@@ -13,29 +13,53 @@ import WishlistDrawer from "@/components/layout/WishlistDrawer";
 import { useCart } from "@/context/CartContext";
 
 interface NavItem {
+  id?: string;
   label: string;
   href: string;
   hasDropdown?: boolean;
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { label: "EARRINGS", href: "/collections/earrings", hasDropdown: true },
-  { label: "NECKLACES", href: "/collections/necklaces", hasDropdown: true },
-  { label: "BRACELETS", href: "/collections/bracelets", hasDropdown: true },
-  { label: "RINGS", href: "/collections/rings", hasDropdown: true },
-  { label: "BEST SELLERS", href: "/collections/best-sellers", hasDropdown: true },
-  { label: "GIFTS", href: "/collections/gifts", hasDropdown: true },
-  { label: "SHOP BY", href: "/collections/shop-by", hasDropdown: true },
-];
+interface NavbarLayoutConfig {
+  logoType: "text" | "image";
+  logoText: string;
+  logoImageUrl: string;
+  navFont: "cinzel" | "cormorant" | "playfair" | "inter";
+  navItems: NavItem[];
+}
+
+const DEFAULT_NAVBAR_CONFIG: NavbarLayoutConfig = {
+  logoType: "text",
+  logoText: "BHAI",
+  logoImageUrl: "",
+  navFont: "cinzel",
+  navItems: [
+    { id: "1", label: "EARRINGS", href: "/collections/earrings", hasDropdown: true },
+    { id: "2", label: "NECKLACES", href: "/collections/necklaces", hasDropdown: true },
+    { id: "3", label: "BRACELETS", href: "/collections/bracelets", hasDropdown: true },
+    { id: "4", label: "RINGS", href: "/collections/rings", hasDropdown: true },
+    { id: "5", label: "BEST SELLERS", href: "/collections/best-sellers", hasDropdown: true },
+    { id: "6", label: "GIFTS", href: "/collections/gifts", hasDropdown: true },
+    { id: "7", label: "SHOP BY", href: "/collections/shop-by", hasDropdown: true },
+  ],
+};
+
+const FONT_MAP: Record<string, string> = {
+  cinzel: "var(--font-cinzel), Georgia, serif",
+  cormorant: "var(--font-cormorant), Georgia, serif",
+  playfair: "var(--font-playfair), Georgia, serif",
+  inter: "var(--font-inter), sans-serif",
+};
+
+const NAV_ITEMS: NavItem[] = DEFAULT_NAVBAR_CONFIG.navItems;
 
 interface MegaMenuContent {
-  categories: { label: string; href: string; isBold?: boolean }[];
-  materials: { name: string; colorHex: string; href: string }[];
-  circleStyles: { name: string; image: string; href: string }[];
-  featured: {
+  categories: { label: string; href: string; isBold?: boolean; badge?: string }[];
+  materials: { name: string; colorHex: string; href: string; karat?: string }[];
+  curatedEdits: { title: string; subtitle: string; href: string; tag?: string }[];
+  atelierHighlight: {
     title: string;
-    subtitle: string;
-    image: string;
+    quote: string;
+    perks: string[];
     href: string;
     buttonText: string;
   };
@@ -45,208 +69,201 @@ const MEGA_MENU_DATA: Record<string, MegaMenuContent> = {
   EARRINGS: {
     categories: [
       { label: "Shop All Earrings", href: "/collections/earrings", isBold: true },
-      { label: "Huggie Hoops", href: "/collections/earrings" },
-      { label: "Chunky Statement Hoops", href: "/collections/earrings" },
-      { label: "Stud Earrings", href: "/collections/earrings" },
+      { label: "Huggie Hoops", href: "/collections/earrings", badge: "BESTSELLER" },
+      { label: "Chunky Statement Hoops", href: "/collections/earrings", badge: "NEW" },
+      { label: "Solitaire Stud Earrings", href: "/collections/earrings" },
       { label: "Drop & Dangle Earrings", href: "/collections/earrings" },
-      { label: "Ear Cuffs (No Piercing)", href: "/collections/earrings" },
-      { label: "Ear Stacking Sets", href: "/collections/earrings" },
-      { label: "Piercing Jewellery", href: "/services/piercing" },
+      { label: "Ear Cuffs (No Piercing)", href: "/collections/earrings", badge: "POPULAR" },
+      { label: "Curated Ear Stacking Sets", href: "/collections/earrings" },
+      { label: "Piercing Jewellery Studio", href: "/services/piercing" },
     ],
     materials: [
-      { name: "18K Gold Vermeil", colorHex: "#E5C158", href: "/collections/earrings" },
-      { name: "14K Solid Gold", colorHex: "#ECC96A", href: "/collections/earrings" },
-      { name: "925 Sterling Silver", colorHex: "#D1D5DB", href: "/collections/earrings" },
-      { name: "Rose Gold", colorHex: "#E8A598", href: "/collections/earrings" },
-      { name: "Certified Moissanite & Diamond", colorHex: "#BAE6FD", href: "/collections/earrings" },
+      { name: "18K Gold Vermeil", colorHex: "#E5C158", href: "/collections/earrings", karat: "Heavy 2.5µm Layer" },
+      { name: "14K Solid Gold", colorHex: "#ECC96A", href: "/collections/earrings", karat: "Lifetime Purity" },
+      { name: "925 Sterling Silver", colorHex: "#D1D5DB", href: "/collections/earrings", karat: "Rhodium Plated" },
+      { name: "Rose Gold Edition", colorHex: "#E8A598", href: "/collections/earrings", karat: "18K Rose Glow" },
+      { name: "Certified Moissanite & Diamond", colorHex: "#BAE6FD", href: "/collections/earrings", karat: "D-Flawless Clarity" },
     ],
-    circleStyles: [
-      { name: "Hoops & Huggies", image: "/ear.jpeg", href: "/collections/earrings" },
-      { name: "Studs & Solitaire", image: "/ear ring.jpeg", href: "/collections/earrings" },
-      { name: "Ear Cuffs", image: "/shop_img.jpeg", href: "/collections/earrings" },
-      { name: "Statement Drops", image: "/hero_section.jpg", href: "/collections/earrings" },
+    curatedEdits: [
+      { title: "The Everyday Ear Stack", subtitle: "Effortless 24/7 comfort huggies & studs", href: "/collections/earrings", tag: "STYLING EDIT" },
+      { title: "Chunky Bold Hoops", subtitle: "Weighty sculptural curves for elevated nights", href: "/collections/earrings", tag: "TRENDING" },
+      { title: "Water-Resistant Collection", subtitle: "Shower, sweat, and swim without fading", href: "/collections/earrings", tag: "DURABLE 18K" },
     ],
-    featured: {
+    atelierHighlight: {
       title: "THE SIGNATURE EAR STACK",
-      subtitle: "Mix, match and stack with our iconic 18K gold and diamond ear pieces.",
-      image: "/ear ring.jpeg",
+      quote: "Hand-sculpted in Birmingham's Jewellery Quarter from recycled 18K gold vermeil and certified ethical diamonds.",
+      perks: ["Complimentary UK Next-Day Delivery", "Luxury Velvet Gift Box Included", "Lifetime Anti-Tarnish Warranty"],
       href: "/collections/earrings",
-      buttonText: "Explore Earrings",
+      buttonText: "Explore Earring Collection",
     },
   },
   NECKLACES: {
     categories: [
       { label: "Shop All Necklaces", href: "/collections/necklaces", isBold: true },
-      { label: "T-Bar & Knot Chains", href: "/collections/necklaces" },
-      { label: "Chunky Chain Necklaces", href: "/collections/necklaces" },
-      { label: "Pendant & Charm Necklaces", href: "/collections/necklaces" },
+      { label: "T-Bar & Heavy Knot Chains", href: "/collections/necklaces", badge: "ICONIC" },
+      { label: "Chunky Curb & Cable Chains", href: "/collections/necklaces" },
+      { label: "Pendant & Charm Necklaces", href: "/collections/necklaces", badge: "NEW" },
       { label: "Fine Chokers & Collars", href: "/collections/necklaces" },
-      { label: "Layered Necklace Sets", href: "/collections/necklaces" },
-      { label: "Lockets & Medallions", href: "/collections/necklaces" },
+      { label: "Multi-Layering Necklace Sets", href: "/collections/necklaces", badge: "SET SAVING" },
+      { label: "Heirloom Lockets & Medallions", href: "/collections/necklaces" },
     ],
     materials: [
-      { name: "18K Gold Vermeil", colorHex: "#E5C158", href: "/collections/necklaces" },
-      { name: "14K Solid Gold", colorHex: "#ECC96A", href: "/collections/necklaces" },
-      { name: "925 Sterling Silver", colorHex: "#D1D5DB", href: "/collections/necklaces" },
-      { name: "Mixed Gold & Silver", colorHex: "#E5C158", href: "/collections/necklaces" },
-      { name: "Lab Grown Diamonds", colorHex: "#BAE6FD", href: "/collections/necklaces" },
+      { name: "18K Gold Vermeil", colorHex: "#E5C158", href: "/collections/necklaces", karat: "Heavy Gold Core" },
+      { name: "14K Solid Gold", colorHex: "#ECC96A", href: "/collections/necklaces", karat: "Solid Karat Gold" },
+      { name: "925 Sterling Silver", colorHex: "#D1D5DB", href: "/collections/necklaces", karat: "Anti-Tarnish Seal" },
+      { name: "Mixed Gold & Silver Links", colorHex: "#E5C158", href: "/collections/necklaces", karat: "Two-Tone Alloy" },
+      { name: "Lab-Grown Solitaires", colorHex: "#BAE6FD", href: "/collections/necklaces", karat: "Certified Ethical" },
     ],
-    circleStyles: [
-      { name: "T-Bar Chains", image: "/necklace.jpeg", href: "/collections/necklaces" },
-      { name: "Pendants", image: "/red.jpeg", href: "/collections/necklaces" },
-      { name: "Layering Sets", image: "/shop_img.jpeg", href: "/collections/necklaces" },
-      { name: "Fine Chains", image: "/hero_section.jpg", href: "/collections/necklaces" },
+    curatedEdits: [
+      { title: "T-Bar Heritage Links", subtitle: "Our quintessential British heavyweight chains", href: "/collections/necklaces", tag: "HALLMARK ICON" },
+      { title: "3-Tier Layering Guide", subtitle: "Choker, chain, and pendant harmonized", href: "/collections/necklaces", tag: "HOW TO WEAR" },
+      { title: "Bespoke Engravable Tags", subtitle: "Initials, dates, and Roman numerals", href: "/collections/necklaces", tag: "CUSTOM" },
     ],
-    featured: {
-      title: "ICONIC T-BAR COLLECTION",
-      subtitle: "Bold statement chunky links handcrafted in Birmingham's Jewellery Quarter.",
-      image: "/necklace.jpeg",
+    atelierHighlight: {
+      title: "ICONIC T-BAR NECKLACES",
+      quote: "Engineered with seamless toggle closures and heavyweight hollow-form links for effortless everyday luxury.",
+      perks: ["Free UK Express Tracked Shipping", "Custom Length Extenders Available", "UK Assay Hallmarked"],
       href: "/collections/necklaces",
-      buttonText: "Shop Necklaces",
+      buttonText: "Shop All Necklaces",
     },
   },
   BRACELETS: {
     categories: [
       { label: "Shop All Bracelets", href: "/collections/bracelets", isBold: true },
-      { label: "Chain Link Bracelets", href: "/collections/bracelets" },
-      { label: "Tennis Bracelets", href: "/collections/bracelets" },
-      { label: "Solid Bangles & Cuffs", href: "/collections/bracelets" },
-      { label: "Welded Permanent Bracelets", href: "/services/piercing" },
-      { label: "Charm Bracelets", href: "/collections/bracelets" },
-      { label: "Anklets", href: "/collections/bracelets" },
+      { label: "Heavy Chain Link Bracelets", href: "/collections/bracelets", badge: "BESTSELLER" },
+      { label: "Sparkling Tennis Bracelets", href: "/collections/bracelets", badge: "NEW" },
+      { label: "Solid Sculpted Bangles & Cuffs", href: "/collections/bracelets" },
+      { label: "Welded Permanent Bracelets", href: "/services/piercing", badge: "IN-STORE" },
+      { label: "T-Bar & Charm Bangles", href: "/collections/bracelets" },
+      { label: "Delicate Anklets", href: "/collections/bracelets" },
     ],
     materials: [
-      { name: "18K Gold Vermeil", colorHex: "#E5C158", href: "/collections/bracelets" },
-      { name: "14K Solid Gold", colorHex: "#ECC96A", href: "/collections/bracelets" },
-      { name: "925 Sterling Silver", colorHex: "#D1D5DB", href: "/collections/bracelets" },
-      { name: "Sparkling Diamonds", colorHex: "#BAE6FD", href: "/collections/bracelets" },
+      { name: "18K Gold Vermeil", colorHex: "#E5C158", href: "/collections/bracelets", karat: "2.5µm Gold Purity" },
+      { name: "14K Solid Gold", colorHex: "#ECC96A", href: "/collections/bracelets", karat: "Wear 24/7 Forever" },
+      { name: "925 Sterling Silver", colorHex: "#D1D5DB", href: "/collections/bracelets", karat: "Rhodium Lustre" },
+      { name: "Certified Diamonds", colorHex: "#BAE6FD", href: "/collections/bracelets", karat: "Prong-Set Sparkle" },
     ],
-    circleStyles: [
-      { name: "Chain Links", image: "/braclet.jpeg", href: "/collections/bracelets" },
-      { name: "Tennis Bangles", image: "/braclet2.jpeg", href: "/collections/bracelets" },
-      { name: "Solid Cuffs", image: "/braclet3.jpeg", href: "/collections/bracelets" },
-      { name: "Welded Bracelets", image: "/shop_img.jpeg", href: "/services/piercing" },
+    curatedEdits: [
+      { title: "The Permanent Welded Bar", subtitle: "Custom fitted seamlessly onto your wrist", href: "/services/piercing", tag: "EXPERIENCE" },
+      { title: "Sculpted Solid Cuffs", subtitle: "High-polished minimalist metal statements", href: "/collections/bracelets", tag: "LUXURY" },
+      { title: "Diamond Tennis Stacks", subtitle: "Refined glamour with secure double-lock", href: "/collections/bracelets", tag: "FINE JEWELLERY" },
     ],
-    featured: {
-      title: "LUXURY WRIST STACKS",
-      subtitle: "Seamlessly engineered links designed for effortless 24/7 wear.",
-      image: "/braclet.jpeg",
+    atelierHighlight: {
+      title: "SCULPTED WRIST STACKS",
+      quote: "Crafted to be stacked or worn solo. Built with precision clasps designed to stay secure through daily life.",
+      perks: ["Free 30-Day Resizing & Returns", "Signature Velvet Pouch Included", "Allergy-Safe & Nickel-Free"],
       href: "/collections/bracelets",
-      buttonText: "Shop Bracelets",
+      buttonText: "Shop All Bracelets",
     },
   },
   RINGS: {
     categories: [
       { label: "Shop All Rings", href: "/collections/rings", isBold: true },
-      { label: "Stacking Ring Bands", href: "/collections/rings" },
-      { label: "Chunky Statement Rings", href: "/collections/rings" },
+      { label: "Stacking Ring Bands", href: "/collections/rings", badge: "POPULAR" },
+      { label: "Chunky Dome & Statement Rings", href: "/collections/rings", badge: "NEW" },
       { label: "Signet & Pinky Rings", href: "/collections/rings" },
-      { label: "Eternity Diamond Bands", href: "/collections/rings" },
-      { label: "Ring Sizer & Guides", href: "/help/ring-size-guide" },
+      { label: "Eternity Diamond Bands", href: "/collections/rings", badge: "LUXURY" },
+      { label: "Complimentary Ring Sizer", href: "/help/ring-size-guide", badge: "FREE TOOL" },
     ],
     materials: [
-      { name: "18K Gold Vermeil", colorHex: "#E5C158", href: "/collections/rings" },
-      { name: "14K Solid Gold", colorHex: "#ECC96A", href: "/collections/rings" },
-      { name: "925 Sterling Silver", colorHex: "#D1D5DB", href: "/collections/rings" },
-      { name: "Certified Diamonds", colorHex: "#BAE6FD", href: "/collections/rings" },
+      { name: "18K Gold Vermeil", colorHex: "#E5C158", href: "/collections/rings", karat: "Solid Core Vermeil" },
+      { name: "14K Solid Gold", colorHex: "#ECC96A", href: "/collections/rings", karat: "Solid Karat Gold" },
+      { name: "925 Sterling Silver", colorHex: "#D1D5DB", href: "/collections/rings", karat: "Hypoallergenic" },
+      { name: "Moissanite & Diamonds", colorHex: "#BAE6FD", href: "/collections/rings", karat: "Hand-Set Pavé" },
     ],
-    circleStyles: [
-      { name: "Stacking Bands", image: "/ring.jpeg", href: "/collections/rings" },
-      { name: "Statement Domes", image: "/ring2.jpeg", href: "/collections/rings" },
-      { name: "Signet Rings", image: "/shop_img.jpeg", href: "/collections/rings" },
-      { name: "Diamond Rings", image: "/hero_section.jpg", href: "/collections/rings" },
+    curatedEdits: [
+      { title: "The Signet & Pinky Edit", subtitle: "Hand-engraved initials and crests", href: "/collections/rings", tag: "BESPOKE" },
+      { title: "Trio Stacking Rings", subtitle: "Mix mixed metals for an effortless stack", href: "/collections/rings", tag: "STYLING" },
+      { title: "Solid Eternity Bands", subtitle: "Seamless diamond ribbons crafted forever", href: "/collections/rings", tag: "TIMELESS" },
     ],
-    featured: {
+    atelierHighlight: {
       title: "SCULPTED TO PERFECTION",
-      subtitle: "Comfort-fit solid gold and sterling silver rings crafted to last a lifetime.",
-      image: "/ring.jpeg",
+      quote: "Comfort-fit solid interior contours engineered to sit weightlessly on your fingers with unmatched brilliance.",
+      perks: ["Complimentary Ring Size Exchange", "Bespoke Engraving On Request", "UK Hallmarked Authenticity"],
       href: "/collections/rings",
-      buttonText: "Shop Rings",
+      buttonText: "Shop Ring Collection",
     },
   },
   "BEST SELLERS": {
     categories: [
       { label: "Shop All Best Sellers", href: "/collections/best-sellers", isBold: true },
-      { label: "Most Loved Jewellery", href: "/collections/best-sellers" },
-      { label: "Trending on TikTok & Instagram", href: "/collections/best-sellers" },
-      { label: "Restocked Icons", href: "/collections/best-sellers" },
-      { label: "Customer Top 5-Star Rated", href: "/collections/best-sellers" },
+      { label: "Most Loved Worldwide", href: "/collections/best-sellers", badge: "TOP RATED" },
+      { label: "Viral TikTok & Instagram Icons", href: "/collections/best-sellers", badge: "TRENDING" },
+      { label: "Restocked Vault Classics", href: "/collections/best-sellers", badge: "RESTOCKED" },
+      { label: "Client 5-Star Hall of Fame", href: "/collections/best-sellers" },
     ],
     materials: [
-      { name: "18K Gold Vermeil", colorHex: "#E5C158", href: "/collections/best-sellers" },
-      { name: "14K Solid Gold", colorHex: "#ECC96A", href: "/collections/best-sellers" },
-      { name: "925 Sterling Silver", colorHex: "#D1D5DB", href: "/collections/best-sellers" },
+      { name: "18K Gold Vermeil", colorHex: "#E5C158", href: "/collections/best-sellers", karat: "Client Favorite" },
+      { name: "14K Solid Gold", colorHex: "#ECC96A", href: "/collections/best-sellers", karat: "Lifetime Wear" },
+      { name: "925 Sterling Silver", colorHex: "#D1D5DB", href: "/collections/best-sellers", karat: "Pure Radiance" },
     ],
-    circleStyles: [
-      { name: "T-Bar Chains", image: "/necklace.jpeg", href: "/collections/necklaces" },
-      { name: "Knot Hoops", image: "/ear ring.jpeg", href: "/collections/earrings" },
-      { name: "Link Bracelets", image: "/braclet.jpeg", href: "/collections/bracelets" },
-      { name: "Dome Rings", image: "/ring.jpeg", href: "/collections/rings" },
+    curatedEdits: [
+      { title: "The 10 Iconic Essentials", subtitle: "The core foundations of the BHAI jewellery box", href: "/collections/best-sellers", tag: "FOUNDATIONS" },
+      { title: "High-Review Favourites", subtitle: "Over 2,500 verified 5-star customer ratings", href: "/collections/best-sellers", tag: "5-STAR RATED" },
+      { title: "Restock Alerts", subtitle: "Limited batches handcrafted weekly", href: "/collections/best-sellers", tag: "LIMITED" },
     ],
-    featured: {
+    atelierHighlight: {
       title: "THE HALL OF FAME",
-      subtitle: "Discover the iconic luxury pieces our clients wear every single day.",
-      image: "/hero_section.jpg",
+      quote: "Discover the timeless pieces our clients reach for every single morning. Designed to never go out of style.",
+      perks: ["Free UK Next-Day Delivery Over £100", "Includes Iconic Gift Box Packaging", "30-Day Hassle-Free Returns"],
       href: "/collections/best-sellers",
-      buttonText: "Shop Best Sellers",
+      buttonText: "Explore Best Sellers",
     },
   },
   GIFTS: {
     categories: [
       { label: "Shop All Gifts", href: "/collections/gifts", isBold: true },
-      { label: "Gifts for Her", href: "/collections/gifts" },
-      { label: "Birthday & Milestone Gifts", href: "/collections/gifts" },
-      { label: "Gifts Under £100", href: "/collections/gifts" },
+      { label: "Gifts for Her", href: "/collections/gifts", badge: "CURATED" },
+      { label: "Birthday & Anniversary Gifts", href: "/collections/gifts" },
+      { label: "Gifts Under £100", href: "/collections/gifts", badge: "UNDER £100" },
       { label: "Gifts Under £250", href: "/collections/gifts" },
       { label: "Luxury Gift Cards", href: "/collections/gifts" },
-      { label: "Complimentary Gift Wrapping", href: "/collections/gifts" },
+      { label: "Complimentary Gift Wrapping", href: "/collections/gifts", badge: "FREE" },
     ],
     materials: [
-      { name: "18K Gold Vermeil", colorHex: "#E5C158", href: "/collections/gifts" },
-      { name: "14K Solid Gold", colorHex: "#ECC96A", href: "/collections/gifts" },
-      { name: "Sterling Silver", colorHex: "#D1D5DB", href: "/collections/gifts" },
+      { name: "18K Gold Vermeil", colorHex: "#E5C158", href: "/collections/gifts", karat: "Luxury Gifting" },
+      { name: "14K Solid Gold", colorHex: "#ECC96A", href: "/collections/gifts", karat: "Milestone Presents" },
+      { name: "Sterling Silver", colorHex: "#D1D5DB", href: "/collections/gifts", karat: "Everyday Treasures" },
     ],
-    circleStyles: [
-      { name: "Gift Sets", image: "/red.jpeg", href: "/collections/gifts" },
-      { name: "Earring Gifts", image: "/ear.jpeg", href: "/collections/gifts" },
-      { name: "Ring Presents", image: "/ring2.jpeg", href: "/collections/gifts" },
-      { name: "Luxury Packaging", image: "/braclet3.jpeg", href: "/collections/gifts" },
+    curatedEdits: [
+      { title: "Complimentary Gift Wrapping", subtitle: "Signature box, embossed ribbon, and handwritten card", href: "/collections/gifts", tag: "COMPLIMENTARY" },
+      { title: "Milestone Jewellery", subtitle: "Commemorate birthdays, graduations and anniversaries", href: "/collections/gifts", tag: "KEEPSAKES" },
+      { title: "Instant E-Gift Cards", subtitle: "Delivered straight to their inbox in seconds", href: "/collections/gifts", tag: "INSTANT" },
     ],
-    featured: {
+    atelierHighlight: {
       title: "THE ART OF GIFTING",
-      subtitle: "Unbox unforgettable moments with signature packaging and custom cards.",
-      image: "/shop_img.jpeg",
+      quote: "Every order arrives ready to gift in our signature embossed presentation box with personalized gift notes.",
+      perks: ["Free Handwritten Luxury Card", "Discreet Outer Packaging", "Extended Holiday Return Window"],
       href: "/collections/gifts",
-      buttonText: "Explore Gifts",
+      buttonText: "Explore Gift Guide",
     },
   },
   "SHOP BY": {
     categories: [
-      { label: "Shop by Metal", href: "/collections/shop-by", isBold: true },
+      { label: "Shop by Metal & Finish", href: "/collections/shop-by", isBold: true },
       { label: "Shop by Price Range", href: "/collections/shop-by" },
-      { label: "Shop New In Arrivals", href: "/collections/shop-by" },
+      { label: "Shop New In Arrivals", href: "/collections/shop-by", badge: "NEW" },
       { label: "In-Store Jewellery Styling", href: "/stores" },
-      { label: "Welded Bracelet Studio", href: "/services/piercing" },
-      { label: "Book Store Appointment", href: "/stores" },
+      { label: "Welded Bracelet Studio", href: "/services/piercing", badge: "BOOK ONLINE" },
+      { label: "Book Showroom Appointment", href: "/stores" },
     ],
     materials: [
-      { name: "18K Gold Vermeil", colorHex: "#E5C158", href: "/collections/shop-by" },
-      { name: "14K Solid Gold", colorHex: "#ECC96A", href: "/collections/shop-by" },
-      { name: "925 Sterling Silver", colorHex: "#D1D5DB", href: "/collections/shop-by" },
-      { name: "Rose Gold", colorHex: "#E8A598", href: "/collections/shop-by" },
+      { name: "18K Gold Vermeil", colorHex: "#E5C158", href: "/collections/shop-by", karat: "Gold Vermeil" },
+      { name: "14K Solid Gold", colorHex: "#ECC96A", href: "/collections/shop-by", karat: "Solid Gold" },
+      { name: "925 Sterling Silver", colorHex: "#D1D5DB", href: "/collections/shop-by", karat: "Sterling Silver" },
+      { name: "Rose Gold Edition", colorHex: "#E8A598", href: "/collections/shop-by", karat: "Rose Gold" },
     ],
-    circleStyles: [
-      { name: "Store Experience", image: "/shop_img.jpeg", href: "/stores" },
-      { name: "New In", image: "/hero_section.jpg", href: "/collections/shop-by" },
-      { name: "Fine Chains", image: "/necklace.jpeg", href: "/collections/necklaces" },
-      { name: "Piercing Studio", image: "/ear ring.jpeg", href: "/services/piercing" },
+    curatedEdits: [
+      { title: "Visit Our Boutiques", subtitle: "Experience in-person bespoke styling in Birmingham & London", href: "/stores", tag: "STORES" },
+      { title: "Permanent Welded Studio", subtitle: "Custom fitted permanent chain welded live", href: "/services/piercing", tag: "IN-STORE" },
+      { title: "Piercing & Stacking Bar", subtitle: "Professional ear styling with 14K solid gold", href: "/services/piercing", tag: "STUDIO" },
     ],
-    featured: {
-      title: "VISIT BHAI SHOWROOM",
-      subtitle: "Meet our jewellery specialists in Birmingham and try our iconic pieces in person.",
-      image: "/shop_img.jpeg",
+    atelierHighlight: {
+      title: "VISIT BHAI ATELIER",
+      quote: "Book a complimentary one-on-one styling session with our certified jewellery specialists in our boutique showroom.",
+      perks: ["1-on-1 Personalized Styling", "Complimentary Champagne & Refreshments", "Exclusive In-Store Pieces"],
       href: "/stores",
-      buttonText: "Book Appointment",
+      buttonText: "Book In-Store Appointment",
     },
   },
 };
@@ -261,6 +278,9 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [showPromoBar, setShowPromoBar] = useState(true);
   
+  // Real-time dynamic navbar configuration (font, logo, dynamic links)
+  const [navbarConfig, setNavbarConfig] = useState<NavbarLayoutConfig>(DEFAULT_NAVBAR_CONFIG);
+
   // Real-time dynamic banner configuration
   const [bannerConfig, setBannerConfig] = useState({
     topBannerText: "SIGN UP FOR 10% OFF YOUR FIRST ORDER",
@@ -314,19 +334,49 @@ export default function Navbar() {
     };
   }, []);
 
-  // Real-time listener for instant banner changes without page refresh
+  // Real-time listener for instant banner & navbar changes without page refresh
   useEffect(() => {
     // 1. Initial local load
     try {
-      const local = localStorage.getItem("bhai_site_banners_v1");
-      if (local) {
-        setBannerConfig(JSON.parse(local));
+      const localBanners = localStorage.getItem("bhai_site_banners_v1");
+      if (localBanners) {
+        setBannerConfig(JSON.parse(localBanners));
+      }
+      const localNavbar = localStorage.getItem("bhai_navbar_config_v1");
+      if (localNavbar) {
+        setNavbarConfig(JSON.parse(localNavbar));
       }
     } catch (e) {
       console.error(e);
     }
 
-    // 2. BroadcastChannel for instant zero-latency cross-tab sync
+    // 2. Fetch from Supabase in background
+    const fetchSupabaseSettings = async () => {
+      try {
+        const { data } = await supabase.from("site_settings").select("key, value");
+        if (data && Array.isArray(data)) {
+          const navSetting = data.find((s) => s.key === "navbar_config");
+          if (navSetting?.value) {
+            setNavbarConfig(navSetting.value);
+            try {
+              localStorage.setItem("bhai_navbar_config_v1", JSON.stringify(navSetting.value));
+            } catch {}
+          }
+          const bannerSetting = data.find((s) => s.key === "site_banners");
+          if (bannerSetting?.value) {
+            setBannerConfig(bannerSetting.value);
+            try {
+              localStorage.setItem("bhai_site_banners_v1", JSON.stringify(bannerSetting.value));
+            } catch {}
+          }
+        }
+      } catch (err) {
+        // Fallback to local
+      }
+    };
+    fetchSupabaseSettings();
+
+    // 3. BroadcastChannel for instant zero-latency cross-tab sync
     let channel: BroadcastChannel | null = null;
     if (typeof window !== "undefined" && "BroadcastChannel" in window) {
       channel = new BroadcastChannel("bhai_realtime_layout");
@@ -334,16 +384,23 @@ export default function Navbar() {
         if (event.data?.type === "BANNERS_UPDATED" && event.data.payload) {
           setBannerConfig(event.data.payload);
         }
+        if (event.data?.type === "NAVBAR_CONFIG_UPDATED" && event.data.payload) {
+          setNavbarConfig(event.data.payload);
+        }
+        if (event.data?.type === "LAYOUT_UPDATED") {
+          if (event.data.payload?.navbar) setNavbarConfig(event.data.payload.navbar);
+          if (event.data.payload?.banners) setBannerConfig(event.data.payload.banners);
+        }
       };
     }
 
-    // 3. Storage event listener for standard storage updates
+    // 4. Storage event listener for standard storage updates
     const handleStorage = (e: StorageEvent | Event) => {
       try {
-        const updated = localStorage.getItem("bhai_site_banners_v1");
-        if (updated) {
-          setBannerConfig(JSON.parse(updated));
-        }
+        const updatedBanners = localStorage.getItem("bhai_site_banners_v1");
+        if (updatedBanners) setBannerConfig(JSON.parse(updatedBanners));
+        const updatedNavbar = localStorage.getItem("bhai_navbar_config_v1");
+        if (updatedNavbar) setNavbarConfig(JSON.parse(updatedNavbar));
       } catch (err) {
         console.error(err);
       }
@@ -465,6 +522,14 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const activeMegaMenu = hoveredNav
+    ? (MEGA_MENU_DATA[hoveredNav] || MEGA_MENU_DATA[hoveredNav.toUpperCase()] || MEGA_MENU_DATA[hoveredNav.trim().toUpperCase()])
+    : null;
+
+  const activeMobileSubMenu = mobileSubMenu
+    ? (MEGA_MENU_DATA[mobileSubMenu] || MEGA_MENU_DATA[mobileSubMenu.toUpperCase()] || MEGA_MENU_DATA[mobileSubMenu.trim().toUpperCase()])
+    : null;
+
   return (
     <header
       onMouseLeave={handleNavMouseLeave}
@@ -535,25 +600,38 @@ export default function Navbar() {
               <Menu className="w-5 h-5" />
             </button>
             <Link href="/" className="group flex items-center focus:outline-none">
-              <span
-                style={{ fontFamily: "var(--font-cinzel), serif" }}
-                className={`text-2xl lg:text-[28px] font-bold tracking-[0.22em] transition-colors duration-300 ${
-                  isHeaderWhite ? "text-neutral-950" : "text-white"
-                }`}
-              >
-                BHAI
-              </span>
+              {navbarConfig.logoType === "image" && navbarConfig.logoImageUrl ? (
+                <div className="relative h-9 sm:h-11 w-28 sm:w-36 flex items-center">
+                  <Image
+                    src={navbarConfig.logoImageUrl}
+                    alt={navbarConfig.logoText || "Brand Logo"}
+                    fill
+                    sizes="150px"
+                    className="object-contain object-left"
+                    priority
+                  />
+                </div>
+              ) : (
+                <span
+                  style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
+                  className={`text-2xl lg:text-[28px] font-bold tracking-[0.22em] transition-colors duration-300 ${
+                    isHeaderWhite ? "text-neutral-950" : "text-white"
+                  }`}
+                >
+                  {navbarConfig.logoText || "BHAI"}
+                </span>
+              )}
             </Link>
           </div>
 
           {/* DESKTOP NAVIGATION LINKS WITH MEGA-MENU TRIGGER */}
           <div 
-            style={{ fontFamily: "var(--font-neue-haas)" }}
+            style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
             className="hidden xl:flex items-center gap-5 2xl:gap-7 h-full"
           >
-            {NAV_ITEMS.map((item) => (
+            {(navbarConfig.navItems && navbarConfig.navItems.length > 0 ? navbarConfig.navItems : NAV_ITEMS).map((item) => (
               <div
-                key={item.label}
+                key={item.id || item.label}
                 onMouseEnter={() => handleNavMouseEnter(item.label)}
                 className="h-full flex items-center"
               >
@@ -770,145 +848,260 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* 4. FULL-WIDTH LUXURY MEGA MENU DROPDOWN */}
-        {hoveredNav && MEGA_MENU_DATA[hoveredNav] && (
+        {/* 4. FULL-WIDTH LUXURY EDITORIAL MEGA MENU DROPDOWN (NO IMAGES / SLEEK DESIGN) */}
+        {hoveredNav && activeMegaMenu && (
           <div
             onMouseEnter={() => handleNavMouseEnter(hoveredNav)}
             onMouseLeave={handleNavMouseLeave}
-            className="hidden xl:block absolute top-full left-0 right-0 w-full bg-white text-neutral-900 shadow-[0_20px_45px_rgba(0,0,0,0.12)] border-t border-neutral-100 border-b border-neutral-200 z-40 animate-in fade-in slide-in-from-top-1 duration-200"
+            className="hidden xl:block absolute top-full left-0 right-0 w-full bg-white text-neutral-900 shadow-[0_25px_60px_rgba(0,0,0,0.12)] border-t border-neutral-100 border-b border-neutral-200 z-40 animate-in fade-in slide-in-from-top-1 duration-200"
           >
-            <div className="w-full px-8 lg:px-14 py-9 max-w-[1360px] mx-auto">
-              <div className="grid grid-cols-12 gap-10 items-start">
+            <div className="w-full px-8 lg:px-14 py-8 max-w-[1400px] mx-auto">
+              
+              <div className="grid grid-cols-12 gap-8 items-start">
 
-                {/* COL 1: CATEGORIES LIST (4 COLS) */}
-                <div className="col-span-4 border-r border-neutral-100 pr-10">
-                  <p
-                    style={{ fontFamily: "var(--font-cinzel), serif" }}
-                    className="text-xs font-bold tracking-[0.24em] uppercase text-neutral-950 mb-4 pb-2 border-b border-neutral-100"
-                  >
-                    CATEGORIES
-                  </p>
-                  <ul className="space-y-2">
-                    {MEGA_MENU_DATA[hoveredNav].categories.map((cat, i) => (
+                {/* COL 1: CATEGORIES & SILHOUETTES (3.5 COLS) */}
+                <div className="col-span-3.5 border-r border-neutral-100 pr-8">
+                  <div className="flex items-center justify-between mb-4 pb-2 border-b border-neutral-100">
+                    <p
+                      style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
+                      className="text-xs font-bold tracking-[0.24em] uppercase text-neutral-950"
+                    >
+                      COLLECTIONS
+                    </p>
+                    <span className="text-[10px] text-neutral-400 font-mono uppercase tracking-wider">
+                      {hoveredNav}
+                    </span>
+                  </div>
+                  <ul className="space-y-1.5">
+                    {activeMegaMenu.categories?.map((cat, i) => (
                       <li key={i}>
                         <Link
                           href={cat.href}
                           onClick={() => setHoveredNav(null)}
-                          style={{ fontFamily: "var(--font-cormorant), serif" }}
-                          className={`transition-all block py-0.5 ${
+                          className={`group flex items-center justify-between py-1 transition-all ${
                             cat.isBold
-                              ? "text-[18px] font-bold text-neutral-950 hover:text-[#d4af37] underline decoration-neutral-300 underline-offset-4"
-                              : "text-[16.5px] font-medium text-neutral-800 hover:text-black hover:translate-x-1.5 transition-transform inline-block"
+                              ? "text-neutral-950 font-bold"
+                              : "text-neutral-800 hover:text-black"
                           }`}
                         >
-                          {cat.label}
+                          <span
+                            style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
+                            className={`transition-transform duration-200 group-hover:translate-x-1 ${
+                              cat.isBold
+                                ? "text-[18px] font-bold text-neutral-950 group-hover:text-[#997b24]"
+                                : "text-[16.5px] font-medium"
+                            }`}
+                          >
+                            {cat.label}
+                          </span>
+                          
+                          <div className="flex items-center gap-1.5">
+                            {cat.badge && (
+                              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-[#FAF7F2] text-[#8A6D1E] border border-[#E5D7BE] rounded-none">
+                                {cat.badge}
+                              </span>
+                            )}
+                            <ArrowRight className="w-3 h-3 text-neutral-300 group-hover:text-black group-hover:translate-x-0.5 transition-all opacity-0 group-hover:opacity-100" />
+                          </div>
                         </Link>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                {/* COL 2: SHOP BY MATERIAL (4 COLS) */}
-                <div className="col-span-4 border-r border-neutral-100 pr-10">
-                  <p
-                    style={{ fontFamily: "var(--font-cinzel), serif" }}
-                    className="text-xs font-bold tracking-[0.24em] uppercase text-neutral-950 mb-4 pb-2 border-b border-neutral-100"
-                  >
-                    SHOP BY MATERIAL
-                  </p>
-                  <ul className="space-y-2.5">
-                    {MEGA_MENU_DATA[hoveredNav].materials.map((mat, i) => (
+                {/* COL 2: PRECIOUS METALS & PURITY (3.5 COLS) */}
+                <div className="col-span-3.5 border-r border-neutral-100 pr-8">
+                  <div className="flex items-center justify-between mb-4 pb-2 border-b border-neutral-100">
+                    <p
+                      style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
+                      className="text-xs font-bold tracking-[0.24em] uppercase text-neutral-950"
+                    >
+                      PRECIOUS METALS
+                    </p>
+                    <span className="text-[10px] text-neutral-400 font-mono uppercase tracking-wider">
+                      HALLMARKED
+                    </span>
+                  </div>
+
+                  <ul className="space-y-2">
+                    {activeMegaMenu.materials?.map((mat, i) => (
                       <li key={i}>
                         <Link
                           href={mat.href}
                           onClick={() => setHoveredNav(null)}
-                          className="flex items-center gap-3 group py-0.5"
+                          className="flex items-center justify-between p-2 rounded-none border border-transparent hover:border-neutral-200 hover:bg-[#FAF9F6] transition-all group"
                         >
-                          <span
-                            className="w-4 h-4 rounded-full border border-neutral-300 shadow-sm flex-shrink-0 group-hover:scale-110 group-hover:border-black transition-all"
-                            style={{ backgroundColor: mat.colorHex }}
-                          />
-                          <span
-                            style={{ fontFamily: "var(--font-cormorant), serif" }}
-                            className="text-[17px] font-semibold text-neutral-850 group-hover:text-black group-hover:translate-x-1 transition-transform"
-                          >
-                            {mat.name}
+                          <div className="flex items-center gap-3">
+                            <span
+                              className="w-4 h-4 rounded-full border border-neutral-300 shadow-2xs flex-shrink-0 group-hover:scale-110 transition-transform"
+                              style={{ backgroundColor: mat.colorHex }}
+                            />
+                            <div>
+                              <p
+                                style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
+                                className="text-[16px] font-semibold text-neutral-900 group-hover:text-black leading-tight"
+                              >
+                                {mat.name}
+                              </p>
+                              {mat.karat && (
+                                <p className="text-[10px] text-neutral-500 font-sans tracking-wide">
+                                  {mat.karat}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <span className="text-[11px] font-mono text-neutral-400 group-hover:text-neutral-900 transition-colors">
+                            Explore →
                           </span>
                         </Link>
                       </li>
                     ))}
                   </ul>
 
-                  <div className="mt-6 pt-4 border-t border-neutral-100">
-                    <p
-                      style={{ fontFamily: "var(--font-cinzel), serif" }}
-                      className="text-[10.5px] font-bold tracking-[0.2em] uppercase text-neutral-950 mb-1"
-                    >
-                      CRAFTSMANSHIP
-                    </p>
-                    <p
-                      style={{ fontFamily: "var(--font-cormorant), serif" }}
-                      className="text-[14.5px] italic text-neutral-600 leading-relaxed"
-                    >
-                      Certified solid metals and responsibly sourced diamonds built for everyday luxury.
-                    </p>
+                  {/* British Craftsmanship Footnote */}
+                  <div className="mt-4 p-3 bg-[#FAF8F5] border border-[#EBE3D5] rounded-none flex items-start gap-2.5">
+                    <Sparkles className="w-3.5 h-3.5 text-[#997b24] flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p
+                        style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
+                        className="text-[10px] font-bold tracking-[0.16em] uppercase text-neutral-900"
+                      >
+                        UK Assay Office Certified
+                      </p>
+                      <p className="text-[11px] text-neutral-600 mt-0.5 leading-snug">
+                        Solid precious metals with certified hallmark authenticity.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                {/* COL 3: FEATURED STYLES (SMALL CIRCULAR IMAGES ONLY) (4 COLS) */}
-                <div className="col-span-4">
-                  <p
-                    style={{ fontFamily: "var(--font-cinzel), serif" }}
-                    className="text-xs font-bold tracking-[0.24em] uppercase text-neutral-950 mb-4 pb-2 border-b border-neutral-100"
-                  >
-                    FEATURED STYLES
-                  </p>
-                  <div className="grid grid-cols-4 gap-3 pt-2">
-                    {MEGA_MENU_DATA[hoveredNav].circleStyles.map((style, i) => (
-                      <Link
-                        key={i}
-                        href={style.href}
-                        onClick={() => setHoveredNav(null)}
-                        className="group flex flex-col items-center text-center p-1.5 rounded-xl hover:bg-neutral-50 transition-colors"
+                {/* COL 3: CURATED EDITS & ATELIER HIGHLIGHT (5 COLS) */}
+                <div className="col-span-5 space-y-4">
+                  
+                  {/* Curated Edits Row */}
+                  {activeMegaMenu.curatedEdits && activeMegaMenu.curatedEdits.length > 0 && (
+                    <div>
+                      <p
+                        style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
+                        className="text-xs font-bold tracking-[0.24em] uppercase text-neutral-950 mb-3 pb-2 border-b border-neutral-100"
                       >
-                        {/* SMALL CIRCLE IMAGE */}
-                        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-neutral-200 group-hover:border-black shadow-sm relative transition-all duration-300">
-                          <Image
-                            src={style.image}
-                            alt={style.name}
-                            fill
-                            className="object-cover group-hover:scale-110 transition-transform duration-300"
-                          />
-                        </div>
-                        <span
-                          style={{ fontFamily: "var(--font-cinzel), serif" }}
-                          className="text-[10.5px] font-bold tracking-[0.12em] uppercase text-neutral-900 group-hover:text-black mt-2 leading-tight"
-                        >
-                          {style.name}
-                        </span>
-                      </Link>
-                    ))}
-                  </div>
+                        CURATED STYLING EDITS
+                      </p>
 
-                  <div className="mt-8 pt-4 border-t border-neutral-100 flex items-center justify-between">
-                    <span
-                      style={{ fontFamily: "var(--font-cormorant), serif" }}
-                      className="text-[15px] italic text-neutral-600"
-                    >
-                      Complimentary UK shipping over £100
-                    </span>
-                    <Link
-                      href={MEGA_MENU_DATA[hoveredNav].categories[0].href}
-                      onClick={() => setHoveredNav(null)}
-                      style={{ fontFamily: "var(--font-cinzel), serif" }}
-                      className="text-xs font-bold tracking-[0.16em] uppercase text-neutral-950 hover:text-[#d4af37] underline underline-offset-4"
-                    >
-                      View All →
-                    </Link>
-                  </div>
+                      <div className="grid grid-cols-1 gap-2">
+                        {activeMegaMenu.curatedEdits.map((edit, idx) => (
+                          <Link
+                            key={idx}
+                            href={edit.href}
+                            onClick={() => setHoveredNav(null)}
+                            className="p-2.5 border border-neutral-200/80 bg-white hover:bg-neutral-900 hover:text-white transition-all duration-200 flex items-center justify-between group shadow-2xs"
+                          >
+                            <div className="min-w-0 pr-3">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                {edit.tag && (
+                                  <span className="text-[9px] font-mono font-bold tracking-wider uppercase text-[#997b24] group-hover:text-[#ECC96A]">
+                                    {edit.tag}
+                                  </span>
+                                )}
+                                <span className="text-neutral-300 group-hover:text-neutral-700">•</span>
+                                <h5 
+                                  style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
+                                  className="text-[16px] font-bold tracking-wide truncate"
+                                >
+                                  {edit.title}
+                                </h5>
+                              </div>
+                              <p className="text-[11px] text-neutral-500 group-hover:text-neutral-300 truncate">
+                                {edit.subtitle}
+                              </p>
+                            </div>
+                            <ArrowRight className="w-3.5 h-3.5 text-neutral-400 group-hover:text-white group-hover:translate-x-1 transition-all flex-shrink-0" />
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Atelier Editorial Highlight Box */}
+                  {activeMegaMenu.atelierHighlight && (
+                    <div className="p-4 bg-[#111111] text-white border border-neutral-800 rounded-none shadow-md">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-[9.5px] font-mono tracking-[0.2em] text-[#d4af37] uppercase font-bold">
+                          ★ BHAI ATELIER HIGHLIGHT
+                        </span>
+                        <span className="text-[9px] text-neutral-400 uppercase tracking-widest">
+                          BIRMINGHAM UK
+                        </span>
+                      </div>
+
+                      <h4
+                        style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
+                        className="text-lg font-medium text-white tracking-wide leading-tight"
+                      >
+                        {activeMegaMenu.atelierHighlight.title}
+                      </h4>
+
+                      <p className="mt-1 text-[11.5px] text-neutral-300 font-light leading-relaxed">
+                        &ldquo;{activeMegaMenu.atelierHighlight.quote}&rdquo;
+                      </p>
+
+                      {activeMegaMenu.atelierHighlight.perks && (
+                        <div className="mt-3 pt-2.5 border-t border-neutral-800/80 grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px] text-neutral-300">
+                          {activeMegaMenu.atelierHighlight.perks.map((perk, pIdx) => (
+                            <div key={pIdx} className="flex items-center gap-1.5">
+                              <span className="text-[#d4af37] text-xs">✓</span>
+                              <span className="truncate">{perk}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <div className="mt-3.5 flex items-center justify-between">
+                        <Link
+                          href={activeMegaMenu.atelierHighlight.href}
+                          onClick={() => setHoveredNav(null)}
+                          className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-[#d4af37] hover:text-white transition-colors pb-0.5 border-b border-[#d4af37] hover:border-white"
+                        >
+                          <span>{activeMegaMenu.atelierHighlight.buttonText}</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+
                 </div>
 
               </div>
+
+              {/* BOTTOM LUXURY VALUE RIBBON */}
+              <div className="mt-6 pt-4 border-t border-neutral-100 flex flex-wrap items-center justify-between gap-4 text-[11px] text-neutral-600">
+                <div className="flex items-center gap-6">
+                  <span className="flex items-center gap-1.5">
+                    <span className="text-[#997b24] font-bold">🚚</span>
+                    <strong className="text-neutral-900">Complimentary UK Shipping</strong> on orders over £100
+                  </span>
+                  <span className="hidden md:inline text-neutral-300">•</span>
+                  <span className="hidden md:flex items-center gap-1.5">
+                    <span className="text-[#997b24] font-bold">🔄</span>
+                    <strong className="text-neutral-900">30-Day Returns</strong> &amp; Ring Size Guarantee
+                  </span>
+                  <span className="hidden lg:inline text-neutral-300">•</span>
+                  <span className="hidden lg:flex items-center gap-1.5">
+                    <span className="text-[#997b24] font-bold">🛡️</span>
+                    <strong className="text-neutral-900">2-Year Warranty</strong> on all fine jewellery
+                  </span>
+                </div>
+
+                <Link
+                  href={activeMegaMenu.categories?.[0]?.href || "/collections"}
+                  onClick={() => setHoveredNav(null)}
+                  style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
+                  className="text-xs font-bold tracking-[0.16em] uppercase text-neutral-950 hover:text-[#997b24] underline underline-offset-4"
+                >
+                  View All {hoveredNav} →
+                </Link>
+              </div>
+
             </div>
           </div>
         )}
@@ -1051,12 +1244,22 @@ export default function Navbar() {
                     <ChevronDown className="w-4 h-4 rotate-90 stroke-[2.5]" />
                     <span>ALL</span>
                   </button>
+                ) : navbarConfig.logoType === "image" && navbarConfig.logoImageUrl ? (
+                  <div className="relative h-8 w-28">
+                    <Image
+                      src={navbarConfig.logoImageUrl}
+                      alt={navbarConfig.logoText || "Brand Logo"}
+                      fill
+                      sizes="120px"
+                      className="object-contain"
+                    />
+                  </div>
                 ) : (
                   <span
-                    style={{ fontFamily: "var(--font-cinzel), serif" }}
+                    style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
                     className="text-xl font-bold tracking-[0.2em] text-neutral-950"
                   >
-                    BHAI
+                    {navbarConfig.logoText || "BHAI"}
                   </span>
                 )}
                 
@@ -1092,23 +1295,35 @@ export default function Navbar() {
               {!mobileSubMenu ? (
                 <div className="py-2">
                   {/* Primary Jewellery Categories */}
-                  {NAV_ITEMS.map((item) => (
-                    <button
-                      key={item.label}
-                      type="button"
-                      onClick={() => {
-                        if (MEGA_MENU_DATA[item.label]) {
-                          setMobileSubMenu(item.label);
-                        } else {
-                          setMobileMenuOpen(false);
-                        }
-                      }}
-                      className="w-full flex items-center justify-between px-6 py-3.5 text-[14px] font-bold tracking-[0.14em] text-neutral-950 hover:bg-neutral-50 text-left border-b border-neutral-50 cursor-pointer"
-                    >
-                      <span>{item.label}</span>
-                      <ChevronDown className="w-4 h-4 text-neutral-400 -rotate-90 stroke-[2]" />
-                    </button>
-                  ))}
+                  {(navbarConfig.navItems && navbarConfig.navItems.length > 0 ? navbarConfig.navItems : NAV_ITEMS).map((item) => {
+                    const upper = item.label.toUpperCase();
+                    const hasSub = Boolean(MEGA_MENU_DATA[upper] || MEGA_MENU_DATA[item.label]);
+                    return hasSub ? (
+                      <button
+                        key={item.id || item.label}
+                        type="button"
+                        onClick={() => {
+                          setMobileSubMenu(MEGA_MENU_DATA[upper] ? upper : item.label);
+                        }}
+                        style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
+                        className="w-full flex items-center justify-between px-6 py-3.5 text-[14px] font-bold tracking-[0.14em] text-neutral-950 hover:bg-neutral-50 text-left border-b border-neutral-50 cursor-pointer"
+                      >
+                        <span>{item.label}</span>
+                        <ChevronDown className="w-4 h-4 text-neutral-400 -rotate-90 stroke-[2]" />
+                      </button>
+                    ) : (
+                      <Link
+                        key={item.id || item.label}
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
+                        className="w-full flex items-center justify-between px-6 py-3.5 text-[14px] font-bold tracking-[0.14em] text-neutral-950 hover:bg-neutral-50 text-left border-b border-neutral-50 cursor-pointer"
+                      >
+                        <span>{item.label}</span>
+                        <ArrowRight className="w-4 h-4 text-neutral-400" />
+                      </Link>
+                    );
+                  })}
 
                   {/* Secondary Curated Links matching reference */}
                   <div className="pt-2">
@@ -1203,7 +1418,7 @@ export default function Navbar() {
                       CATEGORIES
                     </p>
                     <ul className="space-y-2.5">
-                      {MEGA_MENU_DATA[mobileSubMenu]?.categories.map((cat, i) => (
+                      {activeMobileSubMenu?.categories?.map((cat, i) => (
                         <li key={i}>
                           <Link
                             href={cat.href}
@@ -1234,7 +1449,7 @@ export default function Navbar() {
                       SHOP BY MATERIAL
                     </p>
                     <ul className="space-y-2.5">
-                      {MEGA_MENU_DATA[mobileSubMenu]?.materials.map((mat, i) => (
+                      {activeMobileSubMenu?.materials?.map((mat, i) => (
                         <li key={i}>
                           <Link
                             href={mat.href}
@@ -1260,43 +1475,74 @@ export default function Navbar() {
                     </ul>
                   </div>
 
-                  {/* Featured Style Circular Thumbnails */}
-                  <div className="pt-2 border-t border-neutral-100">
-                    <p
-                      style={{ fontFamily: "var(--font-cinzel), serif" }}
-                      className="text-[11px] font-bold tracking-[0.2em] uppercase text-neutral-400 mb-3"
-                    >
-                      FEATURED STYLES
-                    </p>
-                    <div className="grid grid-cols-2 gap-3">
-                      {MEGA_MENU_DATA[mobileSubMenu]?.circleStyles.map((style, i) => (
-                        <Link
-                          key={i}
-                          href={style.href}
-                          onClick={() => {
-                            setMobileMenuOpen(false);
-                            setMobileSubMenu(null);
-                          }}
-                          className="flex items-center gap-2.5 p-2 bg-[#FAF7F2] rounded-xl border border-neutral-200/70"
-                        >
-                          <div className="w-10 h-10 rounded-full overflow-hidden border border-neutral-300 relative flex-shrink-0">
-                            <Image
-                              src={style.image}
-                              alt={style.name}
-                              fill
-                              className="object-cover"
-                            />
-                          </div>
-                          <span
-                            style={{ fontFamily: "var(--font-cinzel), serif" }}
-                            className="text-[10px] font-bold tracking-wider uppercase text-neutral-900 truncate"
+                  {/* Curated Styling Edits in Mobile */}
+                  {activeMobileSubMenu?.curatedEdits && (
+                    <div className="pt-2 border-t border-neutral-100">
+                      <p
+                        style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
+                        className="text-[11px] font-bold tracking-[0.2em] uppercase text-neutral-400 mb-3"
+                      >
+                        CURATED EDITS
+                      </p>
+                      <div className="space-y-2">
+                        {activeMobileSubMenu.curatedEdits.map((edit, i) => (
+                          <Link
+                            key={i}
+                            href={edit.href}
+                            onClick={() => {
+                              setMobileMenuOpen(false);
+                              setMobileSubMenu(null);
+                            }}
+                            className="flex items-center justify-between p-2.5 bg-[#FAF9F6] border border-neutral-200/80 rounded-none"
                           >
-                            {style.name}
-                          </span>
-                        </Link>
-                      ))}
+                            <div>
+                              <span className="text-[9px] font-mono font-bold text-[#997b24] uppercase block">
+                                {edit.tag}
+                              </span>
+                              <p 
+                                style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
+                                className="text-[15px] font-bold text-neutral-900 leading-tight"
+                              >
+                                {edit.title}
+                              </p>
+                            </div>
+                            <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
+                          </Link>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Atelier Highlight Quote in Mobile */}
+                  {activeMobileSubMenu?.atelierHighlight && (
+                    <div className="p-3.5 bg-neutral-950 text-white rounded-none border border-neutral-800 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] font-mono text-[#d4af37] font-bold uppercase tracking-wider">
+                          ★ ATELIER HIGHLIGHT
+                        </span>
+                      </div>
+                      <h4 
+                        style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
+                        className="text-[15px] font-medium text-white"
+                      >
+                        {activeMobileSubMenu.atelierHighlight.title}
+                      </h4>
+                      <p className="text-[11px] text-neutral-300 font-light leading-relaxed">
+                        &ldquo;{activeMobileSubMenu.atelierHighlight.quote}&rdquo;
+                      </p>
+                      <Link
+                        href={activeMobileSubMenu.atelierHighlight.href}
+                        onClick={() => {
+                          setMobileMenuOpen(false);
+                          setMobileSubMenu(null);
+                        }}
+                        className="inline-flex items-center gap-1 text-[10.5px] font-bold uppercase text-[#d4af37] pt-1"
+                      >
+                        <span>{activeMobileSubMenu.atelierHighlight.buttonText}</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

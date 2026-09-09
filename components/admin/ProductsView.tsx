@@ -10,7 +10,11 @@ import {
   Upload,
   Loader2,
   Image as ImageIcon,
-  Check
+  Check,
+  UploadCloud,
+  FileSpreadsheet,
+  CheckCircle2,
+  AlertCircle
 } from "lucide-react";
 import { Product } from "@/data/products";
 import { uploadProductImage } from "@/lib/storageHelper";
@@ -51,6 +55,12 @@ export default function ProductsView({
   const [galleryUrlInput, setGalleryUrlInput] = useState("");
   const [formInStock, setFormInStock] = useState(true);
 
+  // Bulk Import State
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [bulkInput, setBulkInput] = useState("");
+  const [isBulkImporting, setIsBulkImporting] = useState(false);
+  const [bulkResult, setBulkResult] = useState<any | null>(null);
+
   // Upload States
   const [isUploadingPrimary, setIsUploadingPrimary] = useState(false);
   const [isUploadingHover, setIsUploadingHover] = useState(false);
@@ -59,6 +69,7 @@ export default function ProductsView({
   const primaryFileInputRef = React.useRef<HTMLInputElement>(null);
   const hoverFileInputRef = React.useRef<HTMLInputElement>(null);
   const galleryFileInputRef = React.useRef<HTMLInputElement>(null);
+
 
   // Filtered Products
   const filteredProducts = useMemo(() => {
@@ -205,6 +216,87 @@ export default function ProductsView({
     handleCloseModal();
   };
 
+  const handleBulkImport = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBulkResult(null);
+    setIsBulkImporting(true);
+
+    try {
+      let parsedProducts: any[] = [];
+      const trimmed = bulkInput.trim();
+
+      if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+        const json = JSON.parse(trimmed);
+        parsedProducts = Array.isArray(json) ? json : [json];
+      } else {
+        // Parse simple CSV (Name, Category, Price, OriginalPrice, Badge, ImageUrl)
+        const lines = trimmed.split("\n").filter((l) => l.trim().length > 0);
+        const header = lines[0].toLowerCase();
+        const startIndex = header.includes("name") ? 1 : 0;
+
+        for (let i = startIndex; i < lines.length; i++) {
+          const parts = lines[i].split(",").map((p) => p.trim().replace(/^["']|["']$/g, ""));
+          if (parts[0]) {
+            parsedProducts.push({
+              name: parts[0],
+              category: parts[1] || "earrings",
+              price: parseFloat(parts[2]) || 120,
+              originalPrice: parts[3] ? parseFloat(parts[3]) : undefined,
+              badge: parts[4] || undefined,
+              primaryImage: parts[5] || "/ear.jpeg",
+            });
+          }
+        }
+      }
+
+      if (parsedProducts.length === 0) {
+        setBulkResult({ success: false, message: "No valid products found in input." });
+        return;
+      }
+
+      const res = await fetch("/api/admin/products/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ products: parsedProducts }),
+      });
+
+      const data = await res.json();
+      setBulkResult(data);
+
+      if (res.ok && data.success) {
+        // Refresh products list in state if items were added
+        parsedProducts.forEach((p) => {
+          onAddProduct({
+            id: `bulk-${Date.now()}-${Math.random().toString(36).slice(2, 5)}`,
+            name: p.name,
+            slug: p.name.toLowerCase().replace(/\s+/g, "-"),
+            category: p.category || "earrings",
+            price: Number(p.price) || 120,
+            originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
+            badge: p.badge,
+            images: {
+              primary: p.primaryImage || "/ear.jpeg",
+              hover: p.hoverImage || "/ear ring.jpeg",
+              gallery: [],
+            },
+            metals: [
+              { name: "18K Gold Vermeil", type: "gold", colorHex: "#E5C158" },
+              { name: "Recycled Sterling Silver", type: "silver", colorHex: "#D1D5DB" },
+            ],
+            inStock: true,
+          });
+        });
+      }
+    } catch (err: any) {
+      setBulkResult({
+        success: false,
+        message: err.message || "Failed to parse or submit bulk payload.",
+      });
+    } finally {
+      setIsBulkImporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
       
@@ -233,6 +325,19 @@ export default function ProductsView({
           <span className="text-xs text-neutral-500 font-medium">
             <strong>{filteredProducts.length}</strong> items
           </span>
+
+          {/* Bulk Import Trigger */}
+          <button
+            onClick={() => {
+              setBulkResult(null);
+              setIsBulkModalOpen(true);
+            }}
+            className="px-3.5 py-2 bg-white hover:bg-neutral-100 text-neutral-900 border border-neutral-300 rounded-none text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5 text-neutral-600" />
+            <span>Bulk Import</span>
+          </button>
+
           <button
             onClick={() => {
               if (onNavigateToAddProduct) {
@@ -718,6 +823,142 @@ export default function ProductsView({
         </div>
       )}
 
+      {/* BULK IMPORT MODAL */}
+      {isBulkModalOpen && (
+
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="relative bg-white w-full max-w-2xl rounded-none shadow-2xl border border-neutral-200 overflow-hidden my-8 animate-in zoom-in-95 duration-200">
+            
+            {/* Header */}
+            <div className="bg-neutral-950 text-white px-6 py-4 flex items-center justify-between border-b border-neutral-800">
+              <div className="flex items-center gap-2">
+                <FileSpreadsheet className="w-4 h-4 text-[#d4af37]" />
+                <h3 
+                  style={{ fontFamily: "var(--font-cinzel), serif" }}
+                  className="text-xs uppercase tracking-[0.2em] font-bold text-white"
+                >
+                  Bulk Import Jewellery Catalog
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsBulkModalOpen(false)}
+                className="text-neutral-400 hover:text-white transition-colors p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleBulkImport} className="p-6 space-y-4">
+              
+              <div className="bg-[#FAF7F2] p-3.5 border border-[#EBE3D5] text-xs text-neutral-700 space-y-1">
+                <p className="font-bold uppercase tracking-wider text-neutral-950 flex items-center gap-1.5">
+                  <UploadCloud className="w-3.5 h-3.5 text-[#d4af37]" />
+                  Serverless Safe Batch Processor
+                </p>
+                <p className="text-[11px] text-neutral-600">
+                  Products are processed in bounded chunks of 50 items to prevent serverless timeouts and database connection saturation.
+                </p>
+              </div>
+
+              {/* Sample loader */}
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold uppercase tracking-wider text-neutral-900">
+                  Paste JSON or CSV Data:
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBulkInput(JSON.stringify([
+                      {
+                        "name": "18K Gold Emerald Solitaire Ring",
+                        "category": "rings",
+                        "price": 280,
+                        "originalPrice": 320,
+                        "badge": "Statement",
+                        "primaryImage": "https://images.unsplash.com/photo-1605100804763-247f67b3557e?auto=format&fit=crop&q=80&w=800"
+                      },
+                      {
+                        "name": "Axiom Twist Herringbone Chain",
+                        "category": "necklaces",
+                        "price": 195,
+                        "badge": "Bestseller",
+                        "primaryImage": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&q=80&w=800"
+                      }
+                    ], null, 2));
+                  }}
+                  className="text-[10.5px] text-[#b8860b] hover:text-black font-bold uppercase tracking-wider transition-colors"
+                >
+                  + Load Sample JSON Template
+                </button>
+              </div>
+
+              <textarea
+                rows={8}
+                required
+                value={bulkInput}
+                onChange={(e) => setBulkInput(e.target.value)}
+                placeholder='[{"name": "Roman Arc Coin Pendant", "category": "necklaces", "price": 165, "badge": "Bestseller"}]'
+                className="w-full text-xs font-mono p-3 bg-neutral-50 border border-neutral-300 focus:border-black outline-none resize-y"
+              />
+
+              {/* Result Notification */}
+              {bulkResult && (
+                <div className={`p-4 border text-xs space-y-1 ${
+                  bulkResult.success 
+                    ? "bg-emerald-50 border-emerald-200 text-emerald-900" 
+                    : "bg-red-50 border-red-200 text-red-900"
+                }`}>
+                  <div className="flex items-center gap-1.5 font-bold uppercase tracking-wider">
+                    {bulkResult.success ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-700" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-red-700" />
+                    )}
+                    <span>{bulkResult.message || (bulkResult.success ? "Import completed" : "Import failed")}</span>
+                  </div>
+                  {bulkResult.importedCount !== undefined && (
+                    <p className="text-[11px] text-neutral-700">
+                      Imported: <strong>{bulkResult.importedCount}</strong> / {bulkResult.totalProcessed} products.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="pt-4 border-t border-neutral-200 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsBulkModalOpen(false)}
+                  className="px-5 py-2.5 rounded-none border border-neutral-300 text-neutral-700 hover:bg-neutral-100 font-bold uppercase tracking-wider transition-colors cursor-pointer text-xs"
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  disabled={isBulkImporting || !bulkInput.trim()}
+                  className="px-6 py-2.5 rounded-none bg-neutral-950 hover:bg-[#d4af37] text-white hover:text-black font-bold uppercase tracking-wider transition-all cursor-pointer text-xs flex items-center gap-2 disabled:opacity-50"
+                >
+                  {isBulkImporting ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Processing Chunks...</span>
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className="w-3.5 h-3.5" />
+                      <span>Execute Batch Import</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+            </form>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
+

@@ -15,6 +15,7 @@ import {
   Loader2
 } from "lucide-react";
 import { CartTotals } from "@/lib/cart/types";
+import CheckoutModal from "@/components/checkout/CheckoutModal";
 
 interface CartSummaryProps {
   totals: CartTotals;
@@ -33,6 +34,7 @@ export default function CartSummary({
   const [promoApplied, setPromoApplied] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
   const [isValidatingCheckout, setIsValidatingCheckout] = useState(false);
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
 
   const handleApplyPromo = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,26 +53,11 @@ export default function CartSummary({
   };
 
   const handleCheckoutClick = async () => {
-    setIsValidatingCheckout(true);
-    try {
-      // Validate cart state before checkout
-      const res = await fetch("/api/cart/validate", { method: "POST" });
-      const data = await res.json();
-      if (res.ok && data.success) {
-        if (onCheckout) {
-          onCheckout();
-        } else {
-          // Fallback demo checkout redirect
-          alert("Proceeding to secure 256-bit encrypted checkout with validated order total: £" + data.checkout.total.toFixed(2));
-        }
-      } else {
-        alert(data.error || "Unable to proceed to checkout. Please check item stock.");
-      }
-    } catch {
-      alert("Network error. Please try again.");
-    } finally {
-      setIsValidatingCheckout(false);
+    if (onCheckout) {
+      onCheckout();
+      return;
     }
+    setIsCheckoutModalOpen(true);
   };
 
   return (
@@ -215,6 +202,14 @@ export default function CartSummary({
         <ShieldCheck className="w-3.5 h-3.5 text-emerald-700" />
         <span>256-Bit Encrypted Secure Checkout • 30-Day Returns</span>
       </div>
+
+      {/* Real Checkout Modal */}
+      <CheckoutModal
+        isOpen={isCheckoutModalOpen}
+        onClose={() => setIsCheckoutModalOpen(false)}
+        promoCode={promoApplied ? promoCode : undefined}
+      />
     </div>
   );
 }
+

@@ -1,21 +1,88 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import ProductSkeleton from "@/components/ui/ProductSkeleton";
+import ProductCard from "@/components/products/ProductCard";
+import { Product } from "@/data/products";
 
 interface ProductCarouselProps {
   title?: string;
   subtitle?: string;
   itemCount?: number;
+  sort?: "trending" | "popularity" | "hidden-gems" | "newest" | string;
+  category?: string;
+  initialProducts?: Product[];
 }
 
 export default function ProductCarousel({
-  title = "Which T-Bar Are You?",
-  subtitle,
+  title = "Trending Jewellery Pieces",
+  subtitle = "Popularity Algorithm",
   itemCount = 6,
+  sort = "trending",
+  category = "all",
+  initialProducts,
 }: ProductCarouselProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [products, setProducts] = useState<Product[]>(initialProducts || []);
+  const [loading, setLoading] = useState<boolean>(!initialProducts || initialProducts.length === 0);
+
+  useEffect(() => {
+    if (initialProducts && initialProducts.length > 0) {
+      setProducts(initialProducts);
+      setLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    async function fetchDynamicProducts() {
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/products?sort=${sort}&category=${category}&limit=${itemCount}`);
+        if (!res.ok) throw new Error("Failed to load products");
+        const json = await res.json();
+
+        if (isMounted && json.success && Array.isArray(json.products)) {
+          // Transform API output to Product schema
+          const mapped: Product[] = json.products.map((p: any) => ({
+            id: p.id,
+            slug: p.slug,
+            name: p.name,
+            category: p.category,
+            price: p.price,
+            originalPrice: p.originalPrice,
+            badge:
+              p.badge ||
+              (sort === "trending" ? "🔥 Trending" : sort === "hidden-gems" ? "💎 Hidden Gem" : undefined),
+            images: {
+              primary: p.primaryImage || "/ear.jpeg",
+              hover: p.hoverImage || undefined,
+              gallery: p.galleryImages || [],
+            },
+            metals: p.metals && p.metals.length > 0
+              ? p.metals
+              : [
+                  { name: "18K Gold Vermeil", type: "gold", colorHex: "#E5C158" },
+                  { name: "Recycled Sterling Silver", type: "silver", colorHex: "#D1D5DB" },
+                ],
+            inStock: p.inStock ?? true,
+          }));
+
+          setProducts(mapped);
+        }
+      } catch (err) {
+        console.warn("ProductCarousel dynamic fetch error:", err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    fetchDynamicProducts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [sort, category, itemCount, initialProducts]);
 
   const handleScroll = (direction: "left" | "right") => {
     if (scrollContainerRef.current) {
@@ -66,15 +133,27 @@ export default function ProductCarousel({
           </div>
         </div>
 
-        {/* HORIZONTAL SCROLLABLE SKELETON PLACEHOLDERS */}
+        {/* HORIZONTAL SCROLLABLE CAROUSEL */}
         <div
           ref={scrollContainerRef}
           className="flex items-stretch gap-4 sm:gap-6 overflow-x-auto scrollbar-none pb-4 scroll-smooth"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
-          {Array.from({ length: itemCount }).map((_, idx) => (
-            <ProductSkeleton key={idx} />
-          ))}
+          {loading ? (
+            Array.from({ length: itemCount }).map((_, idx) => (
+              <ProductSkeleton key={idx} />
+            ))
+          ) : products.length > 0 ? (
+            products.map((prod) => (
+              <ProductCard key={prod.id || prod.slug} product={prod} />
+            ))
+          ) : (
+            <div className="w-full py-10 flex flex-col items-center justify-center border border-dashed border-neutral-200 rounded-xl bg-[#FAF9F6]">
+              <p className="text-xs font-semibold tracking-wider text-neutral-500 uppercase">
+                New jewellery pieces arriving soon
+              </p>
+            </div>
+          )}
         </div>
 
       </div>

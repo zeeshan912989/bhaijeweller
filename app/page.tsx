@@ -31,39 +31,49 @@ export default function Home() {
         text="Jewellery to live in. The finishing touches for effortless everyday style."
       />
 
-      {/* 4. PRODUCT SKELETON CAROUSEL 1: T-BAR COLLECTION */}
+      {/* 4. ALGORITHM FEED 1: TRENDING NOW (7-Day Velocity Scoring) */}
       <ProductCarousel
-        title="Which T-Bar Are You?"
-        subtitle="Iconic Signatures"
+        title="Trending Right Now"
+        subtitle="Live Community Feed"
+        sort="trending"
         itemCount={6}
       />
 
       {/* 5. 4-COLUMN CATEGORY SHOWCASE (Necklaces, Earrings, Bracelets, Rings) */}
       <CategoryShowcase />
 
-      {/* 6. PRODUCT SKELETON CAROUSEL 2: MOST LOVED BEST SELLERS */}
+      {/* 6. ALGORITHM FEED 2: MOST LOVED & BEST SELLERS (All-Time Popularity Scoring) */}
       <ProductCarousel
         title="Most-Loved Best Sellers"
-        subtitle="Trending This Season"
+        subtitle="Iconic All-Time Favorites"
+        sort="popularity"
         itemCount={6}
       />
 
       {/* 7. 3-COLUMN EDITORIAL FEATURE BANNERS (Meet Your Match, Under £100, Water-Resistant) */}
       <EditorialFeatureBanners />
 
-      {/* 8. BRAND TRUST & GUARANTEE PILLARS */}
+      {/* 8. ALGORITHM FEED 3: HIDDEN GEMS (High Wishlist-to-View Ratio) */}
+      <ProductCarousel
+        title="Hidden Gems & Discoveries"
+        subtitle="Exceptional Pieces You Might Miss"
+        sort="hidden-gems"
+        itemCount={6}
+      />
+
+      {/* 9. BRAND TRUST & GUARANTEE PILLARS */}
       <TrustBadges />
 
-      {/* 9. INSPIRATION STATION (VERTICAL VIDEO REELS WITH AUTO-CENTERING ELEVATION) */}
+      {/* 10. INSPIRATION STATION (VERTICAL VIDEO REELS WITH AUTO-CENTERING ELEVATION) */}
       <InspirationStation />
 
-      {/* 10. CURATED STYLING EDITS & SERVICES (SQUARE 1:1 GRID: Stores, Permanent Bracelets, Piercing Studio, Materials & Care) */}
+      {/* 11. CURATED STYLING EDITS & SERVICES */}
       <CuratedEdits />
 
-      {/* 11. IN-STORE SHOPPING & APPOINTMENT BANNER */}
+      {/* 12. IN-STORE SHOPPING & APPOINTMENT BANNER */}
       <StoreLocatorBanner />
 
-      {/* 12. LUXURY FOOTER */}
+      {/* 13. LUXURY FOOTER */}
       <Footer />
     </main>
   );

@@ -146,47 +146,47 @@ export default function InspirationStation() {
   }
 
   return (
-    <section className="w-full bg-[#FAF7F2] py-16 sm:py-20 border-b border-[#ece7de] overflow-hidden">
+    <section className="w-full bg-[#FAF7F2] py-8 sm:py-10 border-b border-[#ece7de] overflow-hidden">
       
       {/* 1. TOP HEADER & ARROW CONTROLS */}
-      <div className="w-full px-4 sm:px-8 lg:px-12 xl:px-14 mb-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+      <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 mb-5">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
           <div>
-            <span className="text-[10px] sm:text-[11px] font-bold tracking-[0.2em] uppercase text-neutral-500 mb-1.5 block">
+            <span className="text-[10px] sm:text-[10.5px] font-bold tracking-[0.2em] uppercase text-neutral-500 mb-1 block">
               AS SEEN ON YOU
             </span>
             <h2
               style={{ fontFamily: "var(--font-cormorant), var(--font-playfair), serif" }}
-              className="text-2xl sm:text-3xl lg:text-[38px] font-normal tracking-[0.02em] text-neutral-950 capitalize"
+              className="text-2xl sm:text-3xl lg:text-[34px] font-normal tracking-[0.02em] text-neutral-950 capitalize"
             >
               Inspiration Station
             </h2>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
             <button
               onClick={() => scrollHorizontally("left")}
               aria-label="Scroll left"
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-neutral-300 bg-white hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all duration-200 flex items-center justify-center text-neutral-800 shadow-2xs active:scale-95 cursor-pointer"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-neutral-300 bg-white hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all duration-200 flex items-center justify-center text-neutral-800 shadow-2xs active:scale-95 cursor-pointer"
             >
-              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.75]" />
+              <ChevronLeft className="w-4 h-4 stroke-[1.75]" />
             </button>
             <button
               onClick={() => scrollHorizontally("right")}
               aria-label="Scroll right"
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full border border-neutral-300 bg-white hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all duration-200 flex items-center justify-center text-neutral-800 shadow-2xs active:scale-95 cursor-pointer"
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border border-neutral-300 bg-white hover:bg-neutral-900 hover:text-white hover:border-neutral-900 transition-all duration-200 flex items-center justify-center text-neutral-800 shadow-2xs active:scale-95 cursor-pointer"
             >
-              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.75]" />
+              <ChevronRight className="w-4 h-4 stroke-[1.75]" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* 2. SMOOTH HORIZONTAL VIDEO REEL CAROUSEL */}
+      {/* 2. SMOOTH HORIZONTAL VIDEO REEL CAROUSEL (CENTERED) */}
       <div className="w-full relative">
         <div
           ref={scrollRef}
-          className="flex items-start gap-4 sm:gap-6 overflow-x-auto no-scrollbar scroll-smooth px-4 sm:px-8 lg:px-12 xl:px-14 py-4"
+          className="flex items-start justify-center gap-3.5 sm:gap-5 overflow-x-auto no-scrollbar scroll-smooth px-4 sm:px-8 py-2 max-w-[1440px] mx-auto"
           style={{ scrollSnapType: "x mandatory" }}
         >
           {items.map((item) => {
@@ -202,17 +202,17 @@ export default function InspirationStation() {
                 onClick={() => selectAndCenterVideo(item.id)}
                 className={`flex-shrink-0 transition-all duration-500 cursor-pointer ${
                   isFeatured
-                    ? "w-[240px] sm:w-[280px] md:w-[310px] scale-100 z-10"
-                    : "w-[170px] sm:w-[210px] md:w-[230px] opacity-85 hover:opacity-100"
+                    ? "w-[145px] sm:w-[170px] md:w-[185px] scale-100 z-10"
+                    : "w-[115px] sm:w-[135px] md:w-[150px] opacity-90 hover:opacity-100"
                 }`}
                 style={{ scrollSnapAlign: "center" }}
               >
                 {/* 1. VIDEO CONTAINER */}
                 <div
-                  className={`relative aspect-[9/16] w-full rounded-2xl overflow-hidden bg-neutral-950 transition-all duration-500 shadow-md ${
+                  className={`relative aspect-[9/16] w-full rounded-2xl overflow-hidden bg-[#FAF7F2] transition-all duration-500 ${
                     isFeatured
-                      ? "ring-2 ring-neutral-950 shadow-2xl"
-                      : "border border-neutral-300/80"
+                      ? "border-2 border-white shadow-xl ring-1 ring-neutral-200/80"
+                      : "border border-white/90 shadow-2xs"
                   }`}
                 >
                   {item.videoUrl && (
@@ -231,12 +231,12 @@ export default function InspirationStation() {
                   <button
                     onClick={(e) => toggleMute(e, item.id)}
                     aria-label={isMuted ? "Unmute video" : "Mute video"}
-                    className="absolute top-3 right-3 p-2 rounded-full bg-black/50 hover:bg-black/80 text-white backdrop-blur-md transition-all duration-200 z-20"
+                    className="absolute top-2.5 right-2.5 p-1.5 rounded-full bg-black/45 hover:bg-black/80 text-white backdrop-blur-md transition-all duration-200 z-20"
                   >
                     {isMuted ? (
-                      <VolumeX className="w-3.5 h-3.5 stroke-[2]" />
+                      <VolumeX className="w-3 h-3 stroke-[2]" />
                     ) : (
-                      <Volume2 className="w-3.5 h-3.5 stroke-[2]" />
+                      <Volume2 className="w-3 h-3 stroke-[2]" />
                     )}
                   </button>
                 </div>
@@ -245,11 +245,7 @@ export default function InspirationStation() {
                 {item.product && (
                   <Link
                     href={item.product.href || `/collections/earrings`}
-                    className={`mt-2 p-2 bg-white rounded-lg transition-all duration-300 flex items-center gap-2 group/prod ${
-                      isFeatured
-                        ? "border border-neutral-300 shadow-md"
-                        : "border border-neutral-200/80 hover:border-neutral-900 hover:shadow-sm"
-                    }`}
+                    className={`mt-2 p-1.5 sm:p-2 bg-white rounded-xl transition-all duration-300 flex items-center gap-2 group/prod border border-neutral-200/80 shadow-2xs hover:border-black`}
                   >
                     {/* Product Thumbnail */}
                     <div className="w-9 h-9 relative rounded-md overflow-hidden bg-[#FAF7F2] border border-neutral-200/50 flex-shrink-0 p-0.5">

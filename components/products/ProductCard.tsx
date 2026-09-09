@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Heart, ShoppingBag, Check } from "lucide-react";
 import { Product } from "@/data/products";
 import { useCart } from "@/context/CartContext";
+import { Analytics } from "@/lib/analytics/events";
 
 interface ProductCardProps {
   product: Product;
@@ -17,11 +18,67 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [addedToBag, setAddedToBag] = useState(false);
   const { addToCart } = useCart();
 
+  // Check if product is in wishlist on mount
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem("bhai_wishlist_items_v1");
+      if (stored) {
+        const items = JSON.parse(stored);
+        setIsWishlisted(items.some((it: any) => it.id === product.id || it.slug === product.slug));
+      }
+    } catch {
+      // Ignore storage read error
+    }
+  }, [product]);
+
+  const handleToggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    try {
+      const stored = localStorage.getItem("bhai_wishlist_items_v1");
+      let items = stored ? JSON.parse(stored) : [];
+      const idx = items.findIndex((it: any) => it.id === product.id || it.slug === product.slug);
+
+      if (idx >= 0) {
+        items.splice(idx, 1);
+        setIsWishlisted(false);
+        Analytics.removeFromWishlist(product.slug, product.id);
+      } else {
+        const metalName =
+          product.metals && product.metals[selectedMetalIndex]
+            ? product.metals[selectedMetalIndex].name
+            : "18K Gold Vermeil";
+        items.unshift({
+          id: product.id,
+          slug: product.slug,
+          name: product.name,
+          category: product.category,
+          price: product.price,
+          originalPrice: product.originalPrice,
+          image: product.images.primary,
+          metal: metalName,
+          inStock: product.inStock,
+        });
+        setIsWishlisted(true);
+        Analytics.addToWishlist(product.slug, product.id);
+      }
+
+      localStorage.setItem("bhai_wishlist_items_v1", JSON.stringify(items));
+      window.dispatchEvent(new Event("bhai_wishlist_updated"));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const handleQuickAdd = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setAddedToBag(true);
     setTimeout(() => setAddedToBag(false), 2000);
+
+    // Track Add to Cart
+    Analytics.addToCart(product.slug, product.id);
 
     const metalName =
       product.metals && product.metals[selectedMetalIndex]
@@ -49,7 +106,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     <div className="group flex flex-col flex-shrink-0 w-[240px] sm:w-[260px] md:w-[280px] select-none">
       
       {/* 1. PRODUCT IMAGE CONTAINER (With Hover Image Swap & Bottom Action Icons) */}
-      <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-[#FBF9F5] border border-neutral-200/80 transition-all duration-500 group-hover:shadow-md">
+      <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-white border border-neutral-200/80 transition-all duration-500 group-hover:shadow-md">
         
         {/* Top-Left Badge */}
         {product.badge && (
@@ -61,24 +118,24 @@ export default function ProductCard({ product }: ProductCardProps) {
         )}
 
         {/* Product Image Link with Smooth Cross-Fade On Hover */}
-        <Link href={`/products/${product.slug}`} className="block w-full h-full relative">
+        <Link href={`/products/${product.slug}`} className="block w-full h-full relative bg-white">
           {/* Primary Image */}
           <Image
             src={product.images.primary || "/ear.jpeg"}
             alt={product.name}
             fill
             sizes="(max-width: 768px) 240px, 280px"
-            className="object-cover object-center transition-all duration-700 ease-out group-hover:scale-105 p-3"
+            className="object-contain object-center transition-all duration-700 ease-out group-hover:scale-105 p-2.5 bg-white"
           />
 
-          {/* Secondary Hover Image (Smooth Fade-in on Hover from hover or first gallery photo) */}
+          {/* Secondary Hover Image (Full-bleed lifestyle image without side white margins) */}
           {(product.images.hover || (product.images.gallery && product.images.gallery.length > 0)) && (
             <Image
               src={product.images.hover || product.images.gallery![0]}
               alt={`${product.name} alternate view`}
               fill
               sizes="(max-width: 768px) 240px, 280px"
-              className="object-cover object-center transition-opacity duration-500 ease-in-out opacity-0 group-hover:opacity-100 group-hover:scale-105 p-3 absolute inset-0"
+              className="object-cover object-center transition-all duration-500 ease-in-out opacity-0 group-hover:opacity-100 group-hover:scale-105 p-0 absolute inset-0 z-5"
             />
           )}
         </Link>
@@ -106,11 +163,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
           {/* RIGHT: Wishlist Heart Icon Button */}
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsWishlisted(!isWishlisted);
-            }}
+            onClick={handleToggleWishlist}
             aria-label="Add to wishlist"
             title="Add to Wishlist"
             className="w-9 h-9 rounded-xl bg-white/95 text-neutral-700 hover:text-black hover:bg-white border border-neutral-200/80 flex items-center justify-center shadow-sm transition-all cursor-pointer"

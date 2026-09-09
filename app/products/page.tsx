@@ -40,13 +40,16 @@ export default function ProductsIndexPage() {
     async function loadProducts() {
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from("products")
-          .select("*")
-          .order("created_at", { ascending: false });
+        const res = await fetch(`/api/products?category=${activeCategory}&sort=${sortBy}`, {
+          headers: {
+            "Accept": "application/json",
+          },
+        });
+        const json = await res.json();
 
-        if (error) {
-          console.warn("Supabase load error:", error.message);
+        if (json.success && json.products) {
+          setProducts(json.products);
+        } else {
           // Fallback static items if DB is empty or unreachable
           setProducts([
             {
@@ -91,27 +94,19 @@ export default function ProductsIndexPage() {
               inStock: true,
             },
           ]);
-        } else if (data && data.length > 0) {
-          setProducts(data);
         }
       } catch (err) {
-        console.error(err);
+        console.error("Failed to load products via cached API:", err);
       } finally {
         setLoading(false);
       }
     }
 
     loadProducts();
-  }, []);
+  }, [activeCategory, sortBy]);
 
-  const filteredProducts = products.filter((p) => {
-    if (activeCategory === "all") return true;
-    return (p.category || "").toLowerCase() === activeCategory.toLowerCase();
-  }).sort((a, b) => {
-    if (sortBy === "price-asc") return a.price - b.price;
-    if (sortBy === "price-desc") return b.price - a.price;
-    return 0;
-  });
+  const filteredProducts = products;
+
 
   const getProductImage = (p: ProductItem) => {
     if (p.image) return p.image;

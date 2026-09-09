@@ -21,8 +21,10 @@ import {
   AlertCircle
 } from "lucide-react";
 import { Product } from "@/data/products";
-import { ProductSetItem, SeeItIRLItem, DEFAULT_PRODUCT_SETS, DEFAULT_SEE_IT_IRL_ITEMS } from "@/data/productSets";
+import { ProductSetItem, SeeItIRLItem, DEFAULT_PRODUCT_SETS } from "@/data/productSets";
 import { supabase } from "@/lib/supabaseClient";
+import { uploadProductImage } from "@/lib/storageHelper";
+import { setPersistentItem, getPersistentItem } from "@/lib/clientStorage";
 
 interface SetsAndIRLViewProps {
   products: Product[];
@@ -30,8 +32,8 @@ interface SetsAndIRLViewProps {
 
 export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
   const [activeSubTab, setActiveSubTab] = useState<"sets" | "irl">("sets");
-  const [productSets, setProductSets] = useState<ProductSetItem[]>(DEFAULT_PRODUCT_SETS);
-  const [irlItems, setIrlItems] = useState<SeeItIRLItem[]>(DEFAULT_SEE_IT_IRL_ITEMS);
+  const [productSets, setProductSets] = useState<ProductSetItem[]>([]);
+  const [irlItems, setIrlItems] = useState<SeeItIRLItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [saveToast, setSaveToast] = useState(false);
 
@@ -60,7 +62,7 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedProductFilter, setSelectedProductFilter] = useState("all");
 
-  // 1. Initial Load from Supabase + Local Storage Backup
+  // 1. Initial Load from Supabase + High-Capacity IndexedDB Backup
   useEffect(() => {
     async function loadData() {
       setLoading(true);
@@ -83,20 +85,10 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
             moreStyles: Array.isArray(row.more_styles) ? row.more_styles : [],
           }));
         } else {
-          const localSets = localStorage.getItem("bhai_product_sets_v1");
-          if (localSets) {
-            try {
-              const parsed = JSON.parse(localSets);
-              if (Array.isArray(parsed) && parsed.length > 0) loadedSets = parsed;
-            } catch (e) {}
+          const localSets = await getPersistentItem<ProductSetItem[]>("bhai_product_sets_v1");
+          if (localSets && Array.isArray(localSets) && localSets.length > 0) {
+            loadedSets = localSets;
           }
-        }
-
-        if (loadedSets.length === 0) {
-          loadedSets = DEFAULT_PRODUCT_SETS;
-          try {
-            localStorage.setItem("bhai_product_sets_v1", JSON.stringify(DEFAULT_PRODUCT_SETS));
-          } catch (e) {}
         }
         setProductSets(loadedSets);
 
@@ -118,26 +110,14 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
             displayOrder: row.display_order || 0,
           }));
         } else {
-          const localIRL = localStorage.getItem("bhai_see_it_irl_v1");
-          if (localIRL) {
-            try {
-              const parsed = JSON.parse(localIRL);
-              if (Array.isArray(parsed) && parsed.length > 0) loadedIRL = parsed;
-            } catch (e) {}
+          const localIRL = await getPersistentItem<SeeItIRLItem[]>("bhai_see_it_irl_v1");
+          if (localIRL && Array.isArray(localIRL) && localIRL.length > 0) {
+            loadedIRL = localIRL;
           }
-        }
-
-        if (loadedIRL.length === 0) {
-          loadedIRL = DEFAULT_SEE_IT_IRL_ITEMS;
-          try {
-            localStorage.setItem("bhai_see_it_irl_v1", JSON.stringify(DEFAULT_SEE_IT_IRL_ITEMS));
-          } catch (e) {}
         }
         setIrlItems(loadedIRL);
       } catch (err) {
-        console.warn("Notice: Loaded offline defaults for Sets & IRL:", err);
-        setProductSets(DEFAULT_PRODUCT_SETS);
-        setIrlItems(DEFAULT_SEE_IT_IRL_ITEMS);
+        console.warn("Notice: Loaded Sets & IRL status:", err);
       } finally {
         setLoading(false);
       }
@@ -154,35 +134,32 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
   };
 
   // Import existing Video Reels into IRL with 1 click
-  const handleImportReels = () => {
+  const handleImportReels = async () => {
     try {
-      const storedReels = localStorage.getItem("bhai_shoppable_reels_v1");
-      if (storedReels) {
-        const parsed = JSON.parse(storedReels);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const imported: SeeItIRLItem[] = parsed.map((reel: any, idx: number) => {
-            const prodSlug = reel.product?.href ? reel.product.href.replace("/products/", "") : "all";
-            return {
-              id: `imported-reel-${reel.id || idx}`,
-              type: "video",
-              imageUrl: reel.posterUrl || reel.product?.thumbnail || "/ear.jpeg",
-              videoUrl: reel.videoUrl,
-              posterUrl: reel.posterUrl,
-              customerHandle: `@${reel.product?.name ? reel.product.name.toLowerCase().replace(/[^a-z0-9]/g, "_") : "bhai_reels"}`,
-              caption: `Shoppable Video Reel for ${reel.product?.name || "Bhai Fine Jewellery"}`,
-              productSlug: prodSlug,
-              productName: reel.product?.name || "Fine Jewellery Piece",
-              productPrice: reel.product?.price,
-              displayOrder: idx + 1,
-            };
-          });
+      const storedReels = await getPersistentItem<any[]>("bhai_shoppable_reels_v1");
+      if (storedReels && Array.isArray(storedReels) && storedReels.length > 0) {
+        const imported: SeeItIRLItem[] = storedReels.map((reel: any, idx: number) => {
+          const prodSlug = reel.product?.href ? reel.product.href.replace("/products/", "") : "all";
+          return {
+            id: `imported-reel-${reel.id || idx}`,
+            type: "video",
+            imageUrl: reel.posterUrl || reel.product?.thumbnail || "/ear.jpeg",
+            videoUrl: reel.videoUrl,
+            posterUrl: reel.posterUrl,
+            customerHandle: `@${reel.product?.name ? reel.product.name.toLowerCase().replace(/[^a-z0-9]/g, "_") : "bhai_reels"}`,
+            caption: `Shoppable Video Reel for ${reel.product?.name || "Bhai Fine Jewellery"}`,
+            productSlug: prodSlug,
+            productName: reel.product?.name || "Fine Jewellery Piece",
+            productPrice: reel.product?.price,
+            displayOrder: idx + 1,
+          };
+        });
 
-          // Merge without duplicates
-          const merged = [...imported, ...irlItems.filter((it) => !it.id.startsWith("imported-reel-"))];
-          persistIRL(merged);
-          alert(`Successfully imported ${imported.length} shoppable video reel(s) into See It IRL!`);
-          return;
-        }
+        // Merge without duplicates
+        const merged = [...imported, ...irlItems.filter((it) => !it.id.startsWith("imported-reel-"))];
+        await persistIRL(merged);
+        alert(`Successfully imported ${imported.length} shoppable video reel(s) into See It IRL!`);
+        return;
       }
       alert("No stored video reels found in Video Manager. You can upload a new Reel or Photo right here!");
     } catch (e) {
@@ -190,27 +167,19 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
     }
   };
 
-  // 2. Persist Sets
+  // 2. Persist Sets safely (Supabase + IndexedDB)
   const persistSets = async (items: ProductSetItem[]) => {
     setProductSets(items);
-    try {
-      localStorage.setItem("bhai_product_sets_v1", JSON.stringify(items));
-    } catch (e) {
-      console.error(e);
-    }
+    await setPersistentItem("bhai_product_sets_v1", items);
     broadcastSync();
     setSaveToast(true);
     setTimeout(() => setSaveToast(false), 2500);
   };
 
-  // 3. Persist IRL items
+  // 3. Persist IRL items safely (Supabase + IndexedDB)
   const persistIRL = async (items: SeeItIRLItem[]) => {
     setIrlItems(items);
-    try {
-      localStorage.setItem("bhai_see_it_irl_v1", JSON.stringify(items));
-    } catch (e) {
-      console.error(e);
-    }
+    await setPersistentItem("bhai_see_it_irl_v1", items);
     broadcastSync();
     setSaveToast(true);
     setTimeout(() => setSaveToast(false), 2500);
@@ -315,13 +284,16 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
     if (irlType === "video" && !irlVideoUrl.trim() && !irlImage.trim()) return;
 
     const selectedProd = products.find((p) => p.slug === irlProductSlug);
+    const isVideo = irlType === "video";
+    const finalVideoUrl = isVideo ? (irlVideoUrl.trim() || irlImage.trim()) : undefined;
+    const finalPosterUrl = isVideo && irlPosterUrl.trim() && !irlPosterUrl.includes("ear.jpeg") ? irlPosterUrl.trim() : undefined;
 
     const newIrl: SeeItIRLItem = {
       id: editingIrlId || `irl-${Date.now()}`,
-      type: irlType,
-      imageUrl: irlImage.trim() || irlPosterUrl.trim() || "/ear.jpeg",
-      videoUrl: irlType === "video" ? irlVideoUrl.trim() : undefined,
-      posterUrl: irlType === "video" ? (irlPosterUrl.trim() || irlImage.trim()) : undefined,
+      type: isVideo ? "video" : "photo",
+      imageUrl: isVideo ? (finalPosterUrl || "") : (irlImage.trim() || "/ear.jpeg"),
+      videoUrl: finalVideoUrl,
+      posterUrl: finalPosterUrl,
       customerHandle: irlHandle.trim().startsWith("@") ? irlHandle.trim() : `@${irlHandle.trim()}`,
       caption: irlCaption.trim(),
       productSlug: irlProductSlug,
@@ -394,21 +366,23 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
   };
 
   // Image / Video File Upload Helper
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, target: "set" | "irl" | "irl-video" | "irl-poster") => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, target: "set" | "irl" | "irl-video" | "irl-poster") => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (target === "set") setSetImage(dataUrl);
-      if (target === "irl") setIrlImage(dataUrl);
-      if (target === "irl-video") setIrlVideoUrl(dataUrl);
-      if (target === "irl-poster") setIrlPosterUrl(dataUrl);
+    try {
+      const folder = target.startsWith("irl") ? "see-it-irl" : "sets";
+      const uploadedUrl = await uploadProductImage(file, folder);
+      if (target === "set") setSetImage(uploadedUrl);
+      if (target === "irl") setIrlImage(uploadedUrl);
+      if (target === "irl-video") setIrlVideoUrl(uploadedUrl);
+      if (target === "irl-poster") setIrlPosterUrl(uploadedUrl);
+    } catch (err) {
+      console.warn("Media upload notice:", err);
+    } finally {
       setIsUploading(false);
-    };
-    reader.readAsDataURL(file);
+    }
   };
 
   const filteredIRLItems = irlItems.filter((item) => {
@@ -612,19 +586,23 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
                 key={item.id}
                 className="group relative aspect-[3/4] bg-neutral-100 rounded-2xl overflow-hidden border border-neutral-200 shadow-xs"
               >
-                {item.type === "video" && item.videoUrl ? (
+                {(item.type === "video" || Boolean(item.videoUrl)) && item.videoUrl ? (
                   <video
-                    src={item.videoUrl}
-                    poster={item.posterUrl || item.imageUrl}
+                    src={item.videoUrl.includes("#t=") ? item.videoUrl : `${item.videoUrl}#t=0.001`}
+                    poster={item.posterUrl && !item.posterUrl.includes("ear.jpeg") ? item.posterUrl : undefined}
                     muted
                     loop
                     playsInline
+                    preload="auto"
                     onMouseEnter={(e) => e.currentTarget.play().catch(() => {})}
-                    onMouseLeave={(e) => e.currentTarget.pause()}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.pause();
+                      e.currentTarget.currentTime = 0;
+                    }}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                 ) : (
-                  <Image src={item.imageUrl} alt={item.customerHandle} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <Image src={item.imageUrl || "/ear.jpeg"} alt={item.customerHandle} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
                 )}
                 
                 {/* Media Type Badge */}

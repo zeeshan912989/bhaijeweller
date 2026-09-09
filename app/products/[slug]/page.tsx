@@ -13,9 +13,10 @@ import {
   DEFAULT_PRODUCT_SETS, 
   DEFAULT_SEE_IT_IRL_ITEMS 
 } from "@/data/productSets";
-import ProductReviewsSection from "@/components/products/ProductReviewsSection";
 import { supabase } from "@/lib/supabaseClient";
+import { getPersistentItem } from "@/lib/clientStorage";
 import { useCart } from "@/context/CartContext";
+import { Analytics } from "@/lib/analytics/events";
 import { 
   Star, 
   Heart, 
@@ -40,7 +41,8 @@ import {
   MessageSquarePlus,
   Send,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  Play
 } from "lucide-react";
 
 export interface ReviewItem {
@@ -56,6 +58,86 @@ export interface ReviewItem {
   verified: boolean;
   helpful_count: number;
   created_at?: string;
+}
+
+function IRLCardItem({ item, onClick }: { item: SeeItIRLItem; onClick: () => void }) {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const isVideo = Boolean(item.videoUrl) || item.type === "video";
+
+  const handleMouseEnter = () => {
+    if (videoRef.current && isVideo) {
+      videoRef.current
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => {});
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (videoRef.current && isVideo) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+      setIsPlaying(false);
+    }
+  };
+
+  // Only use custom poster if valid and not the dummy default image
+  const hasCustomPoster =
+    item.posterUrl &&
+    !item.posterUrl.includes("ear.jpeg") &&
+    !item.posterUrl.includes("hero_section") &&
+    !item.posterUrl.includes("shop_img");
+
+  const videoSrc = item.videoUrl
+    ? item.videoUrl.includes("#t=")
+      ? item.videoUrl
+      : `${item.videoUrl}#t=0.001`
+    : "";
+
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className="relative flex-shrink-0 w-36 sm:w-44 md:w-48 aspect-[3/4] bg-[#FAF8F5] rounded-none overflow-hidden border border-neutral-200/80 shadow-xs cursor-pointer group/card"
+    >
+      {isVideo && item.videoUrl ? (
+        <>
+          <video
+            ref={videoRef}
+            src={videoSrc}
+            poster={hasCustomPoster ? item.posterUrl : undefined}
+            muted
+            loop
+            playsInline
+            preload="auto"
+            className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
+          />
+          {/* Subtle Video Badge & Play Icon */}
+          <div className="absolute top-2.5 right-2.5 z-10 w-7 h-7 rounded-full bg-black/60 backdrop-blur-xs flex items-center justify-center text-white border border-white/20 transition-all group-hover/card:scale-110">
+            {isPlaying ? (
+              <span className="w-2 h-2 rounded-full bg-[#d4af37] animate-ping" />
+            ) : (
+              <Play className="w-3.5 h-3.5 fill-white text-white ml-0.5" />
+            )}
+          </div>
+        </>
+      ) : (
+        <Image
+          src={item.imageUrl || "/ear.jpeg"}
+          alt={item.customerHandle || "Customer preview"}
+          fill
+          className="object-cover group-hover/card:scale-105 transition-transform duration-500"
+        />
+      )}
+
+      {/* Customer Handle Overlay at bottom */}
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent p-2.5 pt-6 text-white text-[11px] font-medium tracking-wide">
+        <p className="truncate font-sans font-semibold drop-shadow-xs">{item.customerHandle}</p>
+      </div>
+    </div>
+  );
 }
 
 const DISCOVER_CHIPS = [
@@ -84,10 +166,11 @@ export default function ProductDetailPage() {
   const [addedToBagToast, setAddedToBagToast] = useState(false);
   const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
 
-  // Sets & IRL State
-  const [productSets, setProductSets] = useState<ProductSetItem[]>(DEFAULT_PRODUCT_SETS);
-  const [activeSetTab, setActiveSetTab] = useState<"set" | "styles">("set");
-  const [seeItIRLList, setSeeItIRLList] = useState<SeeItIRLItem[]>(DEFAULT_SEE_IT_IRL_ITEMS);
+  // Sets & IRL & Category Styles State
+  const [productSets, setProductSets] = useState<ProductSetItem[]>([]);
+  const [sameCategoryProducts, setSameCategoryProducts] = useState<Product[]>([]);
+  const [activeSetTab, setActiveSetTab] = useState<"set" | "styles">("styles");
+  const [seeItIRLList, setSeeItIRLList] = useState<SeeItIRLItem[]>([]);
   const [activeIrlModalItem, setActiveIrlModalItem] = useState<SeeItIRLItem | null>(null);
   const irlScrollRef = useRef<HTMLDivElement>(null);
 
@@ -164,7 +247,41 @@ export default function ProductDetailPage() {
             setFormMetal(loadedProd.metals[0].name);
           }
 
-          // Fetch real recommendations from same or other categories
+          // Track Product View event for popularity algorithm
+          Analytics.viewProduct(loadedProd.slug, loadedProd.id);
+
+          // Fetch real products from the EXACT SAME CATEGORY (e.g., bracelets for bracelets)
+          const { data: catData } = await supabase
+            .from("products")
+            .select("*")
+            .eq("category", loadedProd.category.toLowerCase())
+            .neq("slug", slug)
+            .limit(6);
+
+          if (catData && catData.length > 0) {
+            setSameCategoryProducts(
+              catData.map((row) => ({
+                id: row.id,
+                slug: row.slug,
+                name: row.name,
+                category: row.category,
+                price: Number(row.price),
+                originalPrice: row.original_price ? Number(row.original_price) : undefined,
+                badge: row.badge || undefined,
+                images: {
+                  primary: row.primary_image || "/ear.jpeg",
+                  hover: row.hover_image,
+                  gallery: Array.isArray(row.gallery_images) ? row.gallery_images : [],
+                },
+                metals: row.metals || [],
+                inStock: Boolean(row.in_stock),
+              }))
+            );
+          } else {
+            setSameCategoryProducts([]);
+          }
+
+          // Fetch general recommendations from catalogue
           const { data: recData } = await supabase
             .from("products")
             .select("*")
@@ -267,21 +384,15 @@ export default function ProductDetailPage() {
             moreStyles: Array.isArray(row.more_styles) ? row.more_styles : [],
           }));
         } else {
-          const localSets = localStorage.getItem("bhai_product_sets_v1");
-          if (localSets) {
-            try {
-              const parsed = JSON.parse(localSets);
-              if (Array.isArray(parsed) && parsed.length > 0) loadedSets = parsed;
-            } catch (e) {}
+          const localSets = await getPersistentItem<ProductSetItem[]>("bhai_product_sets_v1");
+          if (localSets && Array.isArray(localSets) && localSets.length > 0) {
+            loadedSets = localSets;
           }
         }
 
-        if (loadedSets.length === 0) {
-          loadedSets = DEFAULT_PRODUCT_SETS;
-        }
         setProductSets(loadedSets);
 
-        // Load See It IRL & Product Reels
+        // Load See It IRL & Product Reels (Only when items exist in DB or storage)
         let loadedIRL: SeeItIRLItem[] = [];
         const { data: irlData } = await supabase
           .from("see_it_irl")
@@ -303,47 +414,38 @@ export default function ProductDetailPage() {
             displayOrder: row.display_order || 0,
           }));
         } else {
-          const localIRL = localStorage.getItem("bhai_see_it_irl_v1");
-          if (localIRL) {
-            try {
-              const parsed = JSON.parse(localIRL);
-              if (Array.isArray(parsed) && parsed.length > 0) loadedIRL = parsed;
-            } catch (e) {}
+          const localIRL = await getPersistentItem<SeeItIRLItem[]>("bhai_see_it_irl_v1");
+          if (localIRL && Array.isArray(localIRL) && localIRL.length > 0) {
+            loadedIRL = localIRL;
           }
         }
 
         // Also check if any stored shoppable reels exist for this product
         try {
-          const storedReels = localStorage.getItem("bhai_shoppable_reels_v1");
-          if (storedReels) {
-            const parsedReels = JSON.parse(storedReels);
-            if (Array.isArray(parsedReels) && parsedReels.length > 0) {
-              const reelItems: SeeItIRLItem[] = parsedReels.map((r: any, i: number) => ({
-                id: `reel-${r.id || i}`,
-                type: "video",
-                imageUrl: r.posterUrl || r.product?.thumbnail || "/ear.jpeg",
-                videoUrl: r.videoUrl,
-                posterUrl: r.posterUrl,
-                customerHandle: `@${r.product?.name ? r.product.name.toLowerCase().replace(/[^a-z0-9]/g, "_") : "bhai_reels"}`,
-                caption: `Shoppable Video Reel • ${r.product?.name || "Bhai Fine Jewellery"}`,
-                productSlug: r.product?.href ? r.product.href.replace("/products/", "") : "all",
-                productName: r.product?.name,
-                productPrice: r.product?.price,
-                displayOrder: 99 + i,
-              }));
-              loadedIRL = [...loadedIRL, ...reelItems.filter((ri) => !loadedIRL.some((li) => li.videoUrl && li.videoUrl === ri.videoUrl))];
-            }
+          const storedReels = await getPersistentItem<any[]>("bhai_shoppable_reels_v1");
+          if (storedReels && Array.isArray(storedReels) && storedReels.length > 0) {
+            const reelItems: SeeItIRLItem[] = storedReels.map((r: any, i: number) => ({
+              id: `reel-${r.id || i}`,
+              type: "video",
+              imageUrl: r.posterUrl || r.product?.thumbnail || "/ear.jpeg",
+              videoUrl: r.videoUrl,
+              posterUrl: r.posterUrl,
+              customerHandle: `@${r.product?.name ? r.product.name.toLowerCase().replace(/[^a-z0-9]/g, "_") : "bhai_reels"}`,
+              caption: `Shoppable Video Reel • ${r.product?.name || "Bhai Fine Jewellery"}`,
+              productSlug: r.product?.href ? r.product.href.replace("/products/", "") : "all",
+              productName: r.product?.name,
+              productPrice: r.product?.price,
+              displayOrder: 99 + i,
+            }));
+            loadedIRL = [...loadedIRL, ...reelItems.filter((ri) => !loadedIRL.some((li) => li.videoUrl && li.videoUrl === ri.videoUrl))];
           }
         } catch (e) {}
 
-        if (loadedIRL.length === 0) {
-          loadedIRL = DEFAULT_SEE_IT_IRL_ITEMS;
-        }
         setSeeItIRLList(loadedIRL);
       } catch (err) {
         console.warn("Notice: Loaded offline defaults for Sets & IRL:", err);
-        setProductSets(DEFAULT_PRODUCT_SETS);
-        setSeeItIRLList(DEFAULT_SEE_IT_IRL_ITEMS);
+        setProductSets([]);
+        setSeeItIRLList([]);
       }
     }
 
@@ -459,6 +561,14 @@ export default function ProductDetailPage() {
     }
   }, [product]);
 
+  const handleOpenZoom = (index: number) => {
+    setSelectedImageIndex(index);
+    setIsZoomModalOpen(true);
+    if (product) {
+      Analytics.zoomImage(product.slug, product.id);
+    }
+  };
+
   const handleToggleWishlist = () => {
     if (!product) return;
 
@@ -471,6 +581,7 @@ export default function ProductDetailPage() {
         // Remove from wishlist
         items.splice(index, 1);
         setIsWishlisted(false);
+        Analytics.removeFromWishlist(product.slug, product.id);
       } else {
         // Add to wishlist
         items.unshift({
@@ -485,6 +596,7 @@ export default function ProductDetailPage() {
           inStock: product.inStock,
         });
         setIsWishlisted(true);
+        Analytics.addToWishlist(product.slug, product.id);
       }
 
       localStorage.setItem("bhai_wishlist_items_v1", JSON.stringify(items));
@@ -508,6 +620,9 @@ export default function ProductDetailPage() {
     setIsAddingToCart(true);
     setAddedToBagToast(true);
     setTimeout(() => setAddedToBagToast(false), 3000);
+
+    // Track Add to Cart event
+    Analytics.addToCart(product.slug, product.id);
 
     await addToCart(
       product.id || product.slug,
@@ -562,22 +677,21 @@ export default function ProductDetailPage() {
     return list.length > 0 ? list : ["/ear.jpeg"];
   }, [product]);
 
-  // Active Product Set for this piece
+  // Active Product Set for this piece (if added by admin in Supabase)
   const currentSet = React.useMemo(() => {
-    if (!productSets || productSets.length === 0) return DEFAULT_PRODUCT_SETS[0];
+    if (!productSets || productSets.length === 0) return null;
     const matched = productSets.find(
       (s) => s.targetProductSlug === slug || s.targetProductSlug === "all"
     );
-    return matched || productSets[0];
+    return matched || null;
   }, [productSets, slug]);
 
-  // Filtered See It IRL list
+  // Filtered See It IRL list (Strictly Real Admin Uploads)
   const activeIRLItems = React.useMemo(() => {
-    if (!seeItIRLList || seeItIRLList.length === 0) return DEFAULT_SEE_IT_IRL_ITEMS;
-    const directMatches = seeItIRLList.filter(
+    if (!seeItIRLList || seeItIRLList.length === 0) return [];
+    return seeItIRLList.filter(
       (item) => item.productSlug === slug || item.productSlug === "all"
     );
-    return directMatches.length > 0 ? directMatches : seeItIRLList;
   }, [seeItIRLList, slug]);
 
   const currentMetal = product?.metals[selectedMetalIndex] || {
@@ -679,193 +793,142 @@ export default function ProductDetailPage() {
         )}
 
         {/* TOP EDITORIAL SECTION: 2-COLUMN LUXURY SPLIT (GALLERY + BUY BOX) */}
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-4 sm:py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
+        <div className="max-w-[1360px] mx-auto px-4 sm:px-8 lg:px-12 py-4 sm:py-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             
-            {/* LEFT COLUMN: Sticky Luxury Image Gallery (7 Columns - Stays fixed while right side scrolls) */}
-            <div className="lg:col-span-7 lg:sticky lg:top-28 lg:self-start space-y-6">
-              
-              {/* EDITORIAL GRID (Left Hero with Review Quote Overlay + Right 2 Stacked Cards) */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-3.5 sm:gap-4 items-stretch">
+            {/* LEFT COLUMN: Sharp Architectural Atelier Image Gallery (6 Columns) */}
+            <div className="lg:col-span-6 lg:sticky lg:top-28 lg:self-start">
+              <div className="w-full max-w-[500px] mx-auto space-y-4">
                 
-                {/* 1. MAIN HERO CARD (Left 7 cols on desktop): Square with Square Sharp Corners */}
-                <div className={`relative ${galleryImages.length > 1 ? "md:col-span-7" : "md:col-span-12"} aspect-square bg-[#FAF7F2] overflow-hidden rounded-none border border-neutral-200/90 shadow-sm group`}>
-                  <Image
-                    src={galleryImages[0] || "/ear.jpeg"}
-                    alt={`${product.name} lifestyle hero view`}
-                    fill
-                    priority
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-
-                  {/* Bestseller Badge */}
-                  <span className="absolute top-4 left-4 z-10 bg-white/95 backdrop-blur-xs text-[#997b24] text-[10.5px] font-extrabold uppercase tracking-widest px-3.5 py-1.5 rounded-none border border-[#d4af37]/40 shadow-xs">
-                    {product.badge || "BESTSELLER"}
-                  </span>
-
-                  {/* Center Luxury Parchment Editorial Review Card Overlay (Square Corners) */}
-                  <div className="absolute inset-0 flex items-center justify-center p-4 sm:p-6 pointer-events-none">
-                    <div className="bg-[#FAF8F5]/95 backdrop-blur-md border border-[#E8E2D5] shadow-xl rounded-none p-6 sm:p-7 max-w-[88%] sm:max-w-[82%] text-center pointer-events-auto transform transition-transform duration-500 hover:scale-[1.02]">
-                      {/* 5 Solid Black Stars */}
-                      <div className="flex items-center justify-center gap-1 mb-3 text-neutral-950">
-                        {[...Array(5)].map((_, i) => (
-                          <span key={i} className="text-sm sm:text-base leading-none tracking-widest">★</span>
-                        ))}
-                      </div>
-
-                      {/* Editorial Quote */}
-                      <p className="font-serif italic text-neutral-900 text-[12.5px] sm:text-[14px] leading-relaxed tracking-tight">
-                        &quot;There&apos;s something about the mixed metals that makes it so effortlessly wearable. It&apos;s one of those rare pieces that genuinely elevates an outfit without trying too hard.&quot;
-                      </p>
-
-                      {/* Author Tag */}
-                      <p className="mt-3.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.25em] text-neutral-800">
-                        - REBECCA
-                      </p>
+                {/* GALLERY ATELIER: Side-by-Side Thumbnail Filmstrip + Main Showcase Frame */}
+                <div className="flex flex-col sm:flex-row gap-3 items-stretch">
+                  
+                  {/* Vertical Thumbnail Strip on sm/desktop (Sharp Square Edges) */}
+                  {galleryImages.length > 1 && (
+                    <div className="order-2 sm:order-1 flex sm:flex-col gap-2.5 overflow-x-auto sm:overflow-y-auto sm:max-h-[460px] scrollbar-none flex-shrink-0">
+                      {galleryImages.map((imgSrc, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setSelectedImageIndex(idx)}
+                          className={`relative w-16 h-16 sm:w-16 sm:h-16 flex-shrink-0 bg-[#FAF9F6] transition-all cursor-pointer rounded-none border ${
+                            selectedImageIndex === idx
+                              ? "border-neutral-950 ring-1 ring-black shadow-xs"
+                              : "border-neutral-200/90 hover:border-neutral-400 opacity-60 hover:opacity-100"
+                          }`}
+                        >
+                          <Image
+                            src={imgSrc}
+                            alt={`Thumbnail view ${idx + 1}`}
+                            fill
+                            className="object-cover object-center"
+                          />
+                        </button>
+                      ))}
                     </div>
-                  </div>
+                  )}
 
-                  {/* Lightbox / Zoom Icon */}
-                  <button
-                    aria-label="Enlarge hero image"
-                    onClick={() => {
-                      setSelectedImageIndex(0);
-                      setIsZoomModalOpen(true);
-                    }}
-                    className="absolute bottom-4 right-4 z-10 w-9 h-9 bg-white/90 hover:bg-white text-neutral-900 flex items-center justify-center rounded-none shadow-md transition-colors cursor-pointer border border-neutral-200"
-                  >
-                    <Maximize2 className="w-4 h-4 stroke-[1.5]" />
-                  </button>
-                </div>
+                  {/* Main Exhibition Stage (Sharp Square Corners, Pure Photography) */}
+                  <div className="order-1 sm:order-2 relative aspect-square flex-1 bg-[#FAF9F6] border border-neutral-300/80 rounded-none shadow-xs group overflow-hidden">
+                    <Image
+                      src={galleryImages[selectedImageIndex] || galleryImages[0] || "/ear.jpeg"}
+                      alt={`${product.name} exhibition angle ${selectedImageIndex + 1}`}
+                      fill
+                      priority
+                      sizes="(max-width: 768px) 100vw, 440px"
+                      className="object-cover object-center transition-transform duration-500 ease-out group-hover:scale-105 cursor-zoom-in"
+                      onClick={() => handleOpenZoom(selectedImageIndex)}
+                    />
 
-                {/* 2. RIGHT STACK (Right 5 cols on desktop): 2 Square Cards with Sharp Square Corners */}
-                {galleryImages.length > 1 && (
-                  <div className="md:col-span-5 flex flex-col gap-3.5 sm:gap-4 justify-between">
-                    
-                    {/* Top Right Card (Square Model / Ear Detail) */}
-                    <div 
-                      onClick={() => {
-                        setSelectedImageIndex(1);
-                        setIsZoomModalOpen(true);
-                      }}
-                      className="relative aspect-square bg-[#FAF7F2] overflow-hidden rounded-none border border-neutral-200/90 shadow-sm group cursor-pointer"
-                    >
-                      <Image
-                        src={galleryImages[1] || "/ear ring.jpeg"}
-                        alt={`${product.name} ear styling view`}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                      <button
-                        aria-label="Enlarge image"
-                        className="absolute bottom-3 right-3 w-8 h-8 bg-white/90 hover:bg-white text-neutral-900 flex items-center justify-center rounded-none border border-neutral-200 shadow-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Maximize2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-
-                    {/* Bottom Right Card (Square Earring Detail Shot with Tags) */}
-                    <div 
-                      onClick={() => {
-                        setSelectedImageIndex(galleryImages[2] ? 2 : 1);
-                        setIsZoomModalOpen(true);
-                      }}
-                      className="relative aspect-square bg-[#FAF7F2] overflow-hidden rounded-none border border-neutral-200/90 shadow-sm group cursor-pointer"
-                    >
-                      <Image
-                        src={galleryImages[2] || galleryImages[1] || "/ear.jpeg"}
-                        alt={`${product.name} detail styling shot`}
-                        fill
-                        className="object-cover transition-transform duration-700 group-hover:scale-105"
-                      />
-                      
-                      {/* Scale / Styling tags */}
-                      <div className="absolute bottom-3.5 inset-x-3 flex items-center justify-between text-[9px] font-mono tracking-widest text-white drop-shadow-md pointer-events-none">
-                        <span className="bg-black/70 px-2.5 py-0.5 rounded-none uppercase font-bold">
-                          EARRINGS
-                        </span>
-                        <span className="bg-black/70 px-2.5 py-0.5 rounded-none uppercase font-bold">
-                          18K
+                    {/* Top-Left Bestseller Badge (Sharp Minimalist Flag) */}
+                    {product.badge && (
+                      <div className="absolute top-3 left-3 z-10 pointer-events-none">
+                        <span className="bg-white/95 backdrop-blur-xs text-[#997b24] text-[9.5px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-none border border-[#d4af37]/50 shadow-2xs">
+                          {product.badge}
                         </span>
                       </div>
+                    )}
 
+                    {/* Top-Right Minimalist Counter */}
+                    {galleryImages.length > 1 && (
+                      <div className="absolute top-3 right-3 z-10 pointer-events-none">
+                        <span className="bg-neutral-950/80 backdrop-blur-xs text-white text-[10px] font-mono font-medium px-2 py-0.5 rounded-none">
+                          {selectedImageIndex + 1} / {galleryImages.length}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Left Navigation Arrow (Sharp Square) */}
+                    {galleryImages.length > 1 && (
                       <button
-                        aria-label="Enlarge image"
-                        className="absolute top-3 right-3 w-8 h-8 bg-white/90 hover:bg-white text-neutral-900 flex items-center justify-center rounded-none border border-neutral-200 shadow-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Maximize2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-
-                  </div>
-                )}
-
-              </div>
-
-              {/* 3. DYNAMIC MULTI-IMAGE THUMBNAILS STRIP (When 3+ photos are added) */}
-              {galleryImages.length > 2 && (
-                <div className="pt-2">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">
-                      All Angles ({galleryImages.length} Images)
-                    </span>
-                    <span className="text-[10px] text-neutral-400 font-mono">
-                      Click to zoom & explore
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-3 overflow-x-auto pb-2 scrollbar-thin">
-                    {galleryImages.map((imgSrc, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => {
-                          setSelectedImageIndex(idx);
-                          setIsZoomModalOpen(true);
+                        type="button"
+                        aria-label="Previous image"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : galleryImages.length - 1));
                         }}
-                        className={`relative w-18 h-18 sm:w-20 sm:h-20 flex-shrink-0 bg-[#FAF7F2] border transition-all cursor-pointer rounded-xl overflow-hidden group/thumb ${
-                          selectedImageIndex === idx
-                            ? "border-neutral-950 ring-2 ring-black opacity-100 scale-102"
-                            : "border-neutral-200 hover:border-neutral-400 opacity-80 hover:opacity-100"
-                        }`}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white/90 hover:bg-neutral-950 hover:text-white text-neutral-900 flex items-center justify-center rounded-none shadow-xs transition-all opacity-0 group-hover:opacity-100 cursor-pointer border border-neutral-300"
                       >
-                        <Image
-                          src={imgSrc}
-                          alt={`Thumbnail angle ${idx + 1}`}
-                          fill
-                          className="object-cover"
-                        />
-                        <span className="absolute bottom-1 right-1 bg-black/70 text-white text-[8.5px] font-mono px-1.5 py-0.5 rounded-sm">
-                          {idx + 1}
-                        </span>
+                        <ChevronLeft className="w-4 h-4 stroke-[1.75]" />
                       </button>
-                    ))}
+                    )}
+
+                    {/* Right Navigation Arrow (Sharp Square) */}
+                    {galleryImages.length > 1 && (
+                      <button
+                        type="button"
+                        aria-label="Next image"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedImageIndex((prev) => (prev < galleryImages.length - 1 ? prev + 1 : 0));
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 bg-white/90 hover:bg-neutral-950 hover:text-white text-neutral-900 flex items-center justify-center rounded-none shadow-xs transition-all opacity-0 group-hover:opacity-100 cursor-pointer border border-neutral-300"
+                      >
+                        <ChevronRight className="w-4 h-4 stroke-[1.75]" />
+                      </button>
+                    )}
+
+                    {/* Bottom-Right Zoom Button (Sharp Square) */}
+                    <button
+                      type="button"
+                      aria-label="Enlarge image"
+                      title="Click to Zoom"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleOpenZoom(selectedImageIndex);
+                      }}
+                      className="absolute bottom-3 right-3 z-10 w-8 h-8 bg-white/90 hover:bg-neutral-950 hover:text-white text-neutral-900 flex items-center justify-center rounded-none shadow-2xs transition-all cursor-pointer border border-neutral-300"
+                    >
+                      <Maximize2 className="w-3.5 h-3.5 stroke-[1.75]" />
+                    </button>
+                  </div>
+
+                </div>
+
+                {/* Minimalist Trust Bar (Sharp Square Boxes) */}
+                <div className="grid grid-cols-3 gap-2 pt-2 border-t border-neutral-200 text-center text-neutral-800">
+                  <div className="p-2.5 bg-[#FAF9F6] border border-neutral-200 rounded-none space-y-0.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#997b24] mx-auto" />
+                    <p className="text-[9px] font-bold uppercase tracking-wider">Recycled Gold</p>
+                    <p className="text-[8px] text-neutral-500 font-light">Certified ethical</p>
+                  </div>
+                  <div className="p-2.5 bg-[#FAF9F6] border border-neutral-200 rounded-none space-y-0.5">
+                    <Truck className="w-3.5 h-3.5 text-[#997b24] mx-auto" />
+                    <p className="text-[9px] font-bold uppercase tracking-wider">Free Delivery</p>
+                    <p className="text-[8px] text-neutral-500 font-light">Tracked UK-wide</p>
+                  </div>
+                  <div className="p-2.5 bg-[#FAF9F6] border border-neutral-200 rounded-none space-y-0.5">
+                    <RotateCcw className="w-3.5 h-3.5 text-[#997b24] mx-auto" />
+                    <p className="text-[9px] font-bold uppercase tracking-wider">30-Day Returns</p>
+                    <p className="text-[8px] text-neutral-500 font-light">Free exchange</p>
                   </div>
                 </div>
-              )}
 
-              {/* USP Trust Bar below photos */}
-              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-neutral-200 text-center text-neutral-700">
-                <div className="p-3 bg-[#FAF7F2]/60 border border-neutral-200/80 rounded-xl space-y-1">
-                  <ShieldCheck className="w-4 h-4 text-[#997b24] mx-auto" />
-                  <p className="text-[10px] font-bold uppercase tracking-wider">100% Recycled Gold</p>
-                  <p className="text-[9.5px] text-neutral-500 font-light">Certified ethical precious metals</p>
-                </div>
-                <div className="p-3 bg-[#FAF7F2]/60 border border-neutral-200/80 rounded-xl space-y-1">
-                  <Truck className="w-4 h-4 text-[#997b24] mx-auto" />
-                  <p className="text-[10px] font-bold uppercase tracking-wider">Free UK Delivery</p>
-                  <p className="text-[9.5px] text-neutral-500 font-light">Tracked on orders over £100</p>
-                </div>
-                <div className="p-3 bg-[#FAF7F2]/60 border border-neutral-200/80 rounded-xl space-y-1">
-                  <RotateCcw className="w-4 h-4 text-[#997b24] mx-auto" />
-                  <p className="text-[10px] font-bold uppercase tracking-wider">30-Day Returns</p>
-                  <p className="text-[9.5px] text-neutral-500 font-light">Complimentary exchange</p>
-                </div>
               </div>
-
             </div>
 
-            {/* RIGHT COLUMN: Buy Box & Product Details Panel (5 Columns) */}
-            <div className="lg:col-span-5 space-y-6">
+            {/* RIGHT COLUMN: Buy Box & Product Details Panel (6 Columns) */}
+            <div className="lg:col-span-6 space-y-6">
               
               {/* Product Title & Subtitle */}
               <div>
@@ -896,8 +959,8 @@ export default function ProductDetailPage() {
                 </div>
               </div>
 
-              {/* Price & Klarna Installments */}
-              <div className="py-3 border-y border-neutral-200 space-y-2">
+              {/* Price */}
+              <div className="py-3 border-y border-neutral-200">
                 <div className="flex items-baseline gap-3">
                   <span className="text-2xl font-extrabold text-neutral-950 font-mono">
                     £{product.price.toFixed(2)}
@@ -913,11 +976,6 @@ export default function ProductDetailPage() {
                     </span>
                   )}
                 </div>
-
-                {/* Klarna / Clearpay 3-payment split */}
-                <p className="text-[11px] text-neutral-600 font-medium">
-                  or 3 interest-free payments of <strong className="text-neutral-900">£{(product.price / 3).toFixed(2)}</strong> with <span className="font-bold underline cursor-pointer">Klarna</span> or <span className="font-bold underline cursor-pointer">Clearpay</span>.
-                </p>
               </div>
 
               {/* Metal Swatches Selector */}
@@ -994,14 +1052,16 @@ export default function ProductDetailPage() {
                 </span>
               </div>
 
-              {/* Action Buttons: Add to Bag & Express Checkout */}
+              {/* Action Buttons: Add to Bag & Secure Your Piece */}
               <div className="space-y-2.5 pt-2">
                 <div className="flex items-center gap-2.5">
                   <button
                     onClick={handleAddToBag}
-                    className="flex-1 py-4 bg-neutral-950 hover:bg-[#d4af37] text-white hover:text-black text-xs font-bold uppercase tracking-[0.2em] transition-all cursor-pointer rounded-none shadow-md active:scale-[0.99]"
+                    className="flex-1 py-4 bg-neutral-950 hover:bg-[#d4af37] text-white hover:text-black text-xs font-bold uppercase tracking-[0.2em] transition-all cursor-pointer rounded-none shadow-md active:scale-[0.99] flex items-center justify-center gap-2"
                   >
-                    Add To Bag • £{(product.price * quantity).toFixed(2)}
+                    <span>Add To Bag</span>
+                    <span>•</span>
+                    <span>£{(product.price * quantity).toFixed(2)}</span>
                   </button>
                   
                   {/* Wishlist Heart Button */}
@@ -1018,12 +1078,13 @@ export default function ProductDetailPage() {
                   </button>
                 </div>
 
-                {/* Express One-Click Checkout Button */}
+                {/* Instant Express Checkout: Secure Your Piece */}
                 <button
                   onClick={handleAddToBag}
-                  className="w-full py-3.5 bg-[#5A31F4] hover:bg-[#4824d6] text-white text-xs font-bold uppercase tracking-widest transition-colors cursor-pointer rounded-none shadow-sm flex items-center justify-center gap-2"
+                  className="w-full py-3.5 bg-[#FAF7F2] hover:bg-neutral-950 text-neutral-950 hover:text-white border border-neutral-950/20 hover:border-neutral-950 text-xs font-bold uppercase tracking-[0.16em] transition-all cursor-pointer rounded-none shadow-2xs flex items-center justify-center gap-2 group"
                 >
-                  <span>Buy with Shop Pay</span>
+                  <Sparkles className="w-3.5 h-3.5 text-[#997b24] group-hover:text-white transition-colors" />
+                  <span>Secure Your Piece — Instant Checkout</span>
                 </button>
               </div>
 
@@ -1111,41 +1172,43 @@ export default function ProductDetailPage() {
 
               </div>
 
-              {/* 5. "SAVE AS A SET" / "MORE STYLES" PAIRING WIDGET (EXACT MISSOMA LAYOUT) */}
-              {currentSet && (
+              {/* 5. "SAVE AS A SET" / "MORE STYLES" PAIRING WIDGET */}
+              {(currentSet || sameCategoryProducts.length > 0) && (
                 <div className="pt-5 border-t border-neutral-200">
                   {/* Tab Headers with dynamic underline */}
                   <div className="flex items-center gap-6 pb-2 border-b border-neutral-200 text-sm">
-                    <button
-                      type="button"
-                      onClick={() => setActiveSetTab("set")}
-                      style={{ fontFamily: "var(--font-cinzel), Georgia, serif" }}
-                      className={`text-sm tracking-wide transition-all relative pb-2 -mb-[9px] cursor-pointer ${
-                        activeSetTab === "set"
-                          ? "text-neutral-950 border-b-2 border-neutral-950 font-bold"
-                          : "text-neutral-500 hover:text-neutral-900 border-b-2 border-transparent"
-                      }`}
-                    >
-                      Save As A Set
-                    </button>
+                    {currentSet && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveSetTab("set")}
+                        style={{ fontFamily: "var(--font-cinzel), Georgia, serif" }}
+                        className={`text-sm tracking-wide transition-all relative pb-2 -mb-[9px] cursor-pointer ${
+                          activeSetTab === "set"
+                            ? "text-neutral-950 border-b-2 border-neutral-950 font-bold"
+                            : "text-neutral-500 hover:text-neutral-900 border-b-2 border-transparent"
+                        }`}
+                      >
+                        Save As A Set
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => setActiveSetTab("styles")}
                       style={{ fontFamily: "var(--font-cinzel), Georgia, serif" }}
                       className={`text-sm tracking-wide transition-all relative pb-2 -mb-[9px] cursor-pointer ${
-                        activeSetTab === "styles"
+                        activeSetTab === "styles" || !currentSet
                           ? "text-neutral-950 border-b-2 border-neutral-950 font-bold"
                           : "text-neutral-500 hover:text-neutral-900 border-b-2 border-transparent"
                       }`}
                     >
-                      More Styles
+                      More Styles In {product.category.toUpperCase()}
                     </button>
                   </div>
 
-                  {/* Tab 1: Save As A Set Card (Exact Match to Screenshot 2) */}
-                  {activeSetTab === "set" ? (
-                    <div className="mt-4 bg-[#FAF8F5] border border-[#EAE4D8] rounded-2xl p-4 sm:p-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 shadow-2xs">
-                      <div className="relative aspect-square w-28 h-28 sm:w-36 sm:h-36 bg-white rounded-2xl overflow-hidden border border-neutral-200/80 flex-shrink-0 p-2">
+                  {/* Tab 1: Save As A Set Card (Only when configured by admin) */}
+                  {activeSetTab === "set" && currentSet ? (
+                    <div className="mt-4 bg-[#FAF8F5] border border-[#EAE4D8] rounded-none p-4 sm:p-6 flex flex-col sm:flex-row items-center gap-4 sm:gap-6 shadow-2xs">
+                      <div className="relative aspect-square w-28 h-28 sm:w-36 sm:h-36 bg-white rounded-none overflow-hidden border border-neutral-200/80 flex-shrink-0 p-2">
                         <Image
                           src={currentSet.bundleImage || "/ear.jpeg"}
                           alt={currentSet.setTitle}
@@ -1156,7 +1219,7 @@ export default function ProductDetailPage() {
 
                       <div className="flex-1 min-w-0 space-y-2 text-center sm:text-left">
                         <h3 className="text-base sm:text-lg font-extrabold uppercase tracking-wide text-neutral-950">
-                          {currentSet.badgeText || "SAVE Rs.14,678.00 AS A SET"}
+                          {currentSet.badgeText || "SAVE AS A SET"}
                         </h3>
                         <Link
                           href={`/products/${currentSet.setSlug || product.slug}`}
@@ -1190,104 +1253,75 @@ export default function ProductDetailPage() {
                             }}
                             className="px-5 py-2.5 bg-neutral-950 hover:bg-[#d4af37] text-white hover:text-black text-xs font-bold uppercase tracking-widest transition-colors cursor-pointer rounded-none"
                           >
-                            Add Set • £{currentSet.bundlePrice || 195}
+                            Add Set • £{Number(currentSet.bundlePrice || product.price).toFixed(2)}
                           </button>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    /* Tab 2: More Styles (3 in 1 Line on Desktop - Exact Match to Screenshot 3) */
-                    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3.5">
-                      {(currentSet.moreStyles && currentSet.moreStyles.length > 0
-                        ? currentSet.moreStyles
-                        : [
-                            {
-                              name: "Lucy Williams Chunky Knot T-Bar Necklace",
-                              image: "/necklace.jpeg",
-                              price: 63736,
-                              slug: "lucy-williams-chunky-knot-t-bar-necklace",
-                            },
-                            {
-                              name: "Lucy Williams Knot T-Bar Charm Hoop Earrings",
-                              image: "/ear.jpeg",
-                              price: 37855,
-                              slug: "lucy-williams-knot-t-bar-charm-hoop-earrings",
-                            },
-                            {
-                              name: "Lucy Williams Knot Small Hoop Earrings",
-                              image: "/ear ring.jpeg",
-                              price: 37855,
-                              slug: "lucy-williams-knot-small-hoop-earrings",
-                            }
-                          ]
-                      ).map((st, i) => (
-                        <Link
-                          key={i}
-                          href={`/products/${st.slug}`}
-                          className="group bg-[#FAF8F5] border border-neutral-200/80 rounded-2xl p-4 flex flex-row md:flex-col items-center gap-3.5 hover:border-black transition-all shadow-2xs"
-                        >
-                          <div className="relative aspect-square w-20 h-20 sm:w-24 sm:h-24 md:w-full md:aspect-square bg-white rounded-xl overflow-hidden flex-shrink-0 border border-neutral-100 p-2">
-                            <Image 
-                              src={st.image} 
-                              alt={st.name} 
-                              fill 
-                              className="object-contain p-2 group-hover:scale-105 transition-transform duration-300" 
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0 text-left md:text-center space-y-1">
-                            <p className="text-xs font-serif underline underline-offset-2 text-neutral-950 font-semibold group-hover:text-[#997b24] transition-colors line-clamp-2">
-                              {st.name}
-                            </p>
-                            <p className="text-xs text-neutral-700 font-mono font-medium">
-                              Rs.{st.price ? Number(st.price).toLocaleString("en-PK") : "37,855.00"}
-                            </p>
-                          </div>
-                        </Link>
-                      ))}
+                    /* Tab 2: More Styles from EXACT SAME CATEGORY (Real Database Products) */
+                    <div className="mt-4">
+                      {sameCategoryProducts.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
+                          {sameCategoryProducts.map((st) => (
+                            <Link
+                              key={st.id || st.slug}
+                              href={`/products/${st.slug}`}
+                              className="group bg-[#FAF8F5] border border-neutral-200/80 rounded-none p-3 flex flex-row sm:flex-col items-center gap-3 hover:border-black transition-all shadow-2xs"
+                            >
+                              <div className="relative aspect-square w-20 h-20 sm:w-full bg-white rounded-none overflow-hidden flex-shrink-0 border border-neutral-100 p-1.5">
+                                <Image 
+                                  src={st.images.primary || "/ear.jpeg"} 
+                                  alt={st.name} 
+                                  fill 
+                                  className="object-contain p-1 group-hover:scale-105 transition-transform duration-300" 
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0 text-left sm:text-center space-y-1">
+                                <p className="text-xs font-serif underline underline-offset-2 text-neutral-950 font-semibold group-hover:text-[#997b24] transition-colors line-clamp-1">
+                                  {st.name}
+                                </p>
+                                <p className="text-xs text-neutral-900 font-mono font-bold">
+                                  £{st.price.toFixed(2)}
+                                </p>
+                              </div>
+                            </Link>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-neutral-500 py-4 italic text-center">
+                          More {product.category} styles arriving soon in this collection.
+                        </p>
+                      )}
                     </div>
                   )}
 
-                  {/* 6. "SEE IT IRL" (Directly Below Sets / More Styles - Exact Match to Screenshot 2) */}
-                  {activeIRLItems.length > 0 && (
-                    <div className="pt-8 mt-6 border-t border-neutral-200">
-                      <h2
-                        style={{ fontFamily: "var(--font-cinzel), Georgia, serif" }}
-                        className="text-xl sm:text-2xl font-bold tracking-wide text-neutral-950 mb-3.5"
-                      >
-                        See It IRL
-                      </h2>
+                </div>
+              )}
 
-                      <div className="relative">
-                        <div
-                          ref={irlScrollRef}
-                          className="flex items-center gap-3 sm:gap-3.5 overflow-x-auto pb-2 scrollbar-none scroll-smooth"
-                        >
-                          {activeIRLItems.map((item) => (
-                            <div
-                              key={item.id}
-                              onClick={() => setActiveIrlModalItem(item)}
-                              className="relative flex-shrink-0 w-32 sm:w-40 md:w-44 aspect-[3/4] bg-[#FAF8F5] rounded-xl sm:rounded-2xl overflow-hidden border border-neutral-200/80 shadow-xs cursor-pointer group/card"
-                            >
-                              {item.type === "video" && item.videoUrl ? (
-                                <video
-                                  src={item.videoUrl}
-                                  poster={item.posterUrl || item.imageUrl}
-                                  muted
-                                  loop
-                                  playsInline
-                                  className="w-full h-full object-cover group-hover/card:scale-105 transition-transform duration-500"
-                                />
-                              ) : (
-                                <Image
-                                  src={item.imageUrl}
-                                  alt={item.customerHandle}
-                                  fill
-                                  className="object-cover group-hover/card:scale-105 transition-transform duration-500"
-                                />
-                              )}
-                            </div>
-                          ))}
-                        </div>
+              {/* 6. "SEE IT IRL" (Only rendered when real IRL rows are added by admin in Supabase) */}
+              {activeIRLItems.length > 0 && (
+                <div className="pt-8 mt-6 border-t border-neutral-200">
+                  <h2
+                    style={{ fontFamily: "var(--font-cinzel), Georgia, serif" }}
+                    className="text-xl sm:text-2xl font-bold tracking-wide text-neutral-950 mb-3.5"
+                  >
+                    See It IRL
+                  </h2>
+
+                  <div className="relative">
+                    <div
+                      ref={irlScrollRef}
+                      className="flex items-center gap-3 sm:gap-3.5 overflow-x-auto pb-2 scrollbar-none scroll-smooth"
+                    >
+                      {activeIRLItems.map((item) => (
+                        <IRLCardItem
+                          key={item.id}
+                          item={item}
+                          onClick={() => setActiveIrlModalItem(item)}
+                        />
+                      ))}
+                    </div>
 
                         {/* Right Arrow Navigation Button */}
                         <button
@@ -1303,8 +1337,6 @@ export default function ProductDetailPage() {
                       </div>
                     </div>
                   )}
-                </div>
-              )}
 
             </div>
 
@@ -1383,323 +1415,7 @@ export default function ProductDetailPage() {
             </div>
           </section>
         )}
-
-        {/* 5. "HEAR FROM OUR CUSTOMERS" REAL REVIEWS SUITE */}
-        <section ref={reviewsSectionRef} className="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-12 border-t border-neutral-200">
-          
-          <div className="text-center mb-10">
-            <span className="text-[10.5px] font-bold uppercase tracking-widest text-[#997b24] block mb-1">
-              Verified Feedback
-            </span>
-            <h2
-              style={{ fontFamily: "var(--font-cormorant), serif" }}
-              className="text-3xl sm:text-4xl font-normal text-neutral-950 tracking-wide"
-            >
-              Hear From Our Customers
-            </h2>
-          </div>
-
-          {/* Rating Summary Header Box */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 bg-[#FAF7F2] p-6 sm:p-8 border border-neutral-200 mb-8 rounded-none">
-            
-            {/* Score (4 cols) */}
-            <div className="md:col-span-4 flex flex-col items-center justify-center text-center md:border-r border-neutral-300 pr-0 md:pr-6">
-              <span className="text-5xl font-extrabold text-neutral-950 font-mono">
-                {averageRating}
-              </span>
-              <div className="flex text-[#d4af37] text-base my-1">
-                {"★★★★★"}
-              </div>
-              <p className="text-xs text-neutral-600 font-medium">
-                Based on <strong>{totalReviewsCount} verified {totalReviewsCount === 1 ? "review" : "reviews"}</strong>
-              </p>
-              <p className="text-[11px] text-emerald-800 font-bold uppercase tracking-wider mt-1">
-                {recommendPercent}% of customers recommend this piece
-              </p>
-            </div>
-
-            {/* Rating Breakdown Bars (5 cols) */}
-            <div className="md:col-span-5 space-y-1.5 justify-center flex flex-col md:border-r border-neutral-300 pr-0 md:pr-6">
-              {ratingCounts.map((row) => (
-                <div key={row.star} className="flex items-center gap-2 text-xs">
-                  <span className="w-12 text-neutral-700 font-mono text-[11px]">
-                    {row.star} Stars
-                  </span>
-                  <div className="flex-1 h-2 bg-neutral-200 rounded-none overflow-hidden">
-                    <div
-                      className="h-full bg-neutral-950 transition-all duration-500"
-                      style={{ width: `${row.pct}%` }}
-                    />
-                  </div>
-                  <span className="w-8 text-right text-neutral-400 font-mono text-[10.5px]">
-                    {row.count}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            {/* Write a Review Button (3 cols) */}
-            <div className="md:col-span-3 flex flex-col items-center justify-center text-center">
-              <p className="text-xs text-neutral-700 mb-3 font-light">
-                Have you purchased this piece? Share your feedback with our community.
-              </p>
-              <button
-                onClick={() => setIsReviewModalOpen(true)}
-                className="px-6 py-3 bg-neutral-950 hover:bg-[#d4af37] text-white hover:text-black text-xs font-bold uppercase tracking-wider transition-all rounded-none cursor-pointer w-full flex items-center justify-center gap-1.5 shadow-sm"
-              >
-                <MessageSquarePlus className="w-3.5 h-3.5" />
-                <span>Write A Review</span>
-              </button>
-            </div>
-
-          </div>
-
-          {/* Reviews Cards List */}
-          {reviews.length === 0 ? (
-            <div className="p-12 text-center bg-neutral-50 border border-neutral-200 space-y-3">
-              <p className="text-xs font-bold uppercase tracking-wider text-neutral-800">
-                No Reviews Submitted Yet
-              </p>
-              <p className="text-[11px] text-neutral-500 max-w-sm mx-auto">
-                Be the first to review &ldquo;{product.name}&rdquo; and help other jewellery lovers!
-              </p>
-              <button
-                onClick={() => setIsReviewModalOpen(true)}
-                className="px-6 py-2.5 bg-neutral-950 text-white hover:bg-[#d4af37] hover:text-black text-xs font-bold uppercase tracking-wider rounded-none cursor-pointer transition-colors"
-              >
-                Write First Review
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {reviews.map((rev) => {
-                const isLiked = Boolean(likedReviews[rev.id]);
-
-                return (
-                  <div
-                    key={rev.id}
-                    className="p-6 bg-white border border-neutral-200 rounded-none space-y-3 hover:border-neutral-400 transition-colors"
-                  >
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                      <div className="flex items-center gap-2.5">
-                        <span className="font-bold text-xs uppercase tracking-wider text-neutral-950">
-                          {rev.author_name}
-                        </span>
-                        {rev.verified && (
-                          <span className="text-[10px] font-bold uppercase text-emerald-800 bg-emerald-50 px-2 py-0.5 border border-emerald-300 flex items-center gap-1">
-                            <Check className="w-3 h-3" />
-                            <span>Verified Buyer</span>
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-[11px] text-neutral-400 font-mono">
-                        {rev.created_at ? new Date(rev.created_at).toLocaleDateString() : "Recent"}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <div className="flex text-[#d4af37] text-xs">
-                        {"★".repeat(rev.rating)}
-                      </div>
-                      <span className="text-xs font-bold text-neutral-900">
-                        {rev.title}
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-neutral-700 font-light leading-relaxed">
-                      {rev.content}
-                    </p>
-
-                    <div className="flex items-center justify-between pt-2 border-t border-neutral-100 text-[11px] text-neutral-500">
-                      <span className="font-medium">
-                        Metal: <strong>{rev.metal_chosen || "18K Gold Vermeil"}</strong>
-                      </span>
-                      <button
-                        onClick={() => handleLikeReview(rev.id)}
-                        className={`flex items-center gap-1.5 transition-colors cursor-pointer ${
-                          isLiked ? "text-neutral-950 font-bold" : "hover:text-black"
-                        }`}
-                      >
-                        <ThumbsUp className={`w-3.5 h-3.5 ${isLiked ? "fill-black" : ""}`} />
-                        <span>Helpful ({rev.helpful_count || 0})</span>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-        </section>
-
       </main>
-
-      {/* 6. WRITE A CUSTOMER REVIEW MODAL */}
-      {isReviewModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white max-w-lg w-full p-6 sm:p-8 border border-neutral-300 shadow-2xl rounded-none relative space-y-4">
-            
-            {/* Close Button */}
-            <button
-              onClick={() => setIsReviewModalOpen(false)}
-              className="absolute right-4 top-4 p-1 text-neutral-400 hover:text-black cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-[#997b24]">
-                Verified Experience
-              </span>
-              <h2
-                style={{ fontFamily: "var(--font-neue-haas)" }}
-                className="text-base sm:text-lg font-bold uppercase tracking-wider text-neutral-950 mt-0.5"
-              >
-                Review &ldquo;{product.name}&rdquo;
-              </h2>
-            </div>
-
-            {reviewSubmittedSuccess && (
-              <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-900 text-xs font-bold flex items-center gap-2">
-                <Check className="w-4 h-4 text-emerald-700" />
-                <span>Review submitted and published live! Thank you.</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmitReview} className="space-y-4 pt-1">
-              
-              {/* Star Picker */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-neutral-800 mb-1">
-                  Overall Rating *
-                </label>
-                <div className="flex items-center gap-1.5">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button
-                      type="button"
-                      key={star}
-                      onMouseEnter={() => setFormHoverRating(star)}
-                      onMouseLeave={() => setFormHoverRating(0)}
-                      onClick={() => setFormRating(star)}
-                      className="text-2xl transition-transform hover:scale-110 cursor-pointer p-0.5"
-                    >
-                      <span className={
-                        (formHoverRating || formRating) >= star
-                          ? "text-[#d4af37]"
-                          : "text-neutral-300"
-                      }>
-                        ★
-                      </span>
-                    </button>
-                  ))}
-                  <span className="text-xs font-bold text-neutral-700 ml-2">
-                    {formRating} of 5 Stars
-                  </span>
-                </div>
-              </div>
-
-              {/* Author Name & Email */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-800 mb-1">
-                    Your Name / Display Name *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Sophie M."
-                    value={formAuthorName}
-                    onChange={(e) => setFormAuthorName(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 rounded-none px-3 py-2 text-xs font-semibold outline-none focus:border-black"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-800 mb-1">
-                    Email Address (Private)
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="sophie@example.com"
-                    value={formAuthorEmail}
-                    onChange={(e) => setFormAuthorEmail(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 rounded-none px-3 py-2 text-xs outline-none focus:border-black"
-                  />
-                </div>
-              </div>
-
-              {/* Metal Variation */}
-              {product.metals && product.metals.length > 0 && (
-                <div>
-                  <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-800 mb-1">
-                    Metal Variation Purchased
-                  </label>
-                  <select
-                    value={formMetal}
-                    onChange={(e) => setFormMetal(e.target.value)}
-                    className="w-full bg-white border border-neutral-300 rounded-none px-3 py-2 text-xs font-medium outline-none focus:border-black"
-                  >
-                    {product.metals.map((m) => (
-                      <option key={m.name} value={m.name}>{m.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-
-              {/* Review Headline */}
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-800 mb-1">
-                  Review Headline / Title *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Stunning craftsmanship, daily staple!"
-                  value={formTitle}
-                  onChange={(e) => setFormTitle(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 rounded-none px-3 py-2 text-xs font-bold outline-none focus:border-black"
-                />
-              </div>
-
-              {/* Review Text */}
-              <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-neutral-800 mb-1">
-                  Detailed Experience & Quality Feedback *
-                </label>
-                <textarea
-                  rows={4}
-                  required
-                  placeholder="Tell us about the weight, shine, fit, packaging, or styling..."
-                  value={formContent}
-                  onChange={(e) => setFormContent(e.target.value)}
-                  className="w-full bg-white border border-neutral-300 rounded-none p-3 text-xs outline-none focus:border-black leading-relaxed font-medium"
-                />
-              </div>
-
-              {/* Submit Buttons */}
-              <div className="pt-2 flex items-center justify-end gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setIsReviewModalOpen(false)}
-                  className="px-4 py-2.5 border border-neutral-300 text-neutral-700 text-xs font-bold uppercase tracking-wider hover:bg-neutral-100 transition-colors rounded-none"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmittingReview}
-                  className="px-6 py-2.5 bg-neutral-950 hover:bg-[#d4af37] text-white hover:text-black text-xs font-bold uppercase tracking-widest flex items-center gap-1.5 transition-all rounded-none cursor-pointer disabled:opacity-50"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>{isSubmittingReview ? "Submitting..." : "Submit Review"}</span>
-                </button>
-              </div>
-
-            </form>
-
-          </div>
-        </div>
-      )}
 
       {/* FULLSCREEN LIGHTBOX ZOOM MODAL */}
       {isZoomModalOpen && (
@@ -1785,10 +1501,10 @@ export default function ProductDetailPage() {
           <div className="bg-white max-w-3xl w-full rounded-2xl overflow-hidden shadow-2xl flex flex-col md:flex-row border border-neutral-200">
             {/* Left Media (Photo or Video Player) */}
             <div className="relative w-full md:w-1/2 aspect-[3/4] bg-neutral-950 flex items-center justify-center overflow-hidden">
-              {activeIrlModalItem.type === "video" && activeIrlModalItem.videoUrl ? (
+              {(activeIrlModalItem.type === "video" || Boolean(activeIrlModalItem.videoUrl)) && activeIrlModalItem.videoUrl ? (
                 <video
                   src={activeIrlModalItem.videoUrl}
-                  poster={activeIrlModalItem.posterUrl || activeIrlModalItem.imageUrl}
+                  poster={activeIrlModalItem.posterUrl && !activeIrlModalItem.posterUrl.includes("ear.jpeg") ? activeIrlModalItem.posterUrl : undefined}
                   controls
                   autoPlay
                   loop
@@ -1878,13 +1594,6 @@ export default function ProductDetailPage() {
           </div>
         </div>
       )}
-
-      {/* 6.5 CUSTOMER REVIEWS & RATINGS (Responsive Mobile & Desktop Breakdown) */}
-      <ProductReviewsSection
-        productName={product.name}
-        productSlug={slug}
-        currentMetalName={currentMetal?.name}
-      />
 
       {/* 7. FOOTER */}
       <Footer />

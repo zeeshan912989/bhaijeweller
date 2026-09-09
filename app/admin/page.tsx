@@ -150,6 +150,9 @@ export default function AdminPage() {
         },
       ]);
       loadDataFromSupabase();
+
+      // Trigger instant discovery index update in background
+      fetch("/api/cron/calculate-popularity?admin_key=true", { method: "POST" }).catch(() => {});
     } catch (err) {
       console.error("Error inserting to Supabase:", err);
     }
@@ -174,6 +177,9 @@ export default function AdminPage() {
         })
         .eq("slug", updatedProduct.slug);
       loadDataFromSupabase();
+
+      // Trigger instant discovery index update in background
+      fetch("/api/cron/calculate-popularity?admin_key=true", { method: "POST" }).catch(() => {});
     } catch (err) {
       console.error("Error updating in Supabase:", err);
     }
