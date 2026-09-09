@@ -848,48 +848,48 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* 4. FULL-WIDTH LUXURY EDITORIAL MEGA MENU DROPDOWN (NO IMAGES / SLEEK DESIGN) */}
+        {/* 4. FULL-WIDTH LUXURY EDITORIAL MEGA MENU DROPDOWN (COMPACT SLEEK STYLE) */}
         {hoveredNav && activeMegaMenu && (
           <div
             onMouseEnter={() => handleNavMouseEnter(hoveredNav)}
             onMouseLeave={handleNavMouseLeave}
-            className="hidden xl:block absolute top-full left-0 right-0 w-full bg-white text-neutral-900 shadow-[0_25px_60px_rgba(0,0,0,0.12)] border-t border-neutral-100 border-b border-neutral-200 z-40 animate-in fade-in slide-in-from-top-1 duration-200"
+            className="hidden xl:block absolute top-full left-0 right-0 w-full bg-white/98 backdrop-blur-md text-neutral-900 shadow-[0_20px_50px_rgba(0,0,0,0.10)] border-t border-neutral-100 border-b border-neutral-200/80 z-40 animate-in fade-in slide-in-from-top-1 duration-200"
           >
-            <div className="w-full px-8 lg:px-14 py-8 max-w-[1400px] mx-auto">
+            <div className="w-full px-8 lg:px-12 py-5 sm:py-6 max-w-[1320px] mx-auto">
               
-              <div className="grid grid-cols-12 gap-8 items-start">
+              <div className="grid grid-cols-12 gap-6 lg:gap-8 items-start">
 
-                {/* COL 1: CATEGORIES & SILHOUETTES (3.5 COLS) */}
-                <div className="col-span-3.5 border-r border-neutral-100 pr-8">
-                  <div className="flex items-center justify-between mb-4 pb-2 border-b border-neutral-100">
+                {/* COL 1: CATEGORIES & SILHOUETTES (3 COLS) */}
+                <div className="col-span-3 border-r border-neutral-100 pr-5">
+                  <div className="flex items-center justify-between mb-2.5 pb-1.5 border-b border-neutral-100">
                     <p
                       style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
-                      className="text-xs font-bold tracking-[0.24em] uppercase text-neutral-950"
+                      className="text-[11px] font-bold tracking-[0.22em] uppercase text-neutral-950"
                     >
                       COLLECTIONS
                     </p>
-                    <span className="text-[10px] text-neutral-400 font-mono uppercase tracking-wider">
+                    <span className="text-[9.5px] text-neutral-400 font-mono uppercase tracking-wider">
                       {hoveredNav}
                     </span>
                   </div>
-                  <ul className="space-y-1.5">
+                  <ul className="space-y-0.5">
                     {activeMegaMenu.categories?.map((cat, i) => (
                       <li key={i}>
                         <Link
                           href={cat.href}
                           onClick={() => setHoveredNav(null)}
-                          className={`group flex items-center justify-between py-1 transition-all ${
+                          className={`group flex items-center justify-between py-1 transition-all duration-150 ${
                             cat.isBold
                               ? "text-neutral-950 font-bold"
-                              : "text-neutral-800 hover:text-black"
+                              : "text-neutral-700 hover:text-black"
                           }`}
                         >
                           <span
                             style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
-                            className={`transition-transform duration-200 group-hover:translate-x-1 ${
+                            className={`transition-all duration-150 group-hover:translate-x-1 ${
                               cat.isBold
-                                ? "text-[18px] font-bold text-neutral-950 group-hover:text-[#997b24]"
-                                : "text-[16.5px] font-medium"
+                                ? "text-[16px] font-bold text-neutral-950 group-hover:text-[#997b24]"
+                                : "text-[15px] font-normal group-hover:text-black"
                             }`}
                           >
                             {cat.label}
@@ -897,7 +897,7 @@ export default function Navbar() {
                           
                           <div className="flex items-center gap-1.5">
                             {cat.badge && (
-                              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-[#FAF7F2] text-[#8A6D1E] border border-[#E5D7BE] rounded-none">
+                              <span className="text-[8.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-[#FAF7F2] text-[#8A6D1E] border border-[#E5D7BE]/80 rounded-none">
                                 {cat.badge}
                               </span>
                             )}
@@ -909,48 +909,48 @@ export default function Navbar() {
                   </ul>
                 </div>
 
-                {/* COL 2: PRECIOUS METALS & PURITY (3.5 COLS) */}
-                <div className="col-span-3.5 border-r border-neutral-100 pr-8">
-                  <div className="flex items-center justify-between mb-4 pb-2 border-b border-neutral-100">
+                {/* COL 2: PRECIOUS METALS & PURITY (3 COLS) */}
+                <div className="col-span-3 border-r border-neutral-100 pr-5">
+                  <div className="flex items-center justify-between mb-2.5 pb-1.5 border-b border-neutral-100">
                     <p
                       style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
-                      className="text-xs font-bold tracking-[0.24em] uppercase text-neutral-950"
+                      className="text-[11px] font-bold tracking-[0.22em] uppercase text-neutral-950"
                     >
                       PRECIOUS METALS
                     </p>
-                    <span className="text-[10px] text-neutral-400 font-mono uppercase tracking-wider">
+                    <span className="text-[9.5px] text-neutral-400 font-mono uppercase tracking-wider">
                       HALLMARKED
                     </span>
                   </div>
 
-                  <ul className="space-y-2">
+                  <ul className="space-y-1">
                     {activeMegaMenu.materials?.map((mat, i) => (
                       <li key={i}>
                         <Link
                           href={mat.href}
                           onClick={() => setHoveredNav(null)}
-                          className="flex items-center justify-between p-2 rounded-none border border-transparent hover:border-neutral-200 hover:bg-[#FAF9F6] transition-all group"
+                          className="flex items-center justify-between p-1.5 rounded-none border border-transparent hover:border-neutral-200 hover:bg-[#FAF9F6] transition-all duration-150 group"
                         >
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2.5">
                             <span
-                              className="w-4 h-4 rounded-full border border-neutral-300 shadow-2xs flex-shrink-0 group-hover:scale-110 transition-transform"
+                              className="w-3 h-3 rounded-full border border-black/10 shadow-2xs flex-shrink-0 group-hover:scale-110 transition-transform ring-1 ring-neutral-200"
                               style={{ backgroundColor: mat.colorHex }}
                             />
                             <div>
                               <p
                                 style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
-                                className="text-[16px] font-semibold text-neutral-900 group-hover:text-black leading-tight"
+                                className="text-[15px] font-semibold text-neutral-900 group-hover:text-black leading-tight"
                               >
                                 {mat.name}
                               </p>
                               {mat.karat && (
-                                <p className="text-[10px] text-neutral-500 font-sans tracking-wide">
+                                <p className="text-[9.5px] text-neutral-500 font-sans tracking-wide">
                                   {mat.karat}
                                 </p>
                               )}
                             </div>
                           </div>
-                          <span className="text-[11px] font-mono text-neutral-400 group-hover:text-neutral-900 transition-colors">
+                          <span className="text-[10px] font-mono text-neutral-400 group-hover:text-neutral-900 transition-colors opacity-0 group-hover:opacity-100">
                             Explore →
                           </span>
                         </Link>
@@ -959,108 +959,110 @@ export default function Navbar() {
                   </ul>
 
                   {/* British Craftsmanship Footnote */}
-                  <div className="mt-4 p-3 bg-[#FAF8F5] border border-[#EBE3D5] rounded-none flex items-start gap-2.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[#997b24] flex-shrink-0 mt-0.5" />
+                  <div className="mt-2.5 p-2 bg-[#FAF8F5] border border-[#EBE3D5] rounded-none flex items-start gap-2">
+                    <Sparkles className="w-3 h-3 text-[#997b24] flex-shrink-0 mt-0.5" />
                     <div>
                       <p
                         style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
-                        className="text-[10px] font-bold tracking-[0.16em] uppercase text-neutral-900"
+                        className="text-[9.5px] font-bold tracking-[0.14em] uppercase text-neutral-900"
                       >
-                        UK Assay Office Certified
+                        UK Assay Certified
                       </p>
-                      <p className="text-[11px] text-neutral-600 mt-0.5 leading-snug">
-                        Solid precious metals with certified hallmark authenticity.
+                      <p className="text-[10px] text-neutral-600 leading-tight">
+                        Solid metals with certified hallmark authenticity.
                       </p>
                     </div>
                   </div>
                 </div>
 
-                {/* COL 3: CURATED EDITS & ATELIER HIGHLIGHT (5 COLS) */}
-                <div className="col-span-5 space-y-4">
-                  
-                  {/* Curated Edits Row */}
-                  {activeMegaMenu.curatedEdits && activeMegaMenu.curatedEdits.length > 0 && (
-                    <div>
-                      <p
-                        style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
-                        className="text-xs font-bold tracking-[0.24em] uppercase text-neutral-950 mb-3 pb-2 border-b border-neutral-100"
-                      >
-                        CURATED STYLING EDITS
-                      </p>
+                {/* COL 3: CURATED EDITS (3 COLS) */}
+                <div className="col-span-3 border-r border-neutral-100 pr-5">
+                  <div className="flex items-center justify-between mb-2.5 pb-1.5 border-b border-neutral-100">
+                    <p
+                      style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
+                      className="text-[11px] font-bold tracking-[0.22em] uppercase text-neutral-950"
+                    >
+                      CURATED EDITS
+                    </p>
+                    <span className="text-[9.5px] text-neutral-400 font-mono uppercase tracking-wider">
+                      STYLING
+                    </span>
+                  </div>
 
-                      <div className="grid grid-cols-1 gap-2">
-                        {activeMegaMenu.curatedEdits.map((edit, idx) => (
-                          <Link
-                            key={idx}
-                            href={edit.href}
-                            onClick={() => setHoveredNav(null)}
-                            className="p-2.5 border border-neutral-200/80 bg-white hover:bg-neutral-900 hover:text-white transition-all duration-200 flex items-center justify-between group shadow-2xs"
+                  <div className="space-y-1.5">
+                    {activeMegaMenu.curatedEdits?.map((edit, idx) => (
+                      <Link
+                        key={idx}
+                        href={edit.href}
+                        onClick={() => setHoveredNav(null)}
+                        className="p-2 border border-neutral-200/80 bg-[#FAFAFA] hover:bg-neutral-950 hover:text-white transition-all duration-200 flex items-center justify-between group shadow-2xs block"
+                      >
+                        <div className="min-w-0 pr-2">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            {edit.tag && (
+                              <span className="text-[8.5px] font-mono font-bold tracking-wider uppercase text-[#997b24] group-hover:text-[#ECC96A]">
+                                {edit.tag}
+                              </span>
+                            )}
+                          </div>
+                          <h5 
+                            style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
+                            className="text-[14.5px] font-bold tracking-wide truncate group-hover:text-white"
                           >
-                            <div className="min-w-0 pr-3">
-                              <div className="flex items-center gap-2 mb-0.5">
-                                {edit.tag && (
-                                  <span className="text-[9px] font-mono font-bold tracking-wider uppercase text-[#997b24] group-hover:text-[#ECC96A]">
-                                    {edit.tag}
-                                  </span>
-                                )}
-                                <span className="text-neutral-300 group-hover:text-neutral-700">•</span>
-                                <h5 
-                                  style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
-                                  className="text-[16px] font-bold tracking-wide truncate"
-                                >
-                                  {edit.title}
-                                </h5>
-                              </div>
-                              <p className="text-[11px] text-neutral-500 group-hover:text-neutral-300 truncate">
-                                {edit.subtitle}
-                              </p>
-                            </div>
-                            <ArrowRight className="w-3.5 h-3.5 text-neutral-400 group-hover:text-white group-hover:translate-x-1 transition-all flex-shrink-0" />
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Atelier Editorial Highlight Box */}
-                  {activeMegaMenu.atelierHighlight && (
-                    <div className="p-4 bg-[#111111] text-white border border-neutral-800 rounded-none shadow-md">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-[9.5px] font-mono tracking-[0.2em] text-[#d4af37] uppercase font-bold">
-                          ★ BHAI ATELIER HIGHLIGHT
-                        </span>
-                        <span className="text-[9px] text-neutral-400 uppercase tracking-widest">
-                          BIRMINGHAM UK
-                        </span>
-                      </div>
-
-                      <h4
-                        style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
-                        className="text-lg font-medium text-white tracking-wide leading-tight"
-                      >
-                        {activeMegaMenu.atelierHighlight.title}
-                      </h4>
-
-                      <p className="mt-1 text-[11.5px] text-neutral-300 font-light leading-relaxed">
-                        &ldquo;{activeMegaMenu.atelierHighlight.quote}&rdquo;
-                      </p>
-
-                      {activeMegaMenu.atelierHighlight.perks && (
-                        <div className="mt-3 pt-2.5 border-t border-neutral-800/80 grid grid-cols-1 sm:grid-cols-3 gap-2 text-[10px] text-neutral-300">
-                          {activeMegaMenu.atelierHighlight.perks.map((perk, pIdx) => (
-                            <div key={pIdx} className="flex items-center gap-1.5">
-                              <span className="text-[#d4af37] text-xs">✓</span>
-                              <span className="truncate">{perk}</span>
-                            </div>
-                          ))}
+                            {edit.title}
+                          </h5>
+                          <p className="text-[10px] text-neutral-500 group-hover:text-neutral-300 truncate">
+                            {edit.subtitle}
+                          </p>
                         </div>
-                      )}
+                        <ArrowRight className="w-3 h-3 text-neutral-400 group-hover:text-white group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+                      </Link>
+                    ))}
+                  </div>
+                </div>
 
-                      <div className="mt-3.5 flex items-center justify-between">
+                {/* COL 4: ATELIER SPOTLIGHT (3 COLS) */}
+                <div className="col-span-3">
+                  {activeMegaMenu.atelierHighlight && (
+                    <div className="p-3.5 bg-neutral-950 text-white border border-neutral-800 rounded-none shadow-lg flex flex-col justify-between h-full">
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[8.5px] font-mono tracking-[0.2em] text-[#d4af37] uppercase font-bold">
+                            ★ BHAI ATELIER
+                          </span>
+                          <span className="text-[8.5px] text-neutral-400 uppercase tracking-widest font-mono">
+                            LONDON • BHM
+                          </span>
+                        </div>
+
+                        <h4
+                          style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
+                          className="text-[16px] font-medium text-white tracking-wide leading-tight"
+                        >
+                          {activeMegaMenu.atelierHighlight.title}
+                        </h4>
+
+                        <p className="mt-1 text-[10.5px] text-neutral-300 font-light leading-relaxed italic line-clamp-2">
+                          &ldquo;{activeMegaMenu.atelierHighlight.quote}&rdquo;
+                        </p>
+
+                        {activeMegaMenu.atelierHighlight.perks && (
+                          <div className="mt-2.5 pt-2 border-t border-neutral-800 space-y-1 text-[9.5px] text-neutral-300">
+                            {activeMegaMenu.atelierHighlight.perks.slice(0, 2).map((perk, pIdx) => (
+                              <div key={pIdx} className="flex items-center gap-1.5">
+                                <span className="text-[#d4af37] text-xs">✓</span>
+                                <span className="truncate">{perk}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="mt-3">
                         <Link
                           href={activeMegaMenu.atelierHighlight.href}
                           onClick={() => setHoveredNav(null)}
-                          className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-[#d4af37] hover:text-white transition-colors pb-0.5 border-b border-[#d4af37] hover:border-white"
+                          className="w-full py-1.5 px-3 bg-[#d4af37] hover:bg-[#b5952f] text-black text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                         >
                           <span>{activeMegaMenu.atelierHighlight.buttonText}</span>
                           <ArrowRight className="w-3 h-3" />
@@ -1068,27 +1070,26 @@ export default function Navbar() {
                       </div>
                     </div>
                   )}
-
                 </div>
 
               </div>
 
               {/* BOTTOM LUXURY VALUE RIBBON */}
-              <div className="mt-6 pt-4 border-t border-neutral-100 flex flex-wrap items-center justify-between gap-4 text-[11px] text-neutral-600">
-                <div className="flex items-center gap-6">
+              <div className="mt-4 pt-3 border-t border-neutral-100 flex flex-wrap items-center justify-between gap-3 text-[10.5px] text-neutral-600">
+                <div className="flex items-center gap-4 sm:gap-6">
                   <span className="flex items-center gap-1.5">
                     <span className="text-[#997b24] font-bold">🚚</span>
-                    <strong className="text-neutral-900">Complimentary UK Shipping</strong> on orders over £100
+                    <strong className="text-neutral-900">Complimentary UK Shipping</strong> over £100
                   </span>
                   <span className="hidden md:inline text-neutral-300">•</span>
                   <span className="hidden md:flex items-center gap-1.5">
                     <span className="text-[#997b24] font-bold">🔄</span>
-                    <strong className="text-neutral-900">30-Day Returns</strong> &amp; Ring Size Guarantee
+                    <strong className="text-neutral-900">30-Day Returns</strong> &amp; Sizing
                   </span>
                   <span className="hidden lg:inline text-neutral-300">•</span>
                   <span className="hidden lg:flex items-center gap-1.5">
                     <span className="text-[#997b24] font-bold">🛡️</span>
-                    <strong className="text-neutral-900">2-Year Warranty</strong> on all fine jewellery
+                    <strong className="text-neutral-900">2-Year Warranty</strong>
                   </span>
                 </div>
 
@@ -1096,9 +1097,10 @@ export default function Navbar() {
                   href={activeMegaMenu.categories?.[0]?.href || "/collections"}
                   onClick={() => setHoveredNav(null)}
                   style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
-                  className="text-xs font-bold tracking-[0.16em] uppercase text-neutral-950 hover:text-[#997b24] underline underline-offset-4"
+                  className="text-[11px] font-bold tracking-[0.14em] uppercase text-neutral-950 hover:text-[#997b24] underline underline-offset-4 flex items-center gap-1 group"
                 >
-                  View All {hoveredNav} →
+                  <span>View All {hoveredNav}</span>
+                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
               </div>
 

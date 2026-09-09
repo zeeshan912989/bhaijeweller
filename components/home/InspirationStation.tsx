@@ -109,13 +109,13 @@ export default function InspirationStation() {
     setActiveVideoId(id);
     const targetElem = itemRefs.current[id];
     const container = scrollRef.current;
-    
+
     if (targetElem && container) {
       const containerWidth = container.clientWidth;
       const targetLeft = targetElem.offsetLeft;
       const targetWidth = targetElem.offsetWidth;
       const scrollPosition = targetLeft - (containerWidth / 2) + (targetWidth / 2);
-      
+
       container.scrollTo({
         left: scrollPosition,
         behavior: "smooth",
@@ -147,7 +147,7 @@ export default function InspirationStation() {
 
   return (
     <section className="w-full bg-[#FAF7F2] py-8 sm:py-10 border-b border-[#ece7de] overflow-hidden">
-      
+
       {/* 1. TOP HEADER & ARROW CONTROLS */}
       <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 mb-5">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
@@ -200,20 +200,18 @@ export default function InspirationStation() {
                   itemRefs.current[item.id] = el;
                 }}
                 onClick={() => selectAndCenterVideo(item.id)}
-                className={`flex-shrink-0 transition-all duration-500 cursor-pointer ${
-                  isFeatured
+                className={`flex-shrink-0 transition-all duration-500 cursor-pointer ${isFeatured
                     ? "w-[145px] sm:w-[170px] md:w-[185px] scale-100 z-10"
                     : "w-[115px] sm:w-[135px] md:w-[150px] opacity-90 hover:opacity-100"
-                }`}
+                  }`}
                 style={{ scrollSnapAlign: "center" }}
               >
                 {/* 1. VIDEO CONTAINER */}
                 <div
-                  className={`relative aspect-[9/16] w-full rounded-2xl overflow-hidden bg-[#FAF7F2] transition-all duration-500 ${
-                    isFeatured
+                  className={`relative aspect-[9/16] w-full rounded-2xl overflow-hidden bg-[#FAF7F2] transition-all duration-500 ${isFeatured
                       ? "border-2 border-white shadow-xl ring-1 ring-neutral-200/80"
                       : "border border-white/90 shadow-2xs"
-                  }`}
+                    }`}
                 >
                   {item.videoUrl && (
                     <video

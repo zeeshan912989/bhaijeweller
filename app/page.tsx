@@ -6,7 +6,6 @@ import ProductCarousel from "@/components/home/ProductCarousel";
 import CategoryShowcase from "@/components/home/CategoryShowcase";
 import EditorialFeatureBanners from "@/components/home/EditorialFeatureBanners";
 import TrustBadges from "@/components/home/TrustBadges";
-import InspirationStation from "@/components/home/InspirationStation";
 import CuratedEdits from "@/components/home/CuratedEdits";
 import StoreLocatorBanner from "@/components/home/StoreLocatorBanner";
 import Footer from "@/components/layout/Footer";
@@ -64,10 +63,7 @@ export default function Home() {
       {/* 9. BRAND TRUST & GUARANTEE PILLARS */}
       <TrustBadges />
 
-      {/* 10. INSPIRATION STATION (VERTICAL VIDEO REELS WITH AUTO-CENTERING ELEVATION) */}
-      <InspirationStation />
-
-      {/* 11. CURATED STYLING EDITS & SERVICES */}
+      {/* 10. CURATED STYLING EDITS & SERVICES */}
       <CuratedEdits />
 
       {/* 12. IN-STORE SHOPPING & APPOINTMENT BANNER */}

@@ -33,7 +33,6 @@ export default function AdminHeader({
       case "dashboard": return "Dashboard & Performance";
       case "add-product": return "Add New Fine Jewellery Piece";
       case "products": return "Jewellery Products Management";
-      case "videos": return "Shoppable Reels & Video Manager";
       case "orders": return "Customer Orders & Shipments";
       case "layout": return "Site Banners & Layout Customizer";
       case "customers": return "Client Directory & VIPs";

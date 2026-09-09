@@ -20,7 +20,7 @@ import {
   LogOut
 } from "lucide-react";
 
-export type AdminTab = "dashboard" | "add-product" | "products" | "sets-irl" | "orders" | "videos" | "layout" | "customers" | "coupons" | "analytics" | "settings";
+export type AdminTab = "dashboard" | "add-product" | "products" | "sets-irl" | "orders" | "layout" | "customers" | "coupons" | "analytics" | "settings";
 
 interface AdminSidebarProps {
   activeTab: AdminTab;
@@ -46,7 +46,6 @@ export default function AdminSidebar({
     { id: "add-product" as AdminTab, label: "Add Product", icon: PackagePlus },
     { id: "products" as AdminTab, label: "All Products", icon: Package, count: productCount },
     { id: "sets-irl" as AdminTab, label: "Sets & IRL Studio", icon: Sparkles },
-    { id: "videos" as AdminTab, label: "Reels & Videos", icon: Film },
     { id: "orders" as AdminTab, label: "Orders", icon: ShoppingBag, count: orderCount },
     { id: "layout" as AdminTab, label: "Banners & Layout", icon: LayoutTemplate },
     { id: "customers" as AdminTab, label: "Customers", icon: Users },

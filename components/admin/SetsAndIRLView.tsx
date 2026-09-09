@@ -133,40 +133,6 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
     }
   };
 
-  // Import existing Video Reels into IRL with 1 click
-  const handleImportReels = async () => {
-    try {
-      const storedReels = await getPersistentItem<any[]>("bhai_shoppable_reels_v1");
-      if (storedReels && Array.isArray(storedReels) && storedReels.length > 0) {
-        const imported: SeeItIRLItem[] = storedReels.map((reel: any, idx: number) => {
-          const prodSlug = reel.product?.href ? reel.product.href.replace("/products/", "") : "all";
-          return {
-            id: `imported-reel-${reel.id || idx}`,
-            type: "video",
-            imageUrl: reel.posterUrl || reel.product?.thumbnail || "/ear.jpeg",
-            videoUrl: reel.videoUrl,
-            posterUrl: reel.posterUrl,
-            customerHandle: `@${reel.product?.name ? reel.product.name.toLowerCase().replace(/[^a-z0-9]/g, "_") : "bhai_reels"}`,
-            caption: `Shoppable Video Reel for ${reel.product?.name || "Bhai Fine Jewellery"}`,
-            productSlug: prodSlug,
-            productName: reel.product?.name || "Fine Jewellery Piece",
-            productPrice: reel.product?.price,
-            displayOrder: idx + 1,
-          };
-        });
-
-        // Merge without duplicates
-        const merged = [...imported, ...irlItems.filter((it) => !it.id.startsWith("imported-reel-"))];
-        await persistIRL(merged);
-        alert(`Successfully imported ${imported.length} shoppable video reel(s) into See It IRL!`);
-        return;
-      }
-      alert("No stored video reels found in Video Manager. You can upload a new Reel or Photo right here!");
-    } catch (e) {
-      console.error("Import error:", e);
-    }
-  };
-
   // 2. Persist Sets safely (Supabase + IndexedDB)
   const persistSets = async (items: ProductSetItem[]) => {
     setProductSets(items);
@@ -433,26 +399,16 @@ export default function SetsAndIRLView({ products }: SetsAndIRLViewProps) {
               <span>Create New Set</span>
             </button>
           ) : (
-            <>
-              <button
-                onClick={handleImportReels}
-                className="px-4 py-2.5 bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors cursor-pointer border border-neutral-700"
-                title="Automatically import existing shoppable video reels into See It IRL"
-              >
-                <RefreshCw className="w-3.5 h-3.5 text-[#d4af37]" />
-                <span>Import Video Reels</span>
-              </button>
-              <button
-                onClick={() => {
-                  resetIrlForm();
-                  setIsIrlModalOpen(true);
-                }}
-                className="px-5 py-2.5 bg-[#d4af37] hover:bg-[#b5952f] text-black text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-colors cursor-pointer"
-              >
-                <Camera className="w-4 h-4" />
-                <span>Add Look / Reel</span>
-              </button>
-            </>
+            <button
+              onClick={() => {
+                resetIrlForm();
+                setIsIrlModalOpen(true);
+              }}
+              className="px-5 py-2.5 bg-[#d4af37] hover:bg-[#b5952f] text-black text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-colors cursor-pointer"
+            >
+              <Camera className="w-4 h-4" />
+              <span>Add Look / Reel</span>
+            </button>
           )}
         </div>
       </div>

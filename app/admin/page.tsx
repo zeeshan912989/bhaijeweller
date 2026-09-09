@@ -7,7 +7,6 @@ import AdminLogin from "@/components/admin/AdminLogin";
 import DashboardView from "@/components/admin/DashboardView";
 import AddProductView from "@/components/admin/AddProductView";
 import ProductsView from "@/components/admin/ProductsView";
-import VideoManagerView from "@/components/admin/VideoManagerView";
 import OrdersView, { OrderRecord } from "@/components/admin/OrdersView";
 import CustomersView from "@/components/admin/CustomersView";
 import CouponsView from "@/components/admin/CouponsView";
@@ -299,13 +298,6 @@ export default function AdminPage() {
             <AddProductView
               onAddProduct={handleAddProduct}
               onNavigateToProducts={() => setActiveTab("products")}
-            />
-          )}
-
-          {activeTab === "videos" && (
-            <VideoManagerView
-              products={products}
-              onNavigateToAddProduct={() => setActiveTab("add-product")}
             />
           )}
 
