@@ -7,40 +7,39 @@
 
 ## 1. Executive Summary & Objective
 
-This document outlines the complete architectural and mathematical specification for implementing a **Real-Time Live UK Gold Market Rate Pricing Engine** for the **BHAI Fine Jewellery** e-commerce store.
+This document outlines the complete architectural and mathematical specification for implementing a **Real-Time Live UK Gold Market Rate Pricing Engine** for the **BHAI Fine Jewellery** e-commerce store, specifically tailored for **22 Karat (916 Hallmark) & 24 Karat (999 Fine Gold)** high-purity collections.
 
 ### The Objective:
-Enable automated, market-linked price adjustments for solid gold and gold vermeil jewellery pieces based on live LBMA (London Bullion Market Association) gold spot rates in GBP (£), while maintaining transparency, fixed craftsmanship fees, gemstone valuations, and guaranteed profit margins.
+Enable automated, market-linked price adjustments for **22K & 24K solid gold pieces** based on live LBMA (London Bullion Market Association) gold spot rates in GBP (£), supporting both **Per-Gram Making Charges** and **Flat Craftsmanship Fees**, with Gram and Tola weight transparency.
 
 ---
 
-## 2. Jewellery Pricing Formula & Mathematics
+## 2. 22K & 24K Jewellery Pricing Formula & Mathematics
 
-Gold jewellery pricing adheres to the standard fine jewellery valuation equation:
+For high-purity 22K & 24K jewellery, pricing follows the UK bullion and fine jewellery benchmark:
 
-$$\mathbf{P_{\text{final}}} = \left[ \left( W_{\text{metal}} \times R_{\text{live/g}} \times F_{\text{karat}} \right) + C_{\text{craft}} + C_{\text{gem}} \right] \times (1 + M_{\text{margin}}) \times (1 + V_{\text{VAT}})$$
+$$\mathbf{P_{\text{final}}} = \left[ \left( W_{\text{grams}} \times R_{\text{live 24K/g}} \times F_{\text{karat}} \right) + C_{\text{making}} + C_{\text{gem}} \right] \times (1 + M_{\text{margin}}) \times (1 + V_{\text{VAT}})$$
 
-Where:
-* **$W_{\text{metal}}$**: Metal Net Weight in Grams (e.g., $3.45\text{g}$).
-* **$R_{\text{live/g}}$**: Live 24K Gold Spot Rate in GBP per Gram (e.g., $£68.20/\text{g}$).
-* **$F_{\text{karat}}$**: Purity Multiplier of the precious metal (fraction of 24K).
-* **$C_{\text{craft}}$**: Craftsmanship / Making charges (fixed design & bench work fee).
-* **$C_{\text{gem}}$**: Gemstones / Diamonds valuation (if applicable).
-* **$M_{\text{margin}}$**: Brand profit margin markup (e.g., $25\% = 0.25$).
-* **$V_{\text{VAT}}$**: Standard UK Value Added Tax ($20\%$, if not included in base).
+### Making Charges Options ($C_{\text{making}}$):
+In 22K/24K trade, making charges are calculated in two flexible ways:
+1. **Per-Gram Making Charge:** $C_{\text{making}} = W_{\text{grams}} \times \text{Making Rate per Gram}$ *(e.g., $10\text{g} \times £12/\text{g} = £120$)*
+2. **Fixed Piece Fee:** Fixed craftsmanship bench fee for intricate handmade or laser designs.
 
 ---
 
-## 3. Karat Purity Multipliers ($F_{\text{karat}}$)
+## 3. High-Purity Metal Multipliers ($F_{\text{karat}}$)
 
-| Metal Specification | Hallmarking Stamp | Purity ($F_{\text{karat}}$) | Description |
+| Metal Specification | UK Hallmark Stamp | Purity ($F_{\text{karat}}$) | Primary Usage in BHAI |
 | :--- | :---: | :---: | :--- |
-| **24K Fine Gold** | 999 | `1.000` (100%) | Pure bullion gold (Investment standard) |
-| **22K Crown Gold** | 916 | `0.916` (91.6%) | High purity traditional fine jewellery |
-| **18K Solid Gold** | 750 | `0.750` (75.0%) | BHAI signature luxury solid gold |
-| **14K Solid Gold** | 585 | `0.585` (58.5%) | Durable everyday solid gold |
-| **9K Solid Gold** | 375 | `0.375` (37.5%) | Popular UK accessible solid gold |
-| **18K Gold Vermeil** | 925 | Custom | Solid 925 Silver base weight + 2.5µm 18K gold coat |
+| **24K Fine Gold** | **999 / 999.9** | **`1.000` (100%)** | **Primary:** Pure gold pendants, investment coins/bars, minimal bullion sets |
+| **22K Crown Gold** | **916** | **`0.9167` (91.67%)** | **Primary Signature:** Bridal sets, bangles, necklaces, chains, earrings, rings |
+| **18K Solid Gold** | 750 | `0.750` (75.0%) | Diamond settings & delicate fine pieces |
+| **9K Solid Gold** | 375 | `0.375` (37.5%) | Everyday entry solid gold |
+| **18K Gold Vermeil** | 925 | Custom | Recycled silver base with 2.5µm gold coat |
+
+### Weight Standards Supported:
+* **Grams (g):** Official UK metric standard (e.g., `4.850g`).
+* **Tola (tolas):** 1 Tola = `11.6638 grams` (Auto-displayed in transparency breakdown for traditional 22K/24K clients).
 
 ---
 
