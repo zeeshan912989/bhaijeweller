@@ -293,16 +293,28 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSubMenu, setMobileSubMenu] = useState<string | null>(null);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [desktopSearchFocused, setDesktopSearchFocused] = useState(false);
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
   const { itemCount: cartCount, openCart } = useCart();
   const [wishlistCount, setWishlistCount] = useState(0);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
 
-  const desktopSearchRef = useRef<HTMLDivElement>(null);
-  const mobileInputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Close search on ESC key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsSearchOpen(false);
+      }
+    };
+    if (isSearchOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isSearchOpen]);
 
   // Sync real-time wishlist items count and open drawer event
   useEffect(() => {
@@ -658,134 +670,21 @@ export default function Navbar() {
           {/* RIGHT ICONS & UTILITIES */}
           <div className="flex items-center gap-3 sm:gap-4 xl:gap-5 justify-end">
             
-            {/* SQUARE DESKTOP SEARCH BAR */}
-            <div ref={desktopSearchRef} className="relative hidden md:block">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="SEARCH JEWELLERY..."
-                  value={searchQuery}
-                  onFocus={() => setDesktopSearchFocused(true)}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`w-44 lg:w-56 focus:w-80 text-[11px] font-bold tracking-wider pl-3.5 pr-8 py-2 rounded-none transition-all duration-300 outline-none uppercase ${
-                    isHeaderWhite
-                      ? "bg-neutral-100 text-neutral-950 border border-neutral-300 focus:border-black focus:bg-white placeholder:text-neutral-400"
-                      : "bg-white/20 text-white border border-white/40 focus:border-white focus:bg-black/90 placeholder:text-white/70 backdrop-blur-sm"
-                  }`}
-                />
-                {searchQuery ? (
-                  <button
-                    onClick={() => setSearchQuery("")}
-                    aria-label="Clear search"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 text-neutral-400 hover:text-black cursor-pointer"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                ) : (
-                  <Search
-                    className={`w-3.5 h-3.5 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none transition-colors ${
-                      isHeaderWhite ? "text-neutral-700" : "text-white"
-                    }`}
-                  />
-                )}
-              </div>
-
-              {/* SQUARE SEARCH DROPDOWN OVERLAY */}
-              {desktopSearchFocused && searchQuery.trim() && (
-                <div className="absolute right-0 top-full mt-2 w-96 bg-white rounded-none shadow-2xl border border-neutral-300 overflow-hidden z-50 text-neutral-900 animate-in fade-in duration-200">
-                  
-                  {/* Dropdown Header */}
-                  <div className="p-3.5 bg-neutral-900 text-white flex items-center justify-between text-xs border-b border-neutral-800">
-                    <span className="font-bold tracking-widest uppercase text-[10.5px] text-[#d4af37] flex items-center gap-1.5">
-                      <Sparkles className="w-3 h-3" />
-                      <span>{`${searchResults.length} Pieces Found`}</span>
-                    </span>
-                    <button
-                      onClick={() => setDesktopSearchFocused(false)}
-                      className="text-[10px] uppercase font-bold tracking-wider text-neutral-400 hover:text-white cursor-pointer"
-                    >
-                      Close ✕
-                    </button>
-                  </div>
-
-                  {/* Search Results List */}
-                  <div className="max-h-80 overflow-y-auto divide-y divide-neutral-100">
-                    {searchResults.length > 0 ? (
-                      <>
-                        {searchResults.map((item) => (
-                          <Link
-                            key={item.id || item.slug}
-                            href={`/products/${item.slug}`}
-                            onClick={() => {
-                              setDesktopSearchFocused(false);
-                              setSearchQuery("");
-                            }}
-                            className="p-3 flex items-center gap-3 hover:bg-neutral-50 transition-colors group"
-                          >
-                            <div className="w-12 h-12 relative rounded-none overflow-hidden bg-neutral-100 flex-shrink-0 border border-neutral-200">
-                              <Image
-                                src={item.images.primary}
-                                alt={item.name}
-                                fill
-                                className="object-cover transition-transform duration-300 group-hover:scale-105"
-                              />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              {item.badge && (
-                                <span className="text-[9px] font-extrabold text-[#997b24] uppercase tracking-wider block">
-                                  {item.badge}
-                                </span>
-                              )}
-                              <p className="text-xs font-bold text-neutral-950 group-hover:text-[#997b24] transition-colors truncate uppercase">
-                                {item.name}
-                              </p>
-                              <div className="flex items-baseline gap-2 mt-0.5">
-                                <span className="text-xs font-bold text-neutral-950 font-mono">
-                                  £{item.price.toFixed(2)}
-                                </span>
-                                {item.originalPrice && (
-                                  <span className="text-[10px] text-neutral-400 line-through font-mono">
-                                    £{item.originalPrice.toFixed(2)}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                            <ArrowRight className="w-3.5 h-3.5 text-neutral-400 group-hover:translate-x-1 group-hover:text-black transition-all flex-shrink-0" />
-                          </Link>
-                        ))}
-
-                        <div className="p-2.5 bg-neutral-50 text-center border-t border-neutral-200">
-                          <Link
-                            href={`/collections/earrings`}
-                            onClick={() => setDesktopSearchFocused(false)}
-                            className="text-[10.5px] font-bold uppercase tracking-widest text-neutral-900 hover:text-[#997b24] transition-colors"
-                          >
-                            View All Matching Collections →
-                          </Link>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="p-8 text-center space-y-2">
-                        <p className="text-xs font-bold uppercase tracking-wider text-neutral-900">
-                          No Pieces Found for &ldquo;{searchQuery}&rdquo;
-                        </p>
-                        <p className="text-[11px] text-neutral-500">
-                          Try searching for &quot;Gold&quot;, &quot;Earrings&quot;, &quot;Necklace&quot; or &quot;Ring&quot;.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                </div>
-              )}
-            </div>
-
+            {/* SEARCH ICON BUTTON (TRIGGERS TOP SLIDE-DOWN SEARCH BAR) */}
             <button
-              onClick={() => setMobileSearchOpen(true)}
-              className="md:hidden p-1.5 rounded-full hover:opacity-80 transition-opacity"
+              onClick={() => {
+                setIsSearchOpen(true);
+                setTimeout(() => searchInputRef.current?.focus(), 150);
+              }}
               aria-label="Search jewellery"
+              className={`p-1.5 rounded-full relative transition-all hover:scale-105 cursor-pointer ${
+                isHeaderWhite
+                  ? "text-neutral-900 hover:text-black"
+                  : "text-white hover:text-neutral-200 drop-shadow-[0_1px_2px_rgba(0,0,0,0.3)]"
+              }`}
+              title="Search jewellery"
             >
-              <Search className="w-5 h-5" />
+              <Search className="w-[19px] h-[19px] stroke-[1.6]" />
             </button>
 
             <button
@@ -1362,6 +1261,136 @@ export default function Navbar() {
                 </div>
                 <ChevronDown className="w-4 h-4 text-neutral-600 stroke-[2]" />
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. LUXURY TOP SLIDE-DOWN SEARCH OVERLAY (FULL-WIDTH DESKTOP & MOBILE) */}
+      {isSearchOpen && (
+        <div className="fixed inset-0 z-[100] flex flex-col animate-in fade-in duration-200">
+          {/* Dark Backdrop */}
+          <div
+            onClick={() => setIsSearchOpen(false)}
+            className="absolute inset-0 bg-black/60 backdrop-blur-xs"
+          />
+
+          {/* Top Slide-Down Container */}
+          <div className="relative w-full bg-white text-neutral-900 shadow-2xl border-b border-neutral-200 z-10 animate-in slide-in-from-top duration-300">
+            <div className="max-w-5xl mx-auto px-4 sm:px-8 py-6 sm:py-8">
+              
+              {/* Search Input Row */}
+              <div className="flex items-center gap-3 sm:gap-4 pb-4 border-b border-neutral-200">
+                <Search className="w-5 h-5 sm:w-6 sm:h-6 text-neutral-400 flex-shrink-0" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="SEARCH JEWELLERY (NECKLACES, RINGS, EARRINGS, GOLD...)"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 text-base sm:text-xl md:text-2xl font-normal text-neutral-950 placeholder:text-neutral-400 outline-none bg-transparent uppercase"
+                  style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="p-1.5 text-neutral-400 hover:text-neutral-900 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsSearchOpen(false)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-neutral-600 hover:text-black hover:bg-neutral-100 transition-all cursor-pointer border border-neutral-200"
+                >
+                  <span>Close</span>
+                  <span className="hidden sm:inline text-[10px] text-neutral-400 font-mono">ESC</span>
+                </button>
+              </div>
+
+              {/* Popular Searches Pills */}
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400 mr-1">
+                  Popular:
+                </span>
+                {["T-Bar Chains", "Earrings", "Tennis Bracelets", "Rings", "18K Gold Vermeil", "Best Sellers"].map((tag) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery(tag);
+                      searchInputRef.current?.focus();
+                    }}
+                    className="text-[11.5px] px-2.5 py-1 bg-[#FAF8F5] hover:bg-neutral-900 hover:text-white border border-neutral-200 text-neutral-700 transition-all cursor-pointer"
+                  >
+                    {tag}
+                  </button>
+                ))}
+              </div>
+
+              {/* Live Search Results */}
+              {searchQuery.trim() && (
+                <div className="mt-6 pt-4 border-t border-neutral-100 max-h-[60vh] overflow-y-auto pr-1">
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs font-bold uppercase tracking-widest text-neutral-500">
+                      {searchResults.length > 0
+                        ? `Found ${searchResults.length} pieces for "${searchQuery}"`
+                        : `No results for "${searchQuery}"`}
+                    </span>
+                  </div>
+
+                  {searchResults.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                      {searchResults.slice(0, 8).map((prod) => (
+                        <Link
+                          key={prod.id || prod.slug}
+                          href={`/products/${prod.slug}`}
+                          onClick={() => {
+                            setIsSearchOpen(false);
+                            setSearchQuery("");
+                          }}
+                          className="group flex flex-col bg-white border border-neutral-200/80 rounded-[5px] overflow-hidden hover:shadow-md transition-all p-2"
+                        >
+                          <div className="relative aspect-square w-full bg-[#FAF9F6] rounded-[4px] overflow-hidden mb-2">
+                            <Image
+                              src={prod.images.primary}
+                              alt={prod.name}
+                              fill
+                              className="object-contain p-2 group-hover:scale-105 transition-transform duration-500"
+                            />
+                            {prod.badge && (
+                              <span className="absolute top-1.5 left-1.5 text-[8.5px] font-bold uppercase tracking-wider bg-white/95 px-1.5 py-0.5 border border-neutral-200 text-neutral-800">
+                                {prod.badge}
+                              </span>
+                            )}
+                          </div>
+                          <p
+                            style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
+                            className="text-[14px] font-semibold text-neutral-950 group-hover:text-[#997b24] truncate"
+                          >
+                            {prod.name}
+                          </p>
+                          <div className="flex items-baseline gap-2 mt-0.5">
+                            <span className="text-xs font-bold text-neutral-900">
+                              £{prod.price.toFixed(2)}
+                            </span>
+                            {prod.originalPrice && (
+                              <span className="text-[10px] text-neutral-400 line-through">
+                                £{prod.originalPrice.toFixed(2)}
+                              </span>
+                            )}
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="py-10 text-center text-neutral-500 text-sm">
+                      Try searching for general keywords like &quot;necklace&quot;, &quot;gold&quot;, or &quot;ring&quot;.
+                    </div>
+                  )}
+                </div>
+              )}
+
             </div>
           </div>
         </div>
