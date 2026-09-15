@@ -895,7 +895,8 @@ export default function Navbar() {
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);
-                      setMobileSearchOpen(true);
+                      setIsSearchOpen(true);
+                      setTimeout(() => searchInputRef.current?.focus(), 150);
                     }}
                     className="w-full bg-neutral-100 text-xs px-4 py-2.5 rounded-full flex items-center justify-between text-neutral-500 hover:text-neutral-900"
                   >
