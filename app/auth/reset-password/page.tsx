@@ -50,7 +50,7 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen lg:h-screen flex flex-col justify-between bg-[#FAF7F2] text-neutral-900 overflow-x-hidden">
       <Navbar />
 
-      <main className="flex-1 pt-20 sm:pt-24 lg:pt-20 pb-4 lg:pb-2 flex items-center justify-center">
+      <main className="flex-1 pt-28 sm:pt-32 lg:pt-24 pb-6 lg:pb-2 flex items-center justify-center">
         <div className="max-w-md mx-auto px-4 sm:px-6 w-full">
           
           <div className="bg-white border border-neutral-200/90 p-5 sm:p-7 shadow-xl">

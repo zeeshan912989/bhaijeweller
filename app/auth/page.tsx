@@ -14,7 +14,7 @@ export default function AuthPage() {
     <div className="min-h-screen lg:h-screen flex flex-col justify-between bg-[#FAF7F2] text-neutral-900 overflow-x-hidden">
       <Navbar />
 
-      <main className="flex-1 pt-20 sm:pt-24 lg:pt-20 pb-4 lg:pb-2 flex items-center justify-center">
+      <main className="flex-1 pt-28 sm:pt-32 lg:pt-24 pb-6 lg:pb-2 flex items-center justify-center">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
