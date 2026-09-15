@@ -59,6 +59,22 @@ export default function AuthForm({
   const hasLowercase = /[a-z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
 
+  // UK Phone number formatter (10 digits standard UK length)
+  const formatUKPhone = (val: string) => {
+    let digits = val.replace(/\D/g, "");
+    if (digits.startsWith("44")) {
+      digits = digits.slice(2);
+    }
+    if (digits.startsWith("0")) {
+      digits = digits.slice(1);
+    }
+    digits = digits.slice(0, 10);
+    if (digits.length > 4) {
+      return `${digits.slice(0, 4)} ${digits.slice(4)}`;
+    }
+    return digits;
+  };
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setErrorMessage(null);
@@ -84,7 +100,9 @@ export default function AuthForm({
         }
       } else {
         formData.set("fullName", fullName);
-        if (phone) formData.set("phone", phone);
+        if (phone.trim()) {
+          formData.set("phone", `+44 ${phone.trim()}`);
+        }
         formData.set("confirmPassword", confirmPassword);
 
         const res = await signUpAction(null, formData);
@@ -200,14 +218,18 @@ export default function AuthForm({
                 <label className="block text-[10.5px] font-bold uppercase tracking-wider text-neutral-700 mb-1">
                   Phone <span className="text-[9.5px] text-neutral-400 font-normal">(Optional)</span>
                 </label>
-                <div className="relative">
-                  <Phone className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-neutral-400" />
+                <div className="flex border border-neutral-300 bg-neutral-50 focus-within:border-black focus-within:bg-white transition-colors">
+                  <div className="flex items-center gap-1 px-2.5 bg-neutral-100/80 border-r border-neutral-300 text-neutral-800 text-[11px] font-semibold select-none flex-shrink-0">
+                    <span className="text-xs">🇬🇧</span>
+                    <span>+44</span>
+                  </div>
                   <input
                     type="tel"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+44 7123..."
-                    className="w-full bg-neutral-50 text-xs text-neutral-950 pl-8 pr-2.5 py-2 border border-neutral-300 outline-none focus:border-black focus:bg-white transition-colors"
+                    onChange={(e) => setPhone(formatUKPhone(e.target.value))}
+                    placeholder="7123 456789"
+                    maxLength={11}
+                    className="w-full bg-transparent text-xs text-neutral-950 px-2.5 py-2 outline-none font-mono tracking-wider placeholder:font-sans placeholder:tracking-normal"
                   />
                 </div>
               </div>
