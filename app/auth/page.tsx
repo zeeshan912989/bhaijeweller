@@ -19,8 +19,8 @@ export default function AuthPage() {
           
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10 items-center">
             
-            {/* LEFT COLUMN: Luxury Brand Story & VIP Privileges */}
-            <div className="lg:col-span-6 space-y-4 text-left py-2">
+            {/* LEFT COLUMN: Luxury Brand Story & VIP Privileges (Desktop Only) */}
+            <div className="hidden lg:block lg:col-span-6 space-y-4 text-left py-2">
               
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white border border-[#d4af37]/50 text-[#997b24] text-[10px] font-bold uppercase tracking-widest shadow-2xs">
                 <Sparkles className="w-3 h-3 text-[#d4af37]" />
@@ -86,7 +86,7 @@ export default function AuthPage() {
             </div>
 
             {/* RIGHT COLUMN: Combined Auth Form */}
-            <div className="lg:col-span-6 flex justify-center">
+            <div className="w-full lg:col-span-6 flex justify-center">
               <Suspense fallback={<div className="p-8 text-center text-xs text-neutral-400">Loading secure authentication...</div>}>
                 <AuthForm />
               </Suspense>
