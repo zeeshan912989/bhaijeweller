@@ -292,7 +292,6 @@ export default function Navbar() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSubMenu, setMobileSubMenu] = useState<string | null>(null);
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
@@ -835,120 +834,7 @@ export default function Navbar() {
         )}
       </nav>
 
-      {/* 4. FULL-SCREEN SQUARE MOBILE SEARCH MODAL */}
-      {mobileSearchOpen && (
-        <div className="fixed inset-0 z-50 bg-white flex flex-col animate-in fade-in duration-200">
-          <div className="p-4 border-b border-neutral-300 flex items-center gap-3 bg-white">
-            <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-400" />
-              <input
-                ref={mobileInputRef}
-                type="text"
-                placeholder="SEARCH RINGS, NECKLACES, EARRINGS..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-neutral-100 text-xs font-bold text-neutral-900 pl-10 pr-9 py-3 rounded-none border border-neutral-300 outline-none focus:border-black uppercase tracking-wider"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-black cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-            <button
-              onClick={() => {
-                setMobileSearchOpen(false);
-                setSearchQuery("");
-              }}
-              className="text-xs font-bold uppercase tracking-wider text-neutral-900 hover:text-black px-2 py-1 cursor-pointer"
-            >
-              Cancel
-            </button>
-          </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-6">
-            <div>
-              <p className="text-[10.5px] font-bold tracking-widest uppercase text-neutral-400 mb-2.5">
-                Popular Searches
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {["Earrings", "Gold Huggies", "Necklaces", "T-Bar Chains", "Rings", "Bracelets"].map((term) => (
-                  <button
-                    key={term}
-                    onClick={() => setSearchQuery(term)}
-                    className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-950 hover:text-white rounded-none border border-neutral-200 text-xs font-bold uppercase tracking-wider text-neutral-800 transition-colors cursor-pointer"
-                  >
-                    {term}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {searchQuery.trim() && (
-              <div>
-                <div className="flex items-center justify-between mb-3 border-b border-neutral-200 pb-2">
-                  <p className="text-xs font-bold text-neutral-950 uppercase tracking-widest">
-                    Matching Pieces ({searchResults.length})
-                  </p>
-                </div>
-
-                {searchResults.length > 0 ? (
-                  <div className="space-y-2.5">
-                    {searchResults.map((item) => (
-                      <Link
-                        key={item.id || item.slug}
-                        href={`/products/${item.slug}`}
-                        onClick={() => {
-                          setMobileSearchOpen(false);
-                          setSearchQuery("");
-                        }}
-                        className="flex items-center gap-3.5 p-3 bg-white hover:bg-neutral-50 rounded-none border border-neutral-200 transition-colors"
-                      >
-                        <div className="w-14 h-14 relative rounded-none overflow-hidden bg-neutral-100 border border-neutral-200 flex-shrink-0">
-                          <Image
-                            src={item.images.primary}
-                            alt={item.name}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          {item.badge && (
-                            <span className="text-[9px] font-bold text-[#997b24] uppercase tracking-wider block">
-                              {item.badge}
-                            </span>
-                          )}
-                          <p className="text-xs font-bold text-neutral-950 uppercase truncate">
-                            {item.name}
-                          </p>
-                          <div className="flex items-baseline gap-2 mt-0.5">
-                            <span className="text-xs font-extrabold text-neutral-950 font-mono">
-                              £{item.price.toFixed(2)}
-                            </span>
-                            {item.originalPrice && (
-                              <span className="text-[10px] text-neutral-400 line-through font-mono">
-                                £{item.originalPrice.toFixed(2)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <ArrowRight className="w-4 h-4 text-neutral-400 flex-shrink-0 mr-1" />
-                      </Link>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="py-12 text-center text-xs text-neutral-500">
-                    No jewellery found for &ldquo;{searchQuery}&rdquo;. Try searching for &ldquo;Necklace&rdquo; or &ldquo;Ring&rdquo;.
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* 5. MOBILE DRAWER NAVIGATION WITH DRILL-DOWN SUB-MENUS */}
       {mobileMenuOpen && (
