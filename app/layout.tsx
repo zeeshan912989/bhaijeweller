@@ -39,9 +39,13 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${inter.variable} ${cinzel.variable} ${playfair.variable} ${cormorant.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans bg-white text-neutral-900 selection:bg-[#d4af37] selection:text-white">
+      <body
+        suppressHydrationWarning
+        className="min-h-full flex flex-col font-sans bg-white text-neutral-900 selection:bg-[#d4af37] selection:text-white"
+      >
         <ClientProviders>
           {children}
           <CookieConsentModal />

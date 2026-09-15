@@ -13,6 +13,7 @@ interface CookiePreferences {
 }
 
 export default function CookieConsentModal() {
+  const [mounted, setMounted] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [showManage, setShowManage] = useState(false);
   const [preferences, setPreferences] = useState({
@@ -23,6 +24,7 @@ export default function CookieConsentModal() {
   });
 
   useEffect(() => {
+    setMounted(true);
     // Check if consent has already been saved
     try {
       const saved = localStorage.getItem("bhai_cookie_consent");
@@ -80,7 +82,7 @@ export default function CookieConsentModal() {
     saveConsent(preferences);
   };
 
-  if (!isVisible) return null;
+  if (!mounted || !isVisible) return null;
 
   return (
     <div className="fixed inset-x-0 bottom-0 sm:bottom-6 z-[9999] flex items-end justify-center px-0 sm:px-4 pointer-events-none animate-in fade-in duration-300">

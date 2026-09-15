@@ -192,7 +192,7 @@ export default function AuthForm({
         
         {/* Sign Up: Full Name & Phone in 2 cols */}
         {mode === "signup" ? (
-          <>
+          <div key="signup-mode-fields" className="space-y-3">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               <div>
                 <label className="block text-[10.5px] font-bold uppercase tracking-wider text-neutral-700 mb-1">
@@ -333,10 +333,10 @@ export default function AuthForm({
                 </span>
               </div>
             )}
-          </>
+          </div>
         ) : (
           /* Login Mode: Clean Single Columns */
-          <>
+          <div key="login-mode-fields" className="space-y-3">
             <div>
               <label className="block text-[10.5px] font-bold uppercase tracking-wider text-neutral-700 mb-1">
                 Email Address <span className="text-red-500">*</span>
@@ -406,7 +406,7 @@ export default function AuthForm({
                 Remember my session securely
               </label>
             </div>
-          </>
+          </div>
         )}
 
         {/* Submit Action Button */}
