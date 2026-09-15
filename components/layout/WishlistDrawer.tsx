@@ -17,6 +17,7 @@ import {
 import { Product } from "@/data/products";
 
 import { useCart } from "@/context/CartContext";
+import { useCurrency } from "@/context/CurrencyContext";
 
 export interface WishlistItem {
   id: string;
@@ -44,6 +45,7 @@ export default function WishlistDrawer({
   const [items, setItems] = useState<WishlistItem[]>([]);
   const [addedToastItem, setAddedToastItem] = useState<string | null>(null);
   const { addToCart } = useCart();
+  const { formatPrice } = useCurrency();
 
   // Load wishlist items from localStorage & listen to cross-component updates
   const loadWishlist = () => {
@@ -272,11 +274,11 @@ export default function WishlistDrawer({
 
                     <div className="flex items-baseline gap-2">
                       <span className="text-xs font-bold text-neutral-950 font-mono">
-                        £{item.price.toFixed(2)}
+                        {formatPrice(item.price)}
                       </span>
                       {item.originalPrice && (
                         <span className="text-[10.5px] text-neutral-400 line-through font-mono">
-                          £{item.originalPrice.toFixed(2)}
+                          {formatPrice(item.originalPrice)}
                         </span>
                       )}
                     </div>
@@ -315,7 +317,7 @@ export default function WishlistDrawer({
                 Total Wishlist Value:
               </span>
               <span className="font-extrabold text-neutral-950 text-sm font-mono">
-                £{items.reduce((acc, it) => acc + it.price, 0).toFixed(2)}
+                {formatPrice(items.reduce((acc, it) => acc + it.price, 0))}
               </span>
             </div>
 

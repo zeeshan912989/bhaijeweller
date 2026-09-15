@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { CartTotals } from "@/lib/cart/types";
 import CheckoutModal from "@/components/checkout/CheckoutModal";
+import { useCurrency } from "@/context/CurrencyContext";
 
 interface CartSummaryProps {
   totals: CartTotals;
@@ -30,6 +31,7 @@ export default function CartSummary({
   isCompact = false,
   onClose,
 }: CartSummaryProps) {
+  const { formatPrice } = useCurrency();
   const [promoCode, setPromoCode] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
   const [promoError, setPromoError] = useState<string | null>(null);
@@ -108,7 +110,7 @@ export default function CartSummary({
         <div className="flex justify-between items-center">
           <span className="text-neutral-600">Subtotal ({totals.itemCount} items)</span>
           <span className="font-mono font-bold text-neutral-950">
-            £{totals.subtotal.toFixed(2)}
+            {formatPrice(totals.subtotal)}
           </span>
         </div>
 
@@ -123,7 +125,7 @@ export default function CartSummary({
                 FREE
               </span>
             ) : (
-              `£${totals.shipping.toFixed(2)}`
+              formatPrice(totals.shipping)
             )}
           </span>
         </div>
@@ -145,7 +147,7 @@ export default function CartSummary({
           </span>
           <div className="text-right">
             <span className="font-mono font-extrabold text-base text-neutral-950">
-              £{totals.total.toFixed(2)}
+              {formatPrice(totals.total)}
             </span>
             <p className="text-[10px] text-neutral-400 font-light">
               Includes 20% UK VAT
@@ -170,7 +172,7 @@ export default function CartSummary({
           ) : (
             <>
               <Lock className="w-3.5 h-3.5" />
-              <span>Checkout • £{totals.total.toFixed(2)}</span>
+              <span>Checkout • {formatPrice(totals.total)}</span>
               <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
             </>
           )}

@@ -16,6 +16,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useCurrency } from "@/context/CurrencyContext";
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ interface CheckoutModalProps {
 
 export default function CheckoutModal({ isOpen, onClose, promoCode }: CheckoutModalProps) {
   const { items, totals, clearCart } = useCart();
+  const { formatPrice } = useCurrency();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -159,7 +161,7 @@ export default function CheckoutModal({ isOpen, onClose, promoCode }: CheckoutMo
               <div className="flex justify-between items-center text-xs font-bold pt-1">
                 <span className="text-neutral-900">Total Paid:</span>
                 <span className="font-mono text-base text-[#d4af37]">
-                  £{completedOrder.total.toFixed(2)}
+                  {formatPrice(completedOrder.total)}
                 </span>
               </div>
             </div>
@@ -326,15 +328,15 @@ export default function CheckoutModal({ isOpen, onClose, promoCode }: CheckoutMo
             <div className="bg-neutral-50 p-4 border border-neutral-200 space-y-1.5 text-xs">
               <div className="flex justify-between text-neutral-600">
                 <span>Bag Items ({totals.itemCount} items)</span>
-                <span className="font-mono">£{totals.subtotal.toFixed(2)}</span>
+                <span className="font-mono">{formatPrice(totals.subtotal)}</span>
               </div>
               <div className="flex justify-between text-neutral-600">
                 <span>Shipping</span>
-                <span>{totals.isFreeShipping ? "FREE" : `£${totals.shipping.toFixed(2)}`}</span>
+                <span>{totals.isFreeShipping ? "FREE" : formatPrice(totals.shipping)}</span>
               </div>
               <div className="flex justify-between font-bold text-neutral-950 text-sm pt-2 border-t border-neutral-200">
                 <span>Authoritative Total</span>
-                <span className="font-mono text-base text-[#d4af37]">£{totals.total.toFixed(2)}</span>
+                <span className="font-mono text-base text-[#d4af37]">{formatPrice(totals.total)}</span>
               </div>
             </div>
 
@@ -352,7 +354,7 @@ export default function CheckoutModal({ isOpen, onClose, promoCode }: CheckoutMo
               ) : (
                 <>
                   <Lock className="w-3.5 h-3.5" />
-                  <span>Authorize & Complete Order • £{totals.total.toFixed(2)}</span>
+                  <span>Authorize & Complete Order • {formatPrice(totals.total)}</span>
                 </>
               )}
             </button>

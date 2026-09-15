@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Trash2, Loader2, Sparkles } from "lucide-react";
 import { CartItem } from "@/lib/cart/types";
 import QuantitySelector from "./QuantitySelector";
+import { useCurrency } from "@/context/CurrencyContext";
 
 interface CartItemRowProps {
   item: CartItem;
@@ -22,6 +23,7 @@ export default function CartItemRow({
   isCompact = false,
   onItemClick,
 }: CartItemRowProps) {
+  const { formatPrice } = useCurrency();
   const [isRemoving, setIsRemoving] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
@@ -40,51 +42,46 @@ export default function CartItemRow({
 
   return (
     <div
-      className={`relative flex gap-3.5 sm:gap-4 p-3.5 sm:p-4 bg-white border border-neutral-200 transition-all hover:border-neutral-300 ${
-        isRemoving ? "opacity-40 pointer-events-none" : ""
+      className={`group relative flex gap-3.5 sm:gap-4 p-3.5 sm:p-4 bg-white border border-neutral-200/80 transition-all duration-300 hover:border-neutral-400 hover:shadow-[0_4px_20px_rgba(0,0,0,0.04)] ${
+        isRemoving ? "opacity-40 pointer-events-none scale-95" : ""
       }`}
     >
-      {/* Product Image Thumbnail */}
-      <Link
-        href={`/products/${item.product.slug}`}
-        onClick={onItemClick}
-        className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 bg-[#FAF7F2] border border-neutral-200 overflow-hidden group"
-      >
+      {/* Product Image */}
+      <div className="relative w-20 h-20 sm:w-24 sm:h-24 bg-neutral-100 flex-shrink-0 overflow-hidden border border-neutral-200">
         <Image
           src={item.product.image || "/ear.jpeg"}
           alt={item.product.name}
           fill
-          sizes="96px"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
+          sizes="96px"
         />
-      </Link>
+        {isUpdating && (
+          <div className="absolute inset-0 bg-white/70 backdrop-blur-xs flex items-center justify-center">
+            <Loader2 className="w-4 h-4 animate-spin text-neutral-900" />
+          </div>
+        )}
+      </div>
 
-      {/* Item Details */}
-      <div className="flex-1 min-w-0 flex flex-col justify-between">
+      {/* Product Info & Controls */}
+      <div className="flex flex-col justify-between flex-1 min-w-0">
         <div>
           <div className="flex items-start justify-between gap-2">
             <Link
               href={`/products/${item.product.slug}`}
               onClick={onItemClick}
-              className="font-bold text-xs sm:text-sm text-neutral-950 uppercase tracking-wider hover:text-[#997b24] transition-colors line-clamp-2"
+              className="font-serif text-xs sm:text-sm font-medium text-neutral-900 hover:text-[#d4af37] transition-colors line-clamp-2"
             >
               {item.product.name}
             </Link>
 
-            {/* Remove Trash Button */}
+            {/* Remove Item Button */}
             <button
-              type="button"
               onClick={handleRemove}
               disabled={isRemoving}
               aria-label="Remove item"
-              className="p-1 text-neutral-400 hover:text-red-600 transition-colors cursor-pointer flex-shrink-0"
-              title="Remove from bag"
+              className="text-neutral-400 hover:text-rose-600 transition-colors p-1 -mr-1 -mt-1 disabled:opacity-50"
             >
-              {isRemoving ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin text-neutral-500" />
-              ) : (
-                <Trash2 className="w-3.5 h-3.5" />
-              )}
+              <Trash2 className="w-3.5 h-3.5" />
             </button>
           </div>
 
@@ -113,11 +110,11 @@ export default function CartItemRow({
 
           <div className="text-right">
             <p className="font-mono font-bold text-xs sm:text-sm text-neutral-950">
-              £{item.lineTotal.toFixed(2)}
+              {formatPrice(item.lineTotal)}
             </p>
             {item.quantity > 1 && (
               <p className="text-[9.5px] text-neutral-400 font-mono">
-                £{item.product.price.toFixed(2)} each
+                {formatPrice(item.product.price)} each
               </p>
             )}
           </div>

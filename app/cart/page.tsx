@@ -5,6 +5,7 @@ import Link from "next/link";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { useCart } from "@/context/CartContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import CartItemRow from "@/components/cart/CartItemRow";
 import CartSummary from "@/components/cart/CartSummary";
 import EmptyCart from "@/components/cart/EmptyCart";
@@ -20,6 +21,7 @@ import {
 } from "lucide-react";
 
 export default function CartPage() {
+  const { formatPrice } = useCurrency();
   const { items, totals, itemCount, updateQuantity, removeItem, clearCart, isLoading } = useCart();
 
   const shippingProgress = Math.min(100, Math.round((totals.subtotal / 100) * 100));
@@ -86,7 +88,7 @@ export default function CartPage() {
                         <span className="text-emerald-700">Congratulations! You Qualify for Free UK Next-Day Delivery!</span>
                       ) : (
                         <span>
-                          Add <strong className="text-neutral-950 font-mono">£{totals.amountNeededForFreeShipping.toFixed(2)}</strong> for Free UK Delivery
+                          Add <strong className="text-neutral-950 font-mono">{formatPrice(totals.amountNeededForFreeShipping)}</strong> for Free UK Delivery
                         </span>
                       )}
                     </span>

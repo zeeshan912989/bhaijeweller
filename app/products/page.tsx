@@ -7,6 +7,7 @@ import { Sparkles, SlidersHorizontal, ArrowUpDown, ChevronRight } from "lucide-r
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { supabase } from "@/lib/supabaseClient";
+import { useCurrency } from "@/context/CurrencyContext";
 
 interface ProductItem {
   id: string;
@@ -23,6 +24,7 @@ interface ProductItem {
 }
 
 export default function ProductsIndexPage() {
+  const { formatPrice } = useCurrency();
   const [products, setProducts] = useState<ProductItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState("all");
@@ -226,11 +228,11 @@ export default function ProductsIndexPage() {
                     </div>
                     <div className="flex items-baseline gap-2">
                       <span className="text-xs md:text-sm text-[#c5a880] font-serif">
-                        £{prod.price}
+                        {formatPrice(prod.price)}
                       </span>
                       {prod.originalPrice && prod.originalPrice > prod.price && (
                         <span className="text-[10px] text-neutral-500 line-through">
-                          £{prod.originalPrice}
+                          {formatPrice(prod.originalPrice)}
                         </span>
                       )}
                     </div>

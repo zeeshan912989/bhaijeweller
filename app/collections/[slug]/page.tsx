@@ -8,6 +8,7 @@ import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import { ALL_PRODUCTS, Product } from "@/data/products";
 import { supabase } from "@/lib/supabaseClient";
+import { useCurrency } from "@/context/CurrencyContext";
 import { 
   SlidersHorizontal, 
   ChevronDown, 
@@ -198,6 +199,7 @@ const COLLECTIONS_DATA: Record<string, CollectionConfig> = {
 };
 
 export default function CollectionPLP() {
+  const { formatPrice } = useCurrency();
   const params = useParams();
   const slug = (params?.slug as string) || "earrings";
   
@@ -634,9 +636,9 @@ export default function CollectionPLP() {
                         {product.metals.map((m) => m.name).join(", ")}
                       </p>
 
-                      {/* Price (e.g., "£98.00") */}
+                      {/* Price */}
                       <p className="text-xs sm:text-[13px] font-semibold text-neutral-900 mt-1">
-                        £{product.price.toFixed(2)}
+                        {formatPrice(product.price)}
                       </p>
 
                       {/* Dual-Tone / Solid Metal Swatch Circles (Matching Screenshot 1) */}

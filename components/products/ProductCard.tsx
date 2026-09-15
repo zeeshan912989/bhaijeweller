@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Heart, ShoppingBag, Check } from "lucide-react";
 import { Product } from "@/data/products";
 import { useCart } from "@/context/CartContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import { Analytics } from "@/lib/analytics/events";
 
 interface ProductCardProps {
@@ -17,6 +18,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [selectedMetalIndex, setSelectedMetalIndex] = useState(0);
   const [addedToBag, setAddedToBag] = useState(false);
   const { addToCart } = useCart();
+  const { formatPrice } = useCurrency();
 
   // Check if product is in wishlist on mount
   React.useEffect(() => {
@@ -196,10 +198,10 @@ export default function ProductCard({ product }: ProductCardProps) {
           {product.originalPrice ? (
             <>
               <span className="line-through text-neutral-400 font-light">
-                £{product.originalPrice.toFixed(2)}
+                {formatPrice(product.originalPrice)}
               </span>
               <span className="font-semibold text-rose-700">
-                £{product.price.toFixed(2)}
+                {formatPrice(product.price)}
               </span>
               {discountPercent && (
                 <span className="text-[11px] text-rose-700 font-medium">
@@ -209,7 +211,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             </>
           ) : (
             <span className="font-medium text-neutral-900">
-              £{product.price.toFixed(2)}
+              {formatPrice(product.price)}
             </span>
           )}
         </div>

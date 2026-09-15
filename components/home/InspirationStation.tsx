@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Volume2, VolumeX, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { getPersistentItem, setPersistentItem } from "@/lib/clientStorage";
+import { useCurrency } from "@/context/CurrencyContext";
 
 export interface InspirationItem {
   id: string;
@@ -21,6 +22,7 @@ export interface InspirationItem {
 }
 
 export default function InspirationStation() {
+  const { formatPrice } = useCurrency();
   const scrollRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const [items, setItems] = useState<InspirationItem[]>([]);
@@ -264,14 +266,14 @@ export default function InspirationStation() {
                         {item.product.originalPrice ? (
                           <>
                             <span className="line-through text-neutral-400 font-light text-[10px]">
-                              £{item.product.originalPrice.toFixed(0)}
+                              {formatPrice(item.product.originalPrice, 0)}
                             </span>
                             <span className="text-rose-700">
-                              £{item.product.price.toFixed(0)}
+                              {formatPrice(item.product.price, 0)}
                             </span>
                           </>
                         ) : (
-                          <span>£{item.product.price ? item.product.price.toFixed(0) : "0"}</span>
+                          <span>{formatPrice(item.product.price || 0, 0)}</span>
                         )}
                       </div>
                     </div>

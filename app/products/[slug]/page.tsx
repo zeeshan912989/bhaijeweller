@@ -16,6 +16,7 @@ import {
 import { supabase } from "@/lib/supabaseClient";
 import { getPersistentItem } from "@/lib/clientStorage";
 import { useCart } from "@/context/CartContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import { Analytics } from "@/lib/analytics/events";
 import { 
   Star, 
@@ -151,6 +152,7 @@ const DISCOVER_CHIPS = [
 ];
 
 export default function ProductDetailPage() {
+  const { formatPrice } = useCurrency();
   const params = useParams();
   const slug = (params?.slug as string) || "";
 
@@ -961,22 +963,22 @@ export default function ProductDetailPage() {
 
               {/* Price */}
               <div className="py-3 border-y border-neutral-200">
-                <div className="flex items-baseline gap-3">
-                  <span className="text-2xl font-extrabold text-neutral-950 font-mono">
-                    £{product.price.toFixed(2)}
-                  </span>
-                  {product.originalPrice && (
-                    <span className="text-sm text-neutral-400 line-through font-mono">
-                      £{product.originalPrice.toFixed(2)}
-                    </span>
-                  )}
-                  {product.originalPrice && (
-                    <span className="text-[10px] font-bold uppercase tracking-wider bg-red-50 text-red-700 px-2 py-0.5 border border-red-200">
-                      Save £{(product.originalPrice - product.price).toFixed(2)}
-                    </span>
-                  )}
-                </div>
-              </div>
+                 <div className="flex items-baseline gap-3">
+                   <span className="text-2xl font-extrabold text-neutral-950 font-mono">
+                     {formatPrice(product.price)}
+                   </span>
+                   {product.originalPrice && (
+                     <span className="text-sm text-neutral-400 line-through font-mono">
+                       {formatPrice(product.originalPrice)}
+                     </span>
+                   )}
+                   {product.originalPrice && (
+                     <span className="text-[10px] font-bold uppercase tracking-wider bg-red-50 text-red-700 px-2 py-0.5 border border-red-200">
+                       Save {formatPrice(product.originalPrice - product.price)}
+                     </span>
+                   )}
+                 </div>
+               </div>
 
               {/* Metal Swatches Selector */}
               {product.metals && product.metals.length > 0 && (
@@ -1061,7 +1063,7 @@ export default function ProductDetailPage() {
                   >
                     <span>Add To Bag</span>
                     <span>•</span>
-                    <span>£{(product.price * quantity).toFixed(2)}</span>
+                    <span>{formatPrice(product.price * quantity)}</span>
                   </button>
                   
                   {/* Wishlist Heart Button */}
@@ -1253,7 +1255,7 @@ export default function ProductDetailPage() {
                             }}
                             className="px-5 py-2.5 bg-neutral-950 hover:bg-[#d4af37] text-white hover:text-black text-xs font-bold uppercase tracking-widest transition-colors cursor-pointer rounded-none"
                           >
-                            Add Set • £{Number(currentSet.bundlePrice || product.price).toFixed(2)}
+                            Add Set • {formatPrice(Number(currentSet.bundlePrice || product.price))}
                           </button>
                         </div>
                       </div>
@@ -1282,7 +1284,7 @@ export default function ProductDetailPage() {
                                   {st.name}
                                 </p>
                                 <p className="text-xs text-neutral-900 font-mono font-bold">
-                                  £{st.price.toFixed(2)}
+                                  {formatPrice(st.price)}
                                 </p>
                               </div>
                             </Link>
@@ -1402,11 +1404,11 @@ export default function ProductDetailPage() {
                   </h3>
                   <div className="flex items-baseline gap-2">
                     <span className="text-xs font-bold text-neutral-950 font-mono">
-                      £{item.price.toFixed(2)}
+                      {formatPrice(item.price)}
                     </span>
                     {item.originalPrice && (
                       <span className="text-[10.5px] text-neutral-400 line-through font-mono">
-                        £{item.originalPrice.toFixed(2)}
+                        {formatPrice(item.originalPrice)}
                       </span>
                     )}
                   </div>
@@ -1454,8 +1456,8 @@ export default function ProductDetailPage() {
                 <button
                   type="button"
                   onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : galleryImages.length - 1));
+                  e.stopPropagation();
+                  setSelectedImageIndex((prev) => (prev > 0 ? prev - 1 : galleryImages.length - 1));
                   }}
                   className="absolute left-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 hover:bg-white text-white hover:text-black flex items-center justify-center transition-colors cursor-pointer rounded-none"
                 >
@@ -1563,7 +1565,7 @@ export default function ProductDetailPage() {
                       {product.name}
                     </p>
                     <p className="text-xs text-neutral-600 font-mono mt-0.5">
-                      £{product.price.toFixed(2)}
+                      {formatPrice(product.price)}
                     </p>
                   </div>
                 </div>
@@ -1579,7 +1581,7 @@ export default function ProductDetailPage() {
                   }}
                   className="w-full py-3 bg-neutral-950 hover:bg-[#d4af37] text-white hover:text-black text-xs font-bold uppercase tracking-widest transition-colors cursor-pointer rounded-none"
                 >
-                  Add Piece To Bag • £{product.price.toFixed(2)}
+                  Add Piece To Bag • {formatPrice(product.price)}
                 </button>
                 <button
                   type="button"

@@ -12,11 +12,13 @@ import {
   Check
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useCurrency } from "@/context/CurrencyContext";
 import CartItemRow from "./CartItemRow";
 import CartSummary from "./CartSummary";
 import EmptyCart from "./EmptyCart";
 
 export default function CartDrawer() {
+  const { formatPrice } = useCurrency();
   const {
     isCartOpen,
     closeCart,
@@ -113,7 +115,7 @@ export default function CartDrawer() {
                 <span className="text-emerald-700">You Qualify for Free UK Next-Day Delivery!</span>
               ) : (
                 <span>
-                  Add <strong className="text-neutral-950 font-mono">£{totals.amountNeededForFreeShipping.toFixed(2)}</strong> for Free UK Delivery
+                  Add <strong className="text-neutral-950 font-mono">{formatPrice(totals.amountNeededForFreeShipping)}</strong> for Free UK Delivery
                 </span>
               )}
             </span>

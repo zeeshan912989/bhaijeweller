@@ -2,6 +2,7 @@
 
 import React from "react";
 import { CartProvider } from "@/context/CartContext";
+import { CurrencyProvider } from "@/context/CurrencyContext";
 import CartDrawer from "@/components/cart/CartDrawer";
 
 export default function ClientProviders({
@@ -10,9 +11,11 @@ export default function ClientProviders({
   children: React.ReactNode;
 }) {
   return (
-    <CartProvider>
-      {children}
-      <CartDrawer />
-    </CartProvider>
+    <CurrencyProvider>
+      <CartProvider>
+        {children}
+        <CartDrawer />
+      </CartProvider>
+    </CurrencyProvider>
   );
 }

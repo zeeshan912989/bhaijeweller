@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ChevronDown } from "lucide-react";
+import { useCurrency, SUPPORTED_CURRENCIES, CurrencyCode } from "@/context/CurrencyContext";
 
 const PAYMENT_METHODS = [
   { name: "Visa", src: "/visa.png" },
@@ -17,6 +18,7 @@ const PAYMENT_METHODS = [
 ];
 
 export default function Footer() {
+  const { currency, setCurrency } = useCurrency();
   const [email, setEmail] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [currencyOpen, setCurrencyOpen] = useState(false);
@@ -145,35 +147,32 @@ export default function Footer() {
                 className="inline-flex items-center justify-between w-60 px-4 py-2.5 bg-white border border-neutral-300 text-xs sm:text-[13px] font-semibold text-neutral-900 hover:border-neutral-900 transition-colors cursor-pointer"
               >
                 <div className="flex items-center gap-2.5">
-                  <span className="text-base leading-none">🇬🇧</span>
-                  <span>United Kingdom (GBP £)</span>
+                  <span className="text-base leading-none">{currency.flag}</span>
+                  <span>{currency.label}</span>
                 </div>
                 <ChevronDown className="w-4 h-4 text-neutral-600" />
               </button>
 
               {currencyOpen && (
                 <div className="absolute left-0 bottom-full mb-1 w-60 bg-white border border-neutral-200 shadow-lg py-1 z-20 text-xs sm:text-[13px] font-medium">
-                  <button
-                    type="button"
-                    onClick={() => setCurrencyOpen(false)}
-                    className="w-full text-left px-4 py-2 hover:bg-neutral-50 flex items-center gap-2 cursor-pointer"
-                  >
-                    <span>🇬🇧</span> United Kingdom (GBP £)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCurrencyOpen(false)}
-                    className="w-full text-left px-4 py-2 hover:bg-neutral-50 flex items-center gap-2 cursor-pointer"
-                  >
-                    <span>🇺🇸</span> United States (USD $)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCurrencyOpen(false)}
-                    className="w-full text-left px-4 py-2 hover:bg-neutral-50 flex items-center gap-2 cursor-pointer"
-                  >
-                    <span>🇪🇺</span> Europe (EUR €)
-                  </button>
+                  {SUPPORTED_CURRENCIES.map((c) => (
+                    <button
+                      key={c.code}
+                      type="button"
+                      onClick={() => {
+                        setCurrency(c.code as CurrencyCode);
+                        setCurrencyOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 hover:bg-neutral-50 flex items-center justify-between cursor-pointer ${
+                        currency.code === c.code ? "bg-[#FAF7F2] font-bold text-[#997b24]" : "text-neutral-800"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span>{c.flag}</span>
+                        <span>{c.label}</span>
+                      </div>
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
@@ -317,38 +316,35 @@ export default function Footer() {
             <button
               type="button"
               onClick={() => setCurrencyOpen(!currencyOpen)}
-              className="w-full inline-flex items-center justify-between px-4 py-3.5 bg-white border border-neutral-300 text-xs sm:text-sm font-semibold text-neutral-900"
+              className="w-full inline-flex items-center justify-between px-4 py-3.5 bg-white border border-neutral-300 text-xs sm:text-sm font-semibold text-neutral-900 cursor-pointer"
             >
               <div className="flex items-center gap-2.5">
-                <span className="text-base leading-none">🇬🇧</span>
-                <span>United Kingdom (GBP £)</span>
+                <span className="text-base leading-none">{currency.flag}</span>
+                <span>{currency.label}</span>
               </div>
               <ChevronDown className="w-4 h-4 text-neutral-600 stroke-[2]" />
             </button>
 
             {currencyOpen && (
               <div className="absolute left-0 bottom-full mb-1 w-full bg-white border border-neutral-200 shadow-lg py-1 z-20 text-xs sm:text-sm font-medium">
-                <button
-                  type="button"
-                  onClick={() => setCurrencyOpen(false)}
-                  className="w-full text-left px-4 py-2.5 hover:bg-neutral-50 flex items-center gap-2"
-                >
-                  <span>🇬🇧</span> United Kingdom (GBP £)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCurrencyOpen(false)}
-                  className="w-full text-left px-4 py-2.5 hover:bg-neutral-50 flex items-center gap-2"
-                >
-                  <span>🇺🇸</span> United States (USD $)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCurrencyOpen(false)}
-                  className="w-full text-left px-4 py-2.5 hover:bg-neutral-50 flex items-center gap-2"
-                >
-                  <span>🇪🇺</span> Europe (EUR €)
-                </button>
+                {SUPPORTED_CURRENCIES.map((c) => (
+                  <button
+                    key={c.code}
+                    type="button"
+                    onClick={() => {
+                      setCurrency(c.code as CurrencyCode);
+                      setCurrencyOpen(false);
+                    }}
+                    className={`w-full text-left px-4 py-2.5 hover:bg-neutral-50 flex items-center justify-between cursor-pointer ${
+                      currency.code === c.code ? "bg-[#FAF7F2] font-bold text-[#997b24]" : "text-neutral-800"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span>{c.flag}</span>
+                      <span>{c.label}</span>
+                    </div>
+                  </button>
+                ))}
               </div>
             )}
           </div>

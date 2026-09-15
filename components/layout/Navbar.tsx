@@ -4,13 +4,14 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Search, ShoppingBag, X, Menu, ChevronDown, ArrowRight, Sparkles } from "lucide-react";
+import { Search, ShoppingBag, X, Menu, ChevronDown, ArrowRight, Sparkles, Check } from "lucide-react";
 import { UserRound } from "@/components/animate-ui/icons/user-round";
 import { Heart } from "@/components/animate-ui/icons/heart";
 import { FEATURED_TBAR_PRODUCTS, BEST_SELLER_PRODUCTS, Product } from "@/data/products";
 import { supabase } from "@/lib/supabaseClient";
 import WishlistDrawer from "@/components/layout/WishlistDrawer";
 import { useCart } from "@/context/CartContext";
+import { useCurrency } from "@/context/CurrencyContext";
 
 interface NavItem {
   id?: string;
@@ -296,11 +297,28 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [hoveredNav, setHoveredNav] = useState<string | null>(null);
   const { itemCount: cartCount, openCart } = useCart();
+  const { currency, setCurrency, formatPrice, availableCurrencies } = useCurrency();
   const [wishlistCount, setWishlistCount] = useState(0);
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
+  const [isCurrencyDropdownOpen, setIsCurrencyDropdownOpen] = useState(false);
+  const [isMobileCurrencyOpen, setIsMobileCurrencyOpen] = useState(false);
 
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const currencyDropdownRef = useRef<HTMLDivElement>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Close currency dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (currencyDropdownRef.current && !currencyDropdownRef.current.contains(e.target as Node)) {
+        setIsCurrencyDropdownOpen(false);
+      }
+    };
+    if (isCurrencyDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isCurrencyDropdownOpen]);
 
   // Close search on ESC key
   useEffect(() => {
@@ -668,15 +686,51 @@ export default function Navbar() {
               <Search className="w-[19px] h-[19px] stroke-[1.6]" />
             </button>
 
-            <button
-              aria-label="Select currency (UK GBP)"
-              className={`flex items-center gap-1 px-1.5 py-1 rounded-md text-xs font-medium transition-all ${
-                isHeaderWhite ? "hover:bg-neutral-100 text-neutral-800" : "hover:bg-white/10 text-white"
-              }`}
-              title="United Kingdom (£ GBP)"
-            >
-              <span className="text-base leading-none">🇬🇧</span>
-            </button>
+            {/* INTERACTIVE CURRENCY SELECTOR (GBP £ / USD $ / EUR €) */}
+            <div className="relative" ref={currencyDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsCurrencyDropdownOpen(!isCurrencyDropdownOpen)}
+                aria-label={`Select currency (Current: ${currency.code})`}
+                className={`flex items-center gap-1.5 px-2 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                  isHeaderWhite
+                    ? "hover:bg-neutral-100 text-neutral-800"
+                    : "hover:bg-white/10 text-white"
+                }`}
+                title={`Currency: ${currency.label}`}
+              >
+                <span className="text-sm leading-none">{currency.flag}</span>
+                <span className="text-[11px] font-mono tracking-wider">{currency.code}</span>
+                <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${isCurrencyDropdownOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              {isCurrencyDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white text-neutral-900 border border-neutral-200 shadow-xl py-1 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-3 py-1.5 text-[9.5px] uppercase font-bold tracking-widest text-neutral-400 border-b border-neutral-100">
+                    Select Currency
+                  </div>
+                  {availableCurrencies.map((c) => (
+                    <button
+                      key={c.code}
+                      type="button"
+                      onClick={() => {
+                        setCurrency(c.code);
+                        setIsCurrencyDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-xs text-left hover:bg-[#FAF8F5] transition-colors cursor-pointer ${
+                        currency.code === c.code ? "bg-[#FAF7F2] font-bold text-neutral-950" : "text-neutral-700"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm leading-none">{c.flag}</span>
+                        <span>{c.label}</span>
+                      </div>
+                      {currency.code === c.code && <Check className="w-3.5 h-3.5 text-[#997b24]" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <Link
               href="/account"
@@ -1121,15 +1175,45 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Bottom Currency Selector Bar (Matching screenshot) */}
-            <div className="p-4 px-6 bg-neutral-50 border-t border-neutral-200">
-              <div className="flex items-center justify-between text-xs font-semibold text-neutral-900">
+            {/* Bottom Currency Selector Bar (Interactive Real-Time Switcher) */}
+            <div className="relative border-t border-neutral-200 bg-neutral-50">
+              <button
+                type="button"
+                onClick={() => setIsMobileCurrencyOpen(!isMobileCurrencyOpen)}
+                className="w-full p-4 px-6 flex items-center justify-between text-xs font-semibold text-neutral-900 hover:bg-neutral-100 transition-colors cursor-pointer"
+              >
                 <div className="flex items-center gap-2.5">
-                  <span className="text-base leading-none">🇬🇧</span>
-                  <span>United Kingdom (GBP £)</span>
+                  <span className="text-base leading-none">{currency.flag}</span>
+                  <span>{currency.label}</span>
                 </div>
-                <ChevronDown className="w-4 h-4 text-neutral-600 stroke-[2]" />
-              </div>
+                <ChevronDown className={`w-4 h-4 text-neutral-600 stroke-[2] transition-transform duration-200 ${isMobileCurrencyOpen ? "rotate-180" : ""}`} />
+              </button>
+
+              {isMobileCurrencyOpen && (
+                <div className="px-4 pb-3 space-y-1 bg-white border-t border-neutral-100">
+                  {availableCurrencies.map((c) => (
+                    <button
+                      key={c.code}
+                      type="button"
+                      onClick={() => {
+                        setCurrency(c.code);
+                        setIsMobileCurrencyOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 text-xs transition-colors cursor-pointer ${
+                        currency.code === c.code
+                          ? "bg-[#FAF7F2] border border-[#d4af37]/40 font-bold text-neutral-950"
+                          : "hover:bg-neutral-50 text-neutral-700"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="text-sm">{c.flag}</span>
+                        <span>{c.label}</span>
+                      </div>
+                      {currency.code === c.code && <Check className="w-4 h-4 text-[#997b24]" />}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1241,11 +1325,11 @@ export default function Navbar() {
                           </p>
                           <div className="flex items-baseline gap-2 mt-0.5">
                             <span className="text-xs font-bold text-neutral-900">
-                              £{prod.price.toFixed(2)}
+                              {formatPrice(prod.price)}
                             </span>
                             {prod.originalPrice && (
                               <span className="text-[10px] text-neutral-400 line-through">
-                                £{prod.originalPrice.toFixed(2)}
+                                {formatPrice(prod.originalPrice)}
                               </span>
                             )}
                           </div>
