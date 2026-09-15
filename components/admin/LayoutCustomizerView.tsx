@@ -61,15 +61,16 @@ export interface HeroBannerConfig {
 }
 
 export const DEFAULT_HERO_CONFIG: HeroBannerConfig = {
-  title: "The Gold Chain & Link Edition",
-  subtitle: "Heavyweight curb links and delicate chains crafted for bold layering.",
-  ctaText: "Shop Gold Chains",
-  ctaHref: "/collections/necklaces",
-  imageSrc: "/hero_section.jpg",
+  title: "More Than Just Jewellery",
+  subtitle: "Timeless pieces for your most precious moments.",
+  ctaText: "Explore Collection",
+  ctaHref: "/collections",
+  imageSrc: "/hero_desktop.jpg",
 };
 
 export const PRESET_HERO_IMAGES = [
-  { label: "Signature Gold Chain & Layering", src: "/hero_section.jpg" },
+  { label: "Bhai Signature Sunrise & Lake (Desktop)", src: "/hero_desktop.jpg" },
+  { label: "Bhai Signature Sunrise & Lake (Mobile)", src: "/hero_mobile.jpg" },
   { label: "T-Bar & Luxury Pendants", src: "/necklace.jpeg" },
   { label: "High-Fashion Ear Stacks & Cuffs", src: "/shop_img.jpeg" },
   { label: "Hoops & Diamond Studs", src: "/ear.jpeg" },
@@ -139,7 +140,11 @@ export default function LayoutCustomizerView() {
       if (localNav) setNavbar(JSON.parse(localNav));
 
       const localHero = localStorage.getItem("bhai_hero_banner_v1");
-      if (localHero) setHero(JSON.parse(localHero));
+      if (localHero) {
+        const parsed = JSON.parse(localHero);
+        if (!parsed.imageSrc || parsed.imageSrc === "/hero_section.jpg") parsed.imageSrc = "/hero.png";
+        setHero(parsed);
+      }
 
       const localBanners = localStorage.getItem("bhai_site_banners_v1");
       if (localBanners) setConfig(JSON.parse(localBanners));
@@ -157,7 +162,11 @@ export default function LayoutCustomizerView() {
         if (nData && nData.value) setNavbar(nData.value);
 
         const { data: hData } = await supabase.from("site_settings").select("*").eq("key", "hero_banner").single();
-        if (hData && hData.value) setHero(hData.value);
+        if (hData && hData.value) {
+          const val = hData.value;
+          if (!val.imageSrc || val.imageSrc === "/hero_section.jpg") val.imageSrc = "/hero.png";
+          setHero(val);
+        }
 
         const { data: bData } = await supabase.from("site_settings").select("*").eq("key", "header_banners").single();
         if (bData && bData.value) setConfig(bData.value);
@@ -438,7 +447,7 @@ export default function LayoutCustomizerView() {
           <div className="relative w-full h-56 sm:h-72 bg-[#0a0a0a] overflow-hidden flex items-end">
             <div className="absolute inset-0">
               <Image
-                src={hero.imageSrc || "/hero_section.jpg"}
+                src={hero.imageSrc || "/hero.png"}
                 alt={hero.title || "Hero Preview"}
                 fill
                 className="object-cover object-[center_25%] sm:object-center"
@@ -802,7 +811,7 @@ export default function LayoutCustomizerView() {
                 type="text"
                 value={hero.imageSrc}
                 onChange={(e) => setHero({ ...hero, imageSrc: e.target.value })}
-                placeholder="/hero_section.jpg or https://..."
+                placeholder="/hero.png or https://..."
                 className="w-full bg-white border border-neutral-300 px-3.5 py-2.5 text-xs text-neutral-900 font-mono outline-none focus:border-black rounded-none"
               />
             </div>

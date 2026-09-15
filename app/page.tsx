@@ -4,7 +4,7 @@ import HeroBanner from "@/components/home/HeroBanner";
 import BrandStatement from "@/components/home/BrandStatement";
 import ProductCarousel from "@/components/home/ProductCarousel";
 import CategoryShowcase from "@/components/home/CategoryShowcase";
-import EditorialFeatureBanners from "@/components/home/EditorialFeatureBanners";
+import BrandFeatures from "@/components/home/BrandFeatures";
 import TrustBadges from "@/components/home/TrustBadges";
 import CuratedEdits from "@/components/home/CuratedEdits";
 import StoreLocatorBanner from "@/components/home/StoreLocatorBanner";
@@ -18,11 +18,11 @@ export default function Home() {
 
       {/* 2. HERO BANNER */}
       <HeroBanner
-        title="The Gold Chain & Link Edition"
-        subtitle="Heavyweight curb links and delicate chains crafted for bold layering."
-        ctaText="Shop Gold Chains"
-        ctaHref="/collections/necklaces"
-        imageSrc="/hero_section.jpg"
+        title="More Than Just Jewellery"
+        subtitle="Timeless pieces for your most precious moments."
+        ctaText="Explore Collection"
+        ctaHref="/collections"
+        imageSrc="/hero_desktop.jpg"
       />
 
       {/* 3. BRAND STATEMENT TAGLINE */}
@@ -38,8 +38,8 @@ export default function Home() {
         itemCount={6}
       />
 
-      {/* 5. 4-COLUMN CATEGORY SHOWCASE (Necklaces, Earrings, Bracelets, Rings) */}
-      <CategoryShowcase />
+      {/* 5. BRAND FEATURES & SUSTAINABILITY PILLARS (ECO-DESIGNED, COMFORTABLE, LIGHTWEIGHT, COMMITTED) */}
+      <BrandFeatures />
 
       {/* 6. ALGORITHM FEED 2: MOST LOVED & BEST SELLERS (All-Time Popularity Scoring) */}
       <ProductCarousel
@@ -49,8 +49,8 @@ export default function Home() {
         itemCount={6}
       />
 
-      {/* 7. 3-COLUMN EDITORIAL FEATURE BANNERS (Meet Your Match, Under £100, Water-Resistant) */}
-      <EditorialFeatureBanners />
+      {/* 7. 4-COLUMN CATEGORY SHOWCASE (Necklaces, Earrings, Bracelets, Rings) */}
+      <CategoryShowcase />
 
       {/* 8. ALGORITHM FEED 3: HIDDEN GEMS (High Wishlist-to-View Ratio) */}
       <ProductCarousel

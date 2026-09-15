@@ -573,7 +573,6 @@ export default function Navbar() {
               {bannerConfig.secondaryBannerText}
             </p>
             <div className="hidden lg:flex items-center gap-6 justify-end w-48 text-[11px] text-neutral-200">
-              <Link href="/services/piercing" className="hover:text-white transition-colors whitespace-nowrap">Piercing & Welding</Link>
               <Link href="/stores" className="hover:text-white transition-colors whitespace-nowrap">Our Stores</Link>
               <Link href="/blog" className="hover:text-white transition-colors whitespace-nowrap">Blog</Link>
             </div>
@@ -848,262 +847,108 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* 4. FULL-WIDTH LUXURY EDITORIAL MEGA MENU DROPDOWN (COMPACT SLEEK STYLE) */}
+        {/* 4. CLEAN & SIMPLE LUXURY DROPDOWN */}
         {hoveredNav && activeMegaMenu && (
           <div
             onMouseEnter={() => handleNavMouseEnter(hoveredNav)}
             onMouseLeave={handleNavMouseLeave}
-            className="hidden xl:block absolute top-full left-0 right-0 w-full bg-white/98 backdrop-blur-md text-neutral-900 shadow-[0_20px_50px_rgba(0,0,0,0.10)] border-t border-neutral-100 border-b border-neutral-200/80 z-40 animate-in fade-in slide-in-from-top-1 duration-200"
+            className="hidden xl:block absolute top-full left-0 right-0 w-full bg-white text-neutral-900 shadow-[0_12px_30px_rgba(0,0,0,0.08)] border-t border-neutral-100 border-b border-neutral-200 z-40 animate-in fade-in duration-150"
           >
-            <div className="w-full px-8 lg:px-12 py-5 sm:py-6 max-w-[1320px] mx-auto">
-              
-              <div className="grid grid-cols-12 gap-6 lg:gap-8 items-start">
+            <div className="w-full px-8 lg:px-12 py-7 max-w-5xl mx-auto">
+              <div className="grid grid-cols-3 gap-10 items-start">
 
-                {/* COL 1: CATEGORIES & SILHOUETTES (3 COLS) */}
-                <div className="col-span-3 border-r border-neutral-100 pr-5">
-                  <div className="flex items-center justify-between mb-2.5 pb-1.5 border-b border-neutral-100">
-                    <p
-                      style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
-                      className="text-[11px] font-bold tracking-[0.22em] uppercase text-neutral-950"
-                    >
-                      COLLECTIONS
-                    </p>
-                    <span className="text-[9.5px] text-neutral-400 font-mono uppercase tracking-wider">
-                      {hoveredNav}
-                    </span>
-                  </div>
-                  <ul className="space-y-0.5">
+                {/* COL 1: CATEGORIES */}
+                <div>
+                  <p
+                    style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
+                    className="text-[10.5px] font-bold tracking-[0.2em] uppercase text-neutral-400 mb-3.5 pb-1 border-b border-neutral-100"
+                  >
+                    COLLECTIONS
+                  </p>
+                  <ul className="space-y-2">
                     {activeMegaMenu.categories?.map((cat, i) => (
                       <li key={i}>
                         <Link
                           href={cat.href}
                           onClick={() => setHoveredNav(null)}
-                          className={`group flex items-center justify-between py-1 transition-all duration-150 ${
+                          className={`text-[14.5px] block transition-colors ${
                             cat.isBold
-                              ? "text-neutral-950 font-bold"
-                              : "text-neutral-700 hover:text-black"
+                              ? "font-semibold text-neutral-950 hover:text-[#997b24]"
+                              : "text-neutral-600 hover:text-neutral-950"
                           }`}
+                          style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
                         >
-                          <span
-                            style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
-                            className={`transition-all duration-150 group-hover:translate-x-1 ${
-                              cat.isBold
-                                ? "text-[16px] font-bold text-neutral-950 group-hover:text-[#997b24]"
-                                : "text-[15px] font-normal group-hover:text-black"
-                            }`}
-                          >
-                            {cat.label}
-                          </span>
-                          
-                          <div className="flex items-center gap-1.5">
-                            {cat.badge && (
-                              <span className="text-[8.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 bg-[#FAF7F2] text-[#8A6D1E] border border-[#E5D7BE]/80 rounded-none">
-                                {cat.badge}
-                              </span>
-                            )}
-                            <ArrowRight className="w-3 h-3 text-neutral-300 group-hover:text-black group-hover:translate-x-0.5 transition-all opacity-0 group-hover:opacity-100" />
-                          </div>
+                          {cat.label}
                         </Link>
                       </li>
                     ))}
                   </ul>
                 </div>
 
-                {/* COL 2: PRECIOUS METALS & PURITY (3 COLS) */}
-                <div className="col-span-3 border-r border-neutral-100 pr-5">
-                  <div className="flex items-center justify-between mb-2.5 pb-1.5 border-b border-neutral-100">
+                {/* COL 2: BY MATERIAL */}
+                {activeMegaMenu.materials && (
+                  <div>
                     <p
                       style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
-                      className="text-[11px] font-bold tracking-[0.22em] uppercase text-neutral-950"
+                      className="text-[10.5px] font-bold tracking-[0.2em] uppercase text-neutral-400 mb-3.5 pb-1 border-b border-neutral-100"
                     >
-                      PRECIOUS METALS
+                      SHOP BY METAL
                     </p>
-                    <span className="text-[9.5px] text-neutral-400 font-mono uppercase tracking-wider">
-                      HALLMARKED
-                    </span>
-                  </div>
-
-                  <ul className="space-y-1">
-                    {activeMegaMenu.materials?.map((mat, i) => (
-                      <li key={i}>
-                        <Link
-                          href={mat.href}
-                          onClick={() => setHoveredNav(null)}
-                          className="flex items-center justify-between p-1.5 rounded-none border border-transparent hover:border-neutral-200 hover:bg-[#FAF9F6] transition-all duration-150 group"
-                        >
-                          <div className="flex items-center gap-2.5">
+                    <ul className="space-y-2.5">
+                      {activeMegaMenu.materials.map((mat, i) => (
+                        <li key={i}>
+                          <Link
+                            href={mat.href}
+                            onClick={() => setHoveredNav(null)}
+                            className="flex items-center gap-2.5 text-[14.5px] text-neutral-600 hover:text-neutral-950 transition-colors group"
+                            style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
+                          >
                             <span
-                              className="w-3 h-3 rounded-full border border-black/10 shadow-2xs flex-shrink-0 group-hover:scale-110 transition-transform ring-1 ring-neutral-200"
+                              className="w-2.5 h-2.5 rounded-full border border-black/10 flex-shrink-0 group-hover:scale-110 transition-transform"
                               style={{ backgroundColor: mat.colorHex }}
                             />
-                            <div>
-                              <p
-                                style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
-                                className="text-[15px] font-semibold text-neutral-900 group-hover:text-black leading-tight"
-                              >
-                                {mat.name}
-                              </p>
-                              {mat.karat && (
-                                <p className="text-[9.5px] text-neutral-500 font-sans tracking-wide">
-                                  {mat.karat}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                          <span className="text-[10px] font-mono text-neutral-400 group-hover:text-neutral-900 transition-colors opacity-0 group-hover:opacity-100">
-                            Explore →
-                          </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* British Craftsmanship Footnote */}
-                  <div className="mt-2.5 p-2 bg-[#FAF8F5] border border-[#EBE3D5] rounded-none flex items-start gap-2">
-                    <Sparkles className="w-3 h-3 text-[#997b24] flex-shrink-0 mt-0.5" />
-                    <div>
-                      <p
-                        style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
-                        className="text-[9.5px] font-bold tracking-[0.14em] uppercase text-neutral-900"
-                      >
-                        UK Assay Certified
-                      </p>
-                      <p className="text-[10px] text-neutral-600 leading-tight">
-                        Solid metals with certified hallmark authenticity.
-                      </p>
-                    </div>
+                            <span>{mat.name}</span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                </div>
+                )}
 
-                {/* COL 3: CURATED EDITS (3 COLS) */}
-                <div className="col-span-3 border-r border-neutral-100 pr-5">
-                  <div className="flex items-center justify-between mb-2.5 pb-1.5 border-b border-neutral-100">
+                {/* COL 3: CURATED EDITS */}
+                {activeMegaMenu.curatedEdits && (
+                  <div>
                     <p
                       style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
-                      className="text-[11px] font-bold tracking-[0.22em] uppercase text-neutral-950"
+                      className="text-[10.5px] font-bold tracking-[0.2em] uppercase text-neutral-400 mb-3.5 pb-1 border-b border-neutral-100"
                     >
                       CURATED EDITS
                     </p>
-                    <span className="text-[9.5px] text-neutral-400 font-mono uppercase tracking-wider">
-                      STYLING
-                    </span>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    {activeMegaMenu.curatedEdits?.map((edit, idx) => (
-                      <Link
-                        key={idx}
-                        href={edit.href}
-                        onClick={() => setHoveredNav(null)}
-                        className="p-2 border border-neutral-200/80 bg-[#FAFAFA] hover:bg-neutral-950 hover:text-white transition-all duration-200 flex items-center justify-between group shadow-2xs block"
-                      >
-                        <div className="min-w-0 pr-2">
-                          <div className="flex items-center gap-1.5 mb-0.5">
-                            {edit.tag && (
-                              <span className="text-[8.5px] font-mono font-bold tracking-wider uppercase text-[#997b24] group-hover:text-[#ECC96A]">
-                                {edit.tag}
-                              </span>
-                            )}
-                          </div>
-                          <h5 
-                            style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
-                            className="text-[14.5px] font-bold tracking-wide truncate group-hover:text-white"
+                    <ul className="space-y-3">
+                      {activeMegaMenu.curatedEdits.map((edit, idx) => (
+                        <li key={idx}>
+                          <Link
+                            href={edit.href}
+                            onClick={() => setHoveredNav(null)}
+                            className="group block"
                           >
-                            {edit.title}
-                          </h5>
-                          <p className="text-[10px] text-neutral-500 group-hover:text-neutral-300 truncate">
-                            {edit.subtitle}
-                          </p>
-                        </div>
-                        <ArrowRight className="w-3 h-3 text-neutral-400 group-hover:text-white group-hover:translate-x-0.5 transition-all flex-shrink-0" />
-                      </Link>
-                    ))}
+                            <p
+                              style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
+                              className="text-[14.5px] font-medium text-neutral-900 group-hover:text-[#997b24] transition-colors leading-tight"
+                            >
+                              {edit.title}
+                            </p>
+                            <p className="text-[11px] text-neutral-400 font-sans mt-0.5">
+                              {edit.subtitle}
+                            </p>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                </div>
-
-                {/* COL 4: ATELIER SPOTLIGHT (3 COLS) */}
-                <div className="col-span-3">
-                  {activeMegaMenu.atelierHighlight && (
-                    <div className="p-3.5 bg-neutral-950 text-white border border-neutral-800 rounded-none shadow-lg flex flex-col justify-between h-full">
-                      <div>
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-[8.5px] font-mono tracking-[0.2em] text-[#d4af37] uppercase font-bold">
-                            ★ BHAI ATELIER
-                          </span>
-                          <span className="text-[8.5px] text-neutral-400 uppercase tracking-widest font-mono">
-                            LONDON • BHM
-                          </span>
-                        </div>
-
-                        <h4
-                          style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
-                          className="text-[16px] font-medium text-white tracking-wide leading-tight"
-                        >
-                          {activeMegaMenu.atelierHighlight.title}
-                        </h4>
-
-                        <p className="mt-1 text-[10.5px] text-neutral-300 font-light leading-relaxed italic line-clamp-2">
-                          &ldquo;{activeMegaMenu.atelierHighlight.quote}&rdquo;
-                        </p>
-
-                        {activeMegaMenu.atelierHighlight.perks && (
-                          <div className="mt-2.5 pt-2 border-t border-neutral-800 space-y-1 text-[9.5px] text-neutral-300">
-                            {activeMegaMenu.atelierHighlight.perks.slice(0, 2).map((perk, pIdx) => (
-                              <div key={pIdx} className="flex items-center gap-1.5">
-                                <span className="text-[#d4af37] text-xs">✓</span>
-                                <span className="truncate">{perk}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="mt-3">
-                        <Link
-                          href={activeMegaMenu.atelierHighlight.href}
-                          onClick={() => setHoveredNav(null)}
-                          className="w-full py-1.5 px-3 bg-[#d4af37] hover:bg-[#b5952f] text-black text-[10px] font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                        >
-                          <span>{activeMegaMenu.atelierHighlight.buttonText}</span>
-                          <ArrowRight className="w-3 h-3" />
-                        </Link>
-                      </div>
-                    </div>
-                  )}
-                </div>
+                )}
 
               </div>
-
-              {/* BOTTOM LUXURY VALUE RIBBON */}
-              <div className="mt-4 pt-3 border-t border-neutral-100 flex flex-wrap items-center justify-between gap-3 text-[10.5px] text-neutral-600">
-                <div className="flex items-center gap-4 sm:gap-6">
-                  <span className="flex items-center gap-1.5">
-                    <span className="text-[#997b24] font-bold">🚚</span>
-                    <strong className="text-neutral-900">Complimentary UK Shipping</strong> over £100
-                  </span>
-                  <span className="hidden md:inline text-neutral-300">•</span>
-                  <span className="hidden md:flex items-center gap-1.5">
-                    <span className="text-[#997b24] font-bold">🔄</span>
-                    <strong className="text-neutral-900">30-Day Returns</strong> &amp; Sizing
-                  </span>
-                  <span className="hidden lg:inline text-neutral-300">•</span>
-                  <span className="hidden lg:flex items-center gap-1.5">
-                    <span className="text-[#997b24] font-bold">🛡️</span>
-                    <strong className="text-neutral-900">2-Year Warranty</strong>
-                  </span>
-                </div>
-
-                <Link
-                  href={activeMegaMenu.categories?.[0]?.href || "/collections"}
-                  onClick={() => setHoveredNav(null)}
-                  style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
-                  className="text-[11px] font-bold tracking-[0.14em] uppercase text-neutral-950 hover:text-[#997b24] underline underline-offset-4 flex items-center gap-1 group"
-                >
-                  <span>View All {hoveredNav}</span>
-                  <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-                </Link>
-              </div>
-
             </div>
           </div>
         )}
@@ -1344,13 +1189,6 @@ export default function Navbar() {
                       T-BAR JEWELLERY
                     </Link>
                     <Link
-                      href="/services/piercing"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="block px-6 py-3 text-[13.5px] font-medium text-neutral-800 hover:bg-neutral-50"
-                    >
-                      Piercing & Welding
-                    </Link>
-                    <Link
                       href="/stores"
                       onClick={() => setMobileMenuOpen(false)}
                       className="block px-6 py-3 text-[13.5px] font-medium text-neutral-800 hover:bg-neutral-50"
@@ -1484,7 +1322,7 @@ export default function Navbar() {
                         style={{ fontFamily: FONT_MAP[navbarConfig.navFont] || "var(--font-cinzel), serif" }}
                         className="text-[11px] font-bold tracking-[0.2em] uppercase text-neutral-400 mb-3"
                       >
-                        CURATED EDITS
+                        FEATURED
                       </p>
                       <div className="space-y-2">
                         {activeMobileSubMenu.curatedEdits.map((edit, i) => (
@@ -1495,54 +1333,20 @@ export default function Navbar() {
                               setMobileMenuOpen(false);
                               setMobileSubMenu(null);
                             }}
-                            className="flex items-center justify-between p-2.5 bg-[#FAF9F6] border border-neutral-200/80 rounded-none"
+                            className="block py-1"
                           >
-                            <div>
-                              <span className="text-[9px] font-mono font-bold text-[#997b24] uppercase block">
-                                {edit.tag}
-                              </span>
-                              <p 
-                                style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
-                                className="text-[15px] font-bold text-neutral-900 leading-tight"
-                              >
-                                {edit.title}
-                              </p>
-                            </div>
-                            <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
+                            <p 
+                              style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
+                              className="text-[15px] font-medium text-neutral-900 leading-tight"
+                            >
+                              {edit.title}
+                            </p>
+                            <p className="text-[11px] text-neutral-500">
+                              {edit.subtitle}
+                            </p>
                           </Link>
                         ))}
                       </div>
-                    </div>
-                  )}
-
-                  {/* Atelier Highlight Quote in Mobile */}
-                  {activeMobileSubMenu?.atelierHighlight && (
-                    <div className="p-3.5 bg-neutral-950 text-white rounded-none border border-neutral-800 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[9px] font-mono text-[#d4af37] font-bold uppercase tracking-wider">
-                          ★ ATELIER HIGHLIGHT
-                        </span>
-                      </div>
-                      <h4 
-                        style={{ fontFamily: "var(--font-cormorant), Georgia, serif" }}
-                        className="text-[15px] font-medium text-white"
-                      >
-                        {activeMobileSubMenu.atelierHighlight.title}
-                      </h4>
-                      <p className="text-[11px] text-neutral-300 font-light leading-relaxed">
-                        &ldquo;{activeMobileSubMenu.atelierHighlight.quote}&rdquo;
-                      </p>
-                      <Link
-                        href={activeMobileSubMenu.atelierHighlight.href}
-                        onClick={() => {
-                          setMobileMenuOpen(false);
-                          setMobileSubMenu(null);
-                        }}
-                        className="inline-flex items-center gap-1 text-[10.5px] font-bold uppercase text-[#d4af37] pt-1"
-                      >
-                        <span>{activeMobileSubMenu.atelierHighlight.buttonText}</span>
-                        <ArrowRight className="w-3 h-3" />
-                      </Link>
                     </div>
                   )}
                 </div>

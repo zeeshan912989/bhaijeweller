@@ -4,7 +4,7 @@ export default function ProductSkeleton() {
   return (
     <div className="flex flex-col flex-shrink-0 w-[240px] sm:w-[260px] md:w-[280px] select-none group">
       {/* 1. SKELETON IMAGE BOX (Luxury Shimmer Animation) */}
-      <div className="aspect-[4/5] w-full rounded-2xl bg-[#F5F2EC] relative overflow-hidden border border-neutral-200/70">
+      <div className="aspect-[4/5] w-full rounded-[5px] bg-[#F5F2EC] relative overflow-hidden border border-neutral-200/70">
         {/* Shimmer Light Sweep */}
         <div className="skeleton-shimmer absolute inset-0 bg-gradient-to-r from-transparent via-white/70 to-transparent pointer-events-none" />
       </div>

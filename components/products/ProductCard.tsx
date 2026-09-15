@@ -106,7 +106,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     <div className="group flex flex-col flex-shrink-0 w-[240px] sm:w-[260px] md:w-[280px] select-none">
       
       {/* 1. PRODUCT IMAGE CONTAINER (With Hover Image Swap & Bottom Action Icons) */}
-      <div className="relative aspect-[4/5] w-full rounded-2xl overflow-hidden bg-white border border-neutral-200/80 transition-all duration-500 group-hover:shadow-md">
+      <div className="relative aspect-[4/5] w-full rounded-[5px] overflow-hidden bg-white border border-neutral-200/80 transition-all duration-500 group-hover:shadow-md">
         
         {/* Top-Left Badge */}
         {product.badge && (

@@ -200,7 +200,7 @@ export default function ProductsIndexPage() {
                 <Link
                   key={prod.id}
                   href={href}
-                  className="group flex flex-col bg-[#141419]/50 rounded-2xl border border-neutral-800/60 overflow-hidden hover:border-[#c5a880]/50 transition-all duration-300"
+                  className="group flex flex-col bg-[#141419]/50 rounded-[5px] border border-neutral-800/60 overflow-hidden hover:border-[#c5a880]/50 transition-all duration-300"
                 >
                   <div className="relative aspect-[4/5] overflow-hidden bg-neutral-900">
                     <Image

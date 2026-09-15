@@ -15,11 +15,11 @@ export interface HeroBannerProps {
 }
 
 export const DEFAULT_HERO_CONFIG: HeroBannerProps = {
-  title: "The Gold Chain & Link Edition",
-  subtitle: "Heavyweight curb links and delicate chains crafted for bold layering.",
-  ctaText: "Shop Gold Chains",
-  ctaHref: "/collections/necklaces",
-  imageSrc: "/hero_section.jpg",
+  title: "More Than Just Jewellery",
+  subtitle: "Timeless pieces for your most precious moments.",
+  ctaText: "Explore Collection",
+  ctaHref: "/collections",
+  imageSrc: "/hero_desktop.jpg",
 };
 
 export default function HeroBanner(props: HeroBannerProps) {
@@ -32,12 +32,20 @@ export default function HeroBanner(props: HeroBannerProps) {
   });
 
   useEffect(() => {
+    const sanitizeHero = (data: HeroBannerProps): HeroBannerProps => {
+      if (data && (!data.imageSrc || data.imageSrc === "/hero_section.jpg")) {
+        return { ...data, imageSrc: "/hero.png" };
+      }
+      return data;
+    };
+
     // 1. Initial load from localStorage
     try {
       const local = localStorage.getItem("bhai_hero_banner_v1");
       if (local) {
-        const parsed = JSON.parse(local);
+        const parsed = sanitizeHero(JSON.parse(local));
         setHeroData((prev) => ({ ...prev, ...parsed }));
+        localStorage.setItem("bhai_hero_banner_v1", JSON.stringify(parsed));
       }
     } catch (e) {
       console.error(e);
@@ -48,9 +56,10 @@ export default function HeroBanner(props: HeroBannerProps) {
       try {
         const { data } = await supabase.from("site_settings").select("value").eq("key", "hero_banner").single();
         if (data?.value) {
-          setHeroData((prev) => ({ ...prev, ...data.value }));
+          const sanitized = sanitizeHero(data.value);
+          setHeroData((prev) => ({ ...prev, ...sanitized }));
           try {
-            localStorage.setItem("bhai_hero_banner_v1", JSON.stringify(data.value));
+            localStorage.setItem("bhai_hero_banner_v1", JSON.stringify(sanitized));
           } catch {}
         }
       } catch (err) {
@@ -65,10 +74,12 @@ export default function HeroBanner(props: HeroBannerProps) {
       channel = new BroadcastChannel("bhai_realtime_layout");
       channel.onmessage = (event) => {
         if (event.data?.type === "HERO_UPDATED" && event.data.payload) {
-          setHeroData((prev) => ({ ...prev, ...event.data.payload }));
+          const sanitized = sanitizeHero(event.data.payload);
+          setHeroData((prev) => ({ ...prev, ...sanitized }));
         }
         if (event.data?.type === "LAYOUT_UPDATED" && event.data.payload?.hero) {
-          setHeroData((prev) => ({ ...prev, ...event.data.payload.hero }));
+          const sanitized = sanitizeHero(event.data.payload.hero);
+          setHeroData((prev) => ({ ...prev, ...sanitized }));
         }
       };
     }
@@ -78,7 +89,8 @@ export default function HeroBanner(props: HeroBannerProps) {
       try {
         const updated = localStorage.getItem("bhai_hero_banner_v1");
         if (updated) {
-          setHeroData((prev) => ({ ...prev, ...JSON.parse(updated) }));
+          const sanitized = sanitizeHero(JSON.parse(updated));
+          setHeroData((prev) => ({ ...prev, ...sanitized }));
         }
       } catch (err) {
         console.error(err);
@@ -99,41 +111,57 @@ export default function HeroBanner(props: HeroBannerProps) {
   const activeImageSrc = heroData.imageSrc || DEFAULT_HERO_CONFIG.imageSrc;
 
   return (
-    <section className="relative w-full h-[84vh] sm:h-[92vh] min-h-[520px] sm:min-h-[560px] max-h-[1080px] overflow-hidden bg-[#0a0a0a] flex items-end">
-      {/* 1. BACKGROUND IMAGE (Optimized Focal Point for Mobile & Desktop) */}
+    <section className="relative w-full h-[50vh] sm:h-[90vh] min-h-[340px] sm:min-h-[560px] max-h-[1080px] overflow-hidden bg-[#0a0a0a] flex items-end">
+      {/* 1. BACKGROUND IMAGE (Responsive dedicated Mobile Portrait & Desktop Landscape) */}
       <div className="absolute inset-0 z-0">
-        <Image
-          src={activeImageSrc || "/hero_section.jpg"}
-          alt={activeTitle || "Hero Image"}
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-[center_25%] sm:object-center scale-[1.01] transition-all duration-700"
-        />
+        {/* Mobile View: High-res Vertical 3:4 Hero Image */}
+        <div className="block sm:hidden absolute inset-0 w-full h-full">
+          <Image
+            src="/hero_mobile.jpg"
+            alt={activeTitle || "Bhai Jewellers"}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center scale-[1.01]"
+          />
+        </div>
+
+        {/* Tablet & Desktop View: Panoramic 16:9 Hero Image */}
+        <div className="hidden sm:block absolute inset-0 w-full h-full">
+          <Image
+            src={activeImageSrc || "/hero_desktop.jpg"}
+            alt={activeTitle || "Bhai Jewellers"}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center scale-[1.01]"
+          />
+        </div>
+
         {/* Subtle Gradient Overlay for Clean Legibility */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-black/40 sm:from-black/60 sm:via-transparent sm:to-black/35 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/30 sm:from-black/60 sm:via-transparent sm:to-black/35 pointer-events-none" />
       </div>
 
       {/* 2. BOTTOM-LEFT EDITORIAL CONTENT (Compact, Clean & Elegant) */}
-      <div className="relative z-10 w-full px-5 sm:px-8 lg:px-12 xl:px-14 pb-7 sm:pb-10 lg:pb-12 max-w-2xl text-left">
+      <div className="relative z-10 w-full px-4 sm:px-8 lg:px-12 xl:px-14 pb-4 sm:pb-10 lg:pb-12 max-w-2xl text-left">
         
         {/* Refined Title (Cormorant Garamond, delicate size) */}
         <h1
           style={{ fontFamily: "var(--font-cormorant), var(--font-playfair), serif" }}
-          className="text-[26px] sm:text-3xl md:text-4xl lg:text-[42px] font-medium text-white tracking-[0.02em] leading-[1.18] drop-shadow-md"
+          className="text-[20px] sm:text-3xl md:text-4xl lg:text-[42px] font-medium text-white tracking-[0.02em] leading-[1.15] drop-shadow-md"
         >
           {activeTitle}
         </h1>
 
         {/* Short & Clean Subtitle (1 line) */}
-        <p className="mt-2 text-xs sm:text-sm text-neutral-100 font-light tracking-wide leading-relaxed drop-shadow max-w-lg">
+        <p className="mt-1 sm:mt-2 text-[11px] sm:text-sm text-neutral-100 font-light tracking-wide leading-relaxed drop-shadow max-w-lg line-clamp-1 sm:line-clamp-none">
           {activeSubtitle}
         </p>
 
         {/* Minimalist Underlined Link */}
-        <div className="mt-4 sm:mt-5">
+        <div className="mt-2.5 sm:mt-5">
           <Link
-            href={activeCtaHref || "/collections/necklaces"}
+            href={activeCtaHref || "/collections"}
             className="group inline-flex items-center gap-1.5 text-xs sm:text-[13px] font-semibold tracking-wider text-white hover:text-[#f7e8b5] transition-all duration-300 pb-0.5 border-b border-white hover:border-[#d4af37]"
           >
             <span>{activeCtaText}</span>
