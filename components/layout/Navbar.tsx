@@ -514,25 +514,7 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Auto focus mobile search input when opened
-  useEffect(() => {
-    if (mobileSearchOpen) {
-      setTimeout(() => {
-        mobileInputRef.current?.focus();
-      }, 100);
-    }
-  }, [mobileSearchOpen]);
 
-  // Click outside listener for desktop search dropdown
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (desktopSearchRef.current && !desktopSearchRef.current.contains(e.target as Node)) {
-        setDesktopSearchFocused(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const activeMegaMenu = hoveredNav
     ? (MEGA_MENU_DATA[hoveredNav] || MEGA_MENU_DATA[hoveredNav.toUpperCase()] || MEGA_MENU_DATA[hoveredNav.trim().toUpperCase()])
